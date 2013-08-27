@@ -1,7 +1,7 @@
 <?php
 namespace Pmp;
 
-interface CollectionDocJsonLinkInterface
+interface DocLink
 {
     /**
      * Follows the link href to retrieve a document

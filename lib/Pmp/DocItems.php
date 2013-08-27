@@ -1,7 +1,7 @@
 <?php
 namespace Pmp;
 
-interface CollectionDocJsonItemsInterface extends Iterator
+interface DocItems extends Iterator
 {
     /**
      * Total number of pages

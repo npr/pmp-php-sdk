@@ -1,7 +1,7 @@
 <?php
 namespace Pmp;
 
-interface AuthClientInterface extends Iterator
+interface AuthClient extends Iterator
 {
     /**
      * Gets a token for the given client id and secret
