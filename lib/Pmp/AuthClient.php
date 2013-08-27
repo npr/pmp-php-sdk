@@ -15,7 +15,7 @@ interface AuthClient extends Iterator
      * Revokes a token for the given client id and secret
      * @param $clientId
      * @param $clientSecret
-     * @return AuthClientInterface
+     * @return AuthClient
      */
     public function revokeToken($clientId, $clientSecret);
 }
