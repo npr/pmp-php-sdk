@@ -1,21 +1,25 @@
 <?php
 namespace Pmp;
 
-interface AuthClient extends Iterator
+class AuthClient
 {
     /**
      * Gets a token for the given client id and secret
-     * @param $clientId
-     * @param $clientSecret
+     * @param string $clientId
+     * @param string $clientSecret
      * @return string
      */
-    public function getToken($clientId, $clientSecret);
+    public function getToken($clientId, $clientSecret) {
+
+    }
 
     /**
      * Revokes a token for the given client id and secret
-     * @param $clientId
-     * @param $clientSecret
+     * @param string $clientId
+     * @param string $clientSecret
      * @return AuthClient
      */
-    public function revokeToken($clientId, $clientSecret);
+    public function revokeToken($clientId, $clientSecret) {
+
+    }
 }
