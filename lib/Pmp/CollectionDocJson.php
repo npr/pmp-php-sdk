@@ -25,7 +25,8 @@ class CollectionDocJson
      * @return CollectionDocJsonLinks
      */
     public function links($relType) {
-
+        $links = (!empty($this->links->$relType)) ? $this->links->$relType : array();
+        return new CollectionDocJsonLinks($links);
     }
 
     /**
@@ -33,7 +34,7 @@ class CollectionDocJson
      * @return CollectionDocJson
      */
     public function save() {
-
+        $this->putDocument($this->url, $this->accessToken);
     }
 
     /**
@@ -41,7 +42,8 @@ class CollectionDocJson
      * @return CollectionDocJsonItems
      */
     public function items() {
-
+        $items = (!empty($this->items)) ? $this->items : array();
+        return new CollectionDocJsonItems($items);
     }
 
     /**
@@ -50,9 +52,17 @@ class CollectionDocJson
      * @return CollectionDocJsonLink
      */
     public function search($urn) {
-
+        $searchLinks = $this->links('search');
+        $urnSearchLinks = $searchLinks->rels(array($urn));
+        return $urnSearchLinks[0];
     }
 
+    /**
+     * Does a GET operation on the given URL and returns a JSON object
+     * @param $url
+     * @param $accessToken
+     * @return stdClass
+     */
     private function getDocument($url, $accessToken) {
         $request = new Request();
         $response = $request->header('Content-Type', 'application/json')
@@ -61,5 +71,23 @@ class CollectionDocJson
 
         $document = json_decode($response['data']);
         return $document;
+    }
+
+    /**
+     * Does a PUT operation on the given URL using the internal JSON objects
+     * @param $url
+     * @param $accessToken
+     */
+    private function putDocument($url, $accessToken) {
+        $document = new \stdClass();
+        $document->version = $this->version;
+        $document->data = $this->data;
+        $document->links = $this->links;
+
+        $request = new Request();
+        $response = $request->header('Content-Type', 'application/json')
+            ->header('Authorization', 'Bearer ' . $accessToken)
+            ->body(json_encode($document))
+            ->put($url);
     }
 }
