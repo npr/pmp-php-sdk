@@ -1,11 +1,21 @@
 <?php
 namespace Pmp;
 
+require_once(dirname(__FILE__).'/../restagent/restagent.lib.php');
+use restagent\Request as Request;
+
 class CollectionDocJson
 {
     public function __construct($url, $accessToken) {
         $this->url = $url;
         $this->accessToken = $accessToken;
+
+        $document = $this->getDocument($url, $accessToken);
+        $this->version = (!empty($document->version)) ? $document->version : null;
+        $this->data = (!empty($document->data)) ? $document->data : null;
+        $this->links = (!empty($document->links)) ? $document->links : null;
+        $this->items = (!empty($document->items)) ? $document->items : null;
+        $this->error = (!empty($document->error)) ? $document->error : null;
     }
 
     /**
@@ -41,5 +51,15 @@ class CollectionDocJson
      */
     public function search($urn) {
 
+    }
+
+    private function getDocument($url, $accessToken) {
+        $request = new Request();
+        $response = $request->header('Content-Type', 'application/json')
+                            ->header('Authorization', 'Bearer ' . $accessToken)
+                            ->get($url);
+
+        $document = json_decode($response['data']);
+        return $document;
     }
 }
