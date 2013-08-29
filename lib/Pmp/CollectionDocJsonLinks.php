@@ -3,12 +3,14 @@ namespace Pmp;
 
 require_once('CollectionDocJsonLink.php');
 
-class CollectionDocJsonLinks
+class CollectionDocJsonLinks implements \ArrayAccess
 {
-    public function __construct(array $links) {
+    public function __construct(array $links, $parent) {
+        $this->_document = $parent;
+
         $this->links = array();
         foreach($links as $link) {
-            $this->links[] = new CollectionDocJsonLink($link);
+            $this->links[] = new CollectionDocJsonLink($link, $this);
         }
     }
 
@@ -33,12 +35,30 @@ class CollectionDocJsonLinks
 
             // array_diff gives elements of $urns that are not present in $link->rels,
             // so if the result is not the same length as $urns, then we have a match
-            $result = array_diff($urns, $link->rels);
-            if (count($result) !== $count) {
-                $links[] = $link;
+            if (!empty($link->rels)) {
+                $result = array_diff($urns, $link->rels);
+                if (count($result) !== $count) {
+                    $links[] = $link;
+                }
             }
         }
 
         return $links;
+    }
+
+    public function offsetExists($offset) {
+        return isset($this->links[$offset]);
+    }
+
+    public function offsetGet($offset) {
+        return $this->links[$offset];
+    }
+
+    public function offsetSet($offset , $value) {
+        $this->links[$offset] = $value;
+    }
+
+    public function offsetUnset($offset) {
+        unset($this->links[$offset]);
     }
 }
