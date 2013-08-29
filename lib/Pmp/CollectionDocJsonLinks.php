@@ -1,11 +1,15 @@
 <?php
 namespace Pmp;
 
+require_once('CollectionDocJsonLink.php');
+
 class CollectionDocJsonLinks
 {
-
     public function __construct(array $links) {
-        $this->links = $links;
+        $this->links = array();
+        foreach($links as $link) {
+            $this->links[] = new CollectionDocJsonLink($link);
+        }
     }
 
     /**
@@ -13,7 +17,7 @@ class CollectionDocJsonLinks
      * @return array
      */
     public function getLinks() {
-
+        return $this->links;
     }
 
     /**

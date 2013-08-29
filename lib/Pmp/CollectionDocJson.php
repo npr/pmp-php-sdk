@@ -1,6 +1,7 @@
 <?php
 namespace Pmp;
 
+require_once('CollectionDocJsonLinks.php');
 require_once(dirname(__FILE__).'/../restagent/restagent.lib.php');
 use restagent\Request as Request;
 
@@ -11,11 +12,10 @@ class CollectionDocJson
         $this->accessToken = $accessToken;
 
         $document = $this->getDocument($url, $accessToken);
-        $this->version = (!empty($document->version)) ? $document->version : null;
-        $this->data = (!empty($document->data)) ? $document->data : null;
-        $this->links = (!empty($document->links)) ? $document->links : null;
-        $this->items = (!empty($document->items)) ? $document->items : null;
-        $this->error = (!empty($document->error)) ? $document->error : null;
+        $properties = get_object_vars($document);
+        foreach($properties as $name => $value) {
+            $this->$name = $value;
+        }
     }
 
     /**
@@ -25,8 +25,10 @@ class CollectionDocJson
      * @return CollectionDocJsonLinks
      */
     public function links($relType) {
-        $links = (!empty($this->links->$relType)) ? $this->links->$relType : array();
-        return new CollectionDocJsonLinks($links);
+        if (empty($this->links->$relType)) {
+            return null;
+        }
+        return new CollectionDocJsonLinks($this->links->$relType);
     }
 
     /**
@@ -42,8 +44,10 @@ class CollectionDocJson
      * @return CollectionDocJsonItems
      */
     public function items() {
-        $items = (!empty($this->items)) ? $this->items : array();
-        return new CollectionDocJsonItems($items);
+        if (empty($this->items)) {
+            return null;
+        }
+        return new CollectionDocJsonItems($this->items);
     }
 
     /**
@@ -53,7 +57,14 @@ class CollectionDocJson
      */
     public function search($urn) {
         $searchLinks = $this->links('search');
+        if (empty($searchLinks)) {
+            return null;
+        }
+
         $urnSearchLinks = $searchLinks->rels(array($urn));
+        if (empty($urnSearchLinks[0])) {
+            return null;
+        }
         return $urnSearchLinks[0];
     }
 
