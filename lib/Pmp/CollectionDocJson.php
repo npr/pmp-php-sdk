@@ -12,6 +12,10 @@ class CollectionDocJson
         $this->accessToken = $accessToken;
 
         $document = $this->getDocument($url, $accessToken);
+        if (empty($document)) {
+            return;
+        }
+
         $properties = get_object_vars($document);
         foreach($properties as $name => $value) {
             $this->$name = $value;
@@ -25,10 +29,11 @@ class CollectionDocJson
      * @return CollectionDocJsonLinks
      */
     public function links($relType) {
-        if (empty($this->links->$relType)) {
-            return null;
+        $links = array();
+        if (!empty($this->links->$relType)) {
+            $links = $this->links->$relType;
         }
-        return new CollectionDocJsonLinks($this->links->$relType);
+        return new CollectionDocJsonLinks($links, $this);
     }
 
     /**
@@ -44,10 +49,11 @@ class CollectionDocJson
      * @return CollectionDocJsonItems
      */
     public function items() {
-        if (empty($this->items)) {
-            return null;
+        $items = array();
+        if (!empty($this->items)) {
+            $items = $this->items;
         }
-        return new CollectionDocJsonItems($this->items);
+        return new CollectionDocJsonItems($items, $this);
     }
 
     /**
@@ -56,16 +62,15 @@ class CollectionDocJson
      * @return CollectionDocJsonLink
      */
     public function search($urn) {
+        $urnSearchLink = null;
         $searchLinks = $this->links('search');
-        if (empty($searchLinks)) {
-            return null;
+        if (!empty($searchLinks)) {
+            $urnSearchLinks = $searchLinks->rels(array($urn));
+            if (!empty($urnSearchLinks[0])) {
+                $urnSearchLink = $urnSearchLinks[0];
+            }
         }
-
-        $urnSearchLinks = $searchLinks->rels(array($urn));
-        if (empty($urnSearchLinks[0])) {
-            return null;
-        }
-        return $urnSearchLinks[0];
+        return ($urnSearchLink) ? $urnSearchLink : new CollectionDocJsonLink(null, $searchLinks);
     }
 
     /**
@@ -79,7 +84,9 @@ class CollectionDocJson
         $response = $request->header('Content-Type', 'application/json')
                             ->header('Authorization', 'Bearer ' . $accessToken)
                             ->get($url);
-
+        if ($response['code'] != 200 || empty($response['data'])) {
+            return null;
+        }
         $document = json_decode($response['data']);
         return $document;
     }
@@ -88,6 +95,7 @@ class CollectionDocJson
      * Does a PUT operation on the given URL using the internal JSON objects
      * @param $url
      * @param $accessToken
+     * @return bool
      */
     private function putDocument($url, $accessToken) {
         $document = new \stdClass();
@@ -100,5 +108,11 @@ class CollectionDocJson
             ->header('Authorization', 'Bearer ' . $accessToken)
             ->body(json_encode($document))
             ->put($url);
+
+        if ($response['code'] != 202) {
+            return false;
+        } else {
+            return true;
+        }
     }
 }
