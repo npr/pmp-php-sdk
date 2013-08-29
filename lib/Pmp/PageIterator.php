@@ -3,6 +3,10 @@ namespace Pmp;
 
 class PageIterator
 {
+    public function __construct($parent) {
+        $this->_items = $parent;
+    }
+
     /**
      * Ordinal of the current page
      * @return int
