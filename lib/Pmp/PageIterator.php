@@ -3,6 +3,10 @@ namespace Pmp;
 
 class PageIterator
 {
+    /**
+     * @param CollectionDocJsonItems $parent
+     *    the items object that contains this iterator
+     */
     public function __construct($parent) {
         $this->_items = $parent;
     }
