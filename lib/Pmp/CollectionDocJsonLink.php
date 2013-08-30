@@ -2,6 +2,10 @@
 namespace Pmp;
 
 require_once('CollectionDocJson.php');
+require_once(dirname(__FILE__).'/../Guzzle/Parser/UriTemplate/UriTemplateInterface.php');
+require_once(dirname(__FILE__).'/../Guzzle/Parser/UriTemplate/UriTemplate.php');
+
+use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
 
 class CollectionDocJsonLink
 {
@@ -29,10 +33,8 @@ class CollectionDocJsonLink
      * @return CollectionDocJson
      */
     public function follow() {
-        $url = $this->href;
-
         // Retrieve the document at the other end of this URL
-        $document = new CollectionDocJson($url, $this->accessToken);
+        $document = new CollectionDocJson($this->href, $this->accessToken);
         return $document;
     }
 
@@ -43,10 +45,9 @@ class CollectionDocJsonLink
      * @return CollectionDocJson
      */
     public function submit(array $options) {
-        $url = null;
-        $template = $this->{'href-template'};
-
-        /** @todo construct the URL from the template and given options */
+        // Generate the URL from the template
+        $parser = new UriTemplate();
+        $url = $parser->expand($this->{'href-template'}, $this->convertOptions($options));
 
         // Retrieve the document at the other end of this constructed URL
         $document = new CollectionDocJson($url, $this->accessToken);
@@ -67,5 +68,22 @@ class CollectionDocJsonLink
         } else {
             return '';
         }
+    }
+
+    /**
+     * Converts the set of options into API-compatible query string forms
+     * @param array $options
+     * @return array
+     */
+    private function convertOptions(array $options) {
+        $converted = array();
+        foreach ($options as $name => $value) {
+            if (is_array($value)) {
+                $converted[$name] = $this->convertOption($value);
+            } else {
+                $converted[$name] = $value;
+            }
+        }
+        return $converted;
     }
 }
