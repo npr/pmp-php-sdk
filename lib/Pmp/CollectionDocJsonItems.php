@@ -21,7 +21,8 @@ class CollectionDocJsonItems
      * @return int
      */
     public function numPages() {
-
+        $links = $this->_document->links('self');
+        return $links[0]->totalpages;
     }
 
     /**
