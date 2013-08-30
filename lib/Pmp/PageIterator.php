@@ -16,15 +16,20 @@ class PageIterator
      * @return int
      */
     public function currentPageNo() {
-
+        $links = $this->_items->_document->links('self');
+        if (!empty($links[0])) {
+            return $links[0]->pagenum;
+        } else {
+            return 0;
+        }
     }
 
     /**
-     * Array of items on the current page
-     * @return array
+     * Items on the current page
+     * @return CollectionDocJsonItems
      */
     public function current() {
-
+        return $this->_items;
     }
 
     /**
@@ -32,46 +37,68 @@ class PageIterator
      * @return bool
      */
     public function hasNext() {
-
+        $links = $this->_items->_document->links('next');
+        return (!empty($links[0]));
     }
 
     /**
-     * Determine if there is a prev page
+     * Determine if there is a previous page
      * @return bool
      */
-    public function hasPrev() {
-
+    public function hasPrevious() {
+        $links = $this->_items->_document->links('prev');
+        return (!empty($links[0]));
     }
 
     /**
-     * Array of items on the next page
-     * @return array
+     * Items on the next page
+     * @return CollectionDocJsonItems
      */
     public function next() {
-
+        $links = $this->_items->_document->links('next');
+        if (!empty($links[0])) {
+            return $links[0]->follow()->items();
+        } else {
+            return new CollectionDocJsonItems(array(), null);
+        }
     }
 
     /**
-     * Array of items on the previous page
-     * @return array
+     * Items on the previous page
+     * @return CollectionDocJsonItems
      */
-    public function prev() {
-
+    public function previous() {
+        $links = $this->_items->_document->links('prev');
+        if (!empty($links[0])) {
+            return $links[0]->follow()->items();
+        } else {
+            return new CollectionDocJsonItems(array(), null);
+        }
     }
 
     /**
-     * Array of items on the first page
-     * @return array
+     * Items on the first page
+     * @return CollectionDocJsonItems
      */
     public function first() {
-
+        $links = $this->_items->_document->links('first');
+        if (!empty($links[0])) {
+            return $links[0]->follow()->items();
+        } else {
+            return new CollectionDocJsonItems(array(), null);
+        }
     }
 
     /**
-     * Array of items on the last page
-     * @return array
+     * Items on the last page
+     * @return CollectionDocJsonItems
      */
     public function last() {
-
+        $links = $this->_items->_document->links('last');
+        if (!empty($links[0])) {
+            return $links[0]->follow()->items();
+        } else {
+            return new CollectionDocJsonItems(array(), null);
+        }
     }
 }
