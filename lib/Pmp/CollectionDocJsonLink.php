@@ -2,8 +2,10 @@
 namespace Pmp;
 
 require_once('CollectionDocJson.php');
-require_once(dirname(__FILE__).'/../Guzzle/Parser/UriTemplate/UriTemplateInterface.php');
-require_once(dirname(__FILE__).'/../Guzzle/Parser/UriTemplate/UriTemplate.php');
+//require_once(dirname(__FILE__).'/../Guzzle/Parser/UriTemplate/UriTemplateInterface.php');
+//require_once(dirname(__FILE__).'/../Guzzle/Parser/UriTemplate/UriTemplate.php');
+
+require_once(dirname(__FILE__) . '/../guzzle-min.phar');
 
 use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
 
