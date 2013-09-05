@@ -6,12 +6,22 @@ use restagent\Request as Request;
 
 class AuthClient
 {
+
+    // This is not a constant, because in the future we may want to
+    // have auth endpoint URL be dynamically deduced from the API itself.
+    public $AUTH_ENDPOINT = 'auth/access_token';
+
+    private $host;
+
     /**
-     * @param string $url
-     *    authentication endpoint
+     * @param string $host
+     *    URL of the authentication host, e.g.: http://auth.pmp.io/
      */
-    public function __construct($url) {
-        $this->url = $url;
+    public function __construct($host) {
+        if (substr($host, -1) != '/') { // normalize
+            $host = $host . '/';
+        }
+        $this->host = $host;
     }
 
     /**
@@ -23,7 +33,7 @@ class AuthClient
      * @return string
      */
     public function getToken($clientId, $clientSecret) {
-        $url = $this->url;
+        $url = $this->host . $this->AUTH_ENDPOINT;
 
         // Authorization header requires a hash of client ID and client secret
         $hash = base64_encode($clientId . ":" . $clientSecret);
@@ -35,13 +45,19 @@ class AuthClient
 
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
-            return '';
+            $err = "Got unexpected response from the authentication server: \n " . print_r($response, true);
+            throw new Exception($err);
+            return;
         }
+
         $data = json_decode($response['data']);
         if (empty($data->access_token)) {
-            return '';
+            $err = "Got unexpected empty token from the authentication server: \n " . print_r($response, true);
+            throw new Exception($err);
+            return;
         }
-        return $data->access_token;
+
+        return $data;
     }
 
     /**
@@ -53,7 +69,7 @@ class AuthClient
      * @return bool
      */
     public function revokeToken($clientId, $clientSecret) {
-        $url = $this->url;
+        $url = $this->host . $this->AUTH_ENDPOINT;
 
         // Authorization header requires a hash of client ID and client secret
         $hash = base64_encode($clientId . ":" . $clientSecret);
