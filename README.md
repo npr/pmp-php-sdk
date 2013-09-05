@@ -6,6 +6,7 @@ This is a core SDK for Public Media Platform for PHP.
 
 ### Authentication
 
+```php
 require_once('path/to/lib/Pmp/AuthClient.php');
 $client = new \Pmp\AuthClient('http://stage.pmp.io');
 
@@ -17,4 +18,5 @@ if ($token->expires_in < 10) {
     die("Access token expires too soon. Not enough time to make a request. Mayday, mayday!");
 }
 $access_token = $token->access_token;
+```
 
