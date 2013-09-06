@@ -23,7 +23,7 @@ $access_token = $token->access_token;
 ### Making a request
 
 ```php
-require_once(/path/to/lib/Pmp/CollectionDocJson.php');
+require_once('path/to/lib/Pmp/CollectionDocJson.php');
 $doc = new \Pmp\CollectionDocJson($host, $access_token);
 
 $URN = 'urn:pmp:search:docs';
