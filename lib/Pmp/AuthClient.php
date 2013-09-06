@@ -46,14 +46,14 @@ class AuthClient
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
             $err = "Got unexpected response from the authentication server: \n " . print_r($response, true);
-            throw new Exception($err);
+            throw new \Exception($err);
             return;
         }
 
         $data = json_decode($response['data']);
         if (empty($data->access_token)) {
             $err = "Got unexpected empty token from the authentication server: \n " . print_r($response, true);
-            throw new Exception($err);
+            throw new \Exception($err);
             return;
         }
 
