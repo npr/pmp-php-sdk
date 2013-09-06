@@ -20,3 +20,18 @@ if ($token->expires_in < 10) {
 $access_token = $token->access_token;
 ```
 
+### Making a request
+
+```php
+require_once(dirname(__FILE__).'/../lib/Pmp/CollectionDocJson.php');
+$doc = new \Pmp\CollectionDocJson($host, $access_token);
+
+$URN = 'urn:pmp:search:docs';
+
+$options = array(
+    "language" => "en"
+);
+
+print_r ( $doc->search($URN)->submit($options) );
+```
+
