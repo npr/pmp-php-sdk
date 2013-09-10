@@ -9,6 +9,9 @@ use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
 
 class CollectionDocJsonLink
 {
+    private $_links;
+    private $accessToken;
+
     /**
      * @param string $link
      *    the raw link data

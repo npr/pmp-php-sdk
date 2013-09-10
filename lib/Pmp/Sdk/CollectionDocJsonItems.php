@@ -5,6 +5,9 @@ require_once('PageIterator.php');
 
 class CollectionDocJsonItems
 {
+    public $_document;
+    private $items;
+
     /**
      * @param array $items
      *    the raw items array

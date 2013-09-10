@@ -31,6 +31,7 @@ class AuthClient
      * @param string $clientSecret
      *    the client secret to use for the request
      * @return string
+     * @throws \Exception
      */
     public function getToken($clientId, $clientSecret) {
         $url = $this->host . $this->AUTH_ENDPOINT;

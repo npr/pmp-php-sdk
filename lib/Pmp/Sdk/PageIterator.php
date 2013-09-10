@@ -3,6 +3,8 @@ namespace Pmp\Sdk;
 
 class PageIterator
 {
+    private $_items;
+
     /**
      * @param CollectionDocJsonItems $items
      *    the items object that contains this iterator

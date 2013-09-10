@@ -5,6 +5,9 @@ require_once('CollectionDocJsonLink.php');
 
 class CollectionDocJsonLinks implements \ArrayAccess
 {
+    public $_document;
+    private $links;
+
     /**
      * @param array $links
      *    the raw links array

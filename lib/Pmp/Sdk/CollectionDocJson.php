@@ -7,6 +7,9 @@ use restagent\Request as Request;
 
 class CollectionDocJson
 {
+    private $url;
+    public $accessToken;
+
     /**
      * @param string $url
      *    URL for a Collection.doc+json document
