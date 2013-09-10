@@ -7,8 +7,8 @@ This is a core SDK for Public Media Platform for PHP.
 ### Authentication
 
 ```php
-require_once('path/to/lib/Pmp/AuthClient.php');
-$client = new \Pmp\AuthClient('http://stage.pmp.io');
+require_once('path/to/lib/Pmp/Sdk/AuthClient.php');
+$client = new \Pmp\Sdk\AuthClient('http://stage.pmp.io');
 
 $client_id = '...';
 $client_secret = '...';
@@ -23,8 +23,8 @@ $access_token = $token->access_token;
 ### Making a request
 
 ```php
-require_once('path/to/lib/Pmp/CollectionDocJson.php');
-$doc = new \Pmp\CollectionDocJson($host, $access_token);
+require_once('path/to/lib/Pmp/Sdk/CollectionDocJson.php');
+$doc = new \Pmp\Sdk\CollectionDocJson($host, $access_token);
 
 $URN = 'urn:pmp:search:docs';
 

@@ -1,9 +1,9 @@
 <?php
-namespace Pmp;
+namespace Pmp\Sdk;
 
 require_once('CollectionDocJson.php');
 
-require_once(dirname(__FILE__) . '/../guzzle-min.phar');
+require_once(dirname(__FILE__) . '/../C:/Users/scott/Documents/npr/codebase/phpsdk/lib/guzzle-min.phar');
 
 use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
 

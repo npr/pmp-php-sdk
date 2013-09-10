@@ -1,5 +1,5 @@
 <?php
-namespace Pmp;
+namespace Pmp\Sdk;
 
 class PageIterator
 {

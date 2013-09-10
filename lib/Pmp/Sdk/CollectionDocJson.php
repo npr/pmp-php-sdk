@@ -1,8 +1,8 @@
 <?php
-namespace Pmp;
+namespace Pmp\Sdk;
 
 require_once('CollectionDocJsonLinks.php');
-require_once(dirname(__FILE__).'/../restagent/restagent.lib.php');
+require_once(dirname(__FILE__) . '/../restagent/restagent.lib.php');
 use restagent\Request as Request;
 
 class CollectionDocJson
