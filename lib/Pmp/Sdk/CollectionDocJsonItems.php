@@ -8,11 +8,11 @@ class CollectionDocJsonItems
     /**
      * @param array $items
      *    the raw items array
-     * @param CollectionDocJson $parent
+     * @param CollectionDocJson $document
      *    the document object that contains this items object
      */
-    public function __construct(array $items, $parent) {
-        $this->_document = $parent;
+    public function __construct(array $items, $document) {
+        $this->_document = $document;
         $this->items = $items;
     }
 

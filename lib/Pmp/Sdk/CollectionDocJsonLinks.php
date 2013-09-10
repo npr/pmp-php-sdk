@@ -8,11 +8,11 @@ class CollectionDocJsonLinks implements \ArrayAccess
     /**
      * @param array $links
      *    the raw links array
-     * @param CollectionDocJson $parent
+     * @param CollectionDocJson $document
      *    the document object that contains this links object
      */
-    public function __construct(array $links, $parent) {
-        $this->_document = $parent;
+    public function __construct(array $links, $document) {
+        $this->_document = $document;
 
         // Create link objects for each raw link
         $this->links = array();

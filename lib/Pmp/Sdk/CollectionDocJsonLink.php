@@ -12,11 +12,11 @@ class CollectionDocJsonLink
     /**
      * @param string $link
      *    the raw link data
-     * @param CollectionDocJsonLinks $parent
+     * @param CollectionDocJsonLinks $links
      *    the links object that contains this link object
      */
-    public function __construct($link, $parent) {
-        $this->_links = $parent;
+    public function __construct($link, $links) {
+        $this->_links = $links;
 
         // Access token must come from the main document that contains this link
         $this->accessToken = $this->_links->_document->accessToken;
