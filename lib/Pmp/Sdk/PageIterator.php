@@ -17,7 +17,7 @@ class PageIterator
      * Ordinal of the current page
      * @return int
      */
-    public function currentPageNo() {
+    public function currentPageNum() {
         $links = $this->_items->_document->links('self');
         if (!empty($links[0])) {
             return $links[0]->pagenum;
