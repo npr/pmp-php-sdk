@@ -4,6 +4,7 @@ namespace Pmp\Sdk;
 class PageIterator
 {
     private $_items;
+    private $_navigationLinks;
 
     /**
      * @param CollectionDocJsonItems $items
@@ -11,6 +12,7 @@ class PageIterator
      */
     public function __construct($items) {
         $this->_items = $items;
+        $this->_navigationLinks = $this->_items->_document->links('navigation');
     }
 
     /**
@@ -18,7 +20,7 @@ class PageIterator
      * @return int
      */
     public function currentPageNum() {
-        $links = $this->_items->_document->links('self');
+        $links = $this->_navigationLinks->rels(array('urn:pmp:navigation:self'));
         if (!empty($links[0])) {
             return $links[0]->pagenum;
         } else {
@@ -39,7 +41,7 @@ class PageIterator
      * @return bool
      */
     public function hasNext() {
-        $links = $this->_items->_document->links('next');
+        $links = $this->_navigationLinks->rels(array('urn:pmp:navigation:next'));
         return (!empty($links[0]));
     }
 
@@ -48,7 +50,7 @@ class PageIterator
      * @return bool
      */
     public function hasPrevious() {
-        $links = $this->_items->_document->links('prev');
+        $links = $this->_navigationLinks->rels(array('urn:pmp:navigation:prev'));
         return (!empty($links[0]));
     }
 
@@ -57,7 +59,7 @@ class PageIterator
      * @return CollectionDocJsonItems
      */
     public function next() {
-        $links = $this->_items->_document->links('next');
+        $links = $this->_navigationLinks->rels(array('urn:pmp:navigation:next'));
         if (!empty($links[0])) {
             return $links[0]->follow()->items();
         } else {
@@ -70,7 +72,7 @@ class PageIterator
      * @return CollectionDocJsonItems
      */
     public function previous() {
-        $links = $this->_items->_document->links('prev');
+        $links = $this->_navigationLinks->rels(array('urn:pmp:navigation:prev'));
         if (!empty($links[0])) {
             return $links[0]->follow()->items();
         } else {
@@ -83,7 +85,7 @@ class PageIterator
      * @return CollectionDocJsonItems
      */
     public function first() {
-        $links = $this->_items->_document->links('first');
+        $links = $this->_navigationLinks->rels(array('urn:pmp:navigation:first'));
         if (!empty($links[0])) {
             return $links[0]->follow()->items();
         } else {
@@ -96,7 +98,7 @@ class PageIterator
      * @return CollectionDocJsonItems
      */
     public function last() {
-        $links = $this->_items->_document->links('last');
+        $links = $this->_navigationLinks->rels(array('urn:pmp:navigation:last'));
         if (!empty($links[0])) {
             return $links[0]->follow()->items();
         } else {
