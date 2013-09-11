@@ -25,7 +25,12 @@ class CollectionDocJsonLink
         $this->accessToken = $this->_links->_document->accessToken;
 
         // Map the link properties to this object's properties
-        $properties = get_object_vars($link);
+        if (is_object($link)) {
+            $properties = get_object_vars($link);
+        } else {
+            $properties = array();
+        }
+
         foreach($properties as $name => $value) {
             $this->$name = $value;
         }
