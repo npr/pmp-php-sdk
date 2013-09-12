@@ -2,13 +2,13 @@
 namespace Pmp\Sdk;
 
 require_once('CollectionDocJsonLinks.php');
-require_once(dirname(__FILE__) . '/../restagent/restagent.lib.php');
+require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
 use restagent\Request as Request;
 
 class CollectionDocJson
 {
     private $url;
-    public $accessToken;
+    private $accessToken;
 
     /**
      * @param string $url
@@ -20,11 +20,8 @@ class CollectionDocJson
         $this->url = $url;
         $this->accessToken = $accessToken;
 
-        // Retrieve the document from the given URL
+        // Retrieve the document from the given URL. Document is never empty. It will throw exception if it is empty.
         $document = $this->getDocument($url, $accessToken);
-        if (empty($document)) {
-            return;
-        }
 
         // Map the document properties to this object's properties
         $properties = get_object_vars($document);
@@ -44,7 +41,7 @@ class CollectionDocJson
         if (!empty($this->links->$relType)) {
             $links = $this->links->$relType;
         }
-        return new CollectionDocJsonLinks($links, $this);
+        return new CollectionDocJsonLinks($links, $this->accessToken);
     }
 
     /**
@@ -107,7 +104,10 @@ class CollectionDocJson
 
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
-            return null;
+            $err = "Got unexpected HTTP 200 and/or empty document
+                    while retrieving \"$url\" with access Token: \"$accessToken\": \n " . print_r($response, true);
+            throw new \Exception($err);
+            return;
         }
         $document = json_decode($response['data']);
         return $document;
@@ -143,5 +143,9 @@ class CollectionDocJson
             return false;
         }
         return true;
+    }
+
+    public function getAccessToken() {
+        return $this->accessToken;
     }
 }

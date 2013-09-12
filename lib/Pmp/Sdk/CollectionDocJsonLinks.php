@@ -5,22 +5,19 @@ require_once('CollectionDocJsonLink.php');
 
 class CollectionDocJsonLinks implements \ArrayAccess
 {
-    public $_document;
     private $links;
 
     /**
      * @param array $links
      *    the raw links array
-     * @param CollectionDocJson $document
-     *    the document object that contains this links object
+     * @param string $accessToken
+     *    access token for the API
      */
-    public function __construct(array $links, $document) {
-        $this->_document = $document;
-
+    public function __construct(array $links, $accessToken) {
         // Create link objects for each raw link
         $this->links = array();
         foreach($links as $link) {
-            $this->links[] = new CollectionDocJsonLink($link, $this);
+            $this->links[] = new CollectionDocJsonLink($link, $accessToken);
         }
     }
 

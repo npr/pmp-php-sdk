@@ -3,26 +3,22 @@ namespace Pmp\Sdk;
 
 require_once('CollectionDocJson.php');
 
-require_once(dirname(__FILE__) . '/../C:/Users/scott/Documents/npr/codebase/phpsdk/lib/guzzle-min.phar');
+require_once(dirname(__FILE__) . '/../../guzzle.phar');
 
 use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
 
 class CollectionDocJsonLink
 {
-    private $_links;
     private $accessToken;
 
     /**
      * @param string $link
      *    the raw link data
-     * @param CollectionDocJsonLinks $links
-     *    the links object that contains this link object
+     * @param string $accessToken
+     *    access token for the API
      */
-    public function __construct($link, $links) {
-        $this->_links = $links;
-
-        // Access token must come from the main document that contains this link
-        $this->accessToken = $this->_links->_document->accessToken;
+    public function __construct($link, $accessToken) {
+        $this->accessToken = $accessToken;
 
         // Map the link properties to this object's properties
         if (is_object($link)) {
