@@ -104,7 +104,7 @@ class CollectionDocJson
 
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
-            $err = "Got unexpected HTTP 200 and/or empty document
+            $err = "Got unexpected non-HTTP-200 response and/or empty document
                     while retrieving \"$url\" with access Token: \"$accessToken\": \n " . print_r($response, true);
             throw new \Exception($err);
             return;
