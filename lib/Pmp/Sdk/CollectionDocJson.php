@@ -49,7 +49,23 @@ class CollectionDocJson
      * @return CollectionDocJson
      */
     public function save() {
-        $this->putDocument($this->url, $this->accessToken);
+        // Determine where to save the document
+        $editFormLinks = $this->links("edit-form");
+        if (!empty($editFormLinks[0])) {
+
+            // Make sure there is a guid to save to
+            if (empty($this->data->guid)) {
+                $this->data->guid = $this->generateGuid();
+            }
+
+            // Build the URL for saving the document
+            $saveUrl = $editFormLinks[0]->href . '/' . $this->data->guid;
+
+            // Save the document
+            $this->putDocument($saveUrl, $this->accessToken);
+        }
+
+        return $this;
     }
 
     /**
@@ -147,5 +163,33 @@ class CollectionDocJson
 
     public function getAccessToken() {
         return $this->accessToken;
+    }
+
+    /**
+     * Generates a guid using UUID v4 based on RFC 4122
+     *
+     * @see http://tools.ietf.org/html/rfc4122#section-4.4
+     * @see http://www.php.net/manual/en/function.uniqid.php#94959
+     *
+     * @return string
+     */
+    public function generateGuid() {
+        return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+
+            // 32 bits for "time-low"
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+
+            // 16 bits for "time-mid"
+            mt_rand(0, 0xffff),
+
+            // 16 bits for "time-hi-and-version", four most significant bits are 0100 (so first hex digit is 4, for UUID version 4)
+            mt_rand(0, 0x0fff) | 0x4000,
+
+            // 16 bits, 8 bits for "clock-seq-hi-and-reserved", 8 bits for "clock_seq_low", two most significant bits are 10 (so first hex digit is 8, 9, A, or B)
+            mt_rand(0, 0x3fff) | 0x8000,
+
+            // 48 bits for "node"
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+        );
     }
 }
