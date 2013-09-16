@@ -56,10 +56,10 @@ class CollectionDocJson
         }
 
         // Determine where to save the document
-        $saveUrl = $this->getSaveUrl();
+        $saveUri = $this->getSaveUri();
 
         // Save the document
-        $this->putDocument($saveUrl, $this->accessToken);
+        $this->putDocument($saveUri, $this->accessToken);
 
         return $this;
     }
@@ -99,26 +99,26 @@ class CollectionDocJson
     }
 
     /**
-     * Does a GET operation on the given URL and returns a JSON string
-     * @param $url
-     *    the URL to use in the request
+     * Does a GET operation on the given URI and returns a JSON string
+     * @param $uri
+     *    the URI to use in the request
      * @param $accessToken
      *    the access token to use in the request
      * @return string
      * @throws \Exception
      */
-    private function getDocument($url, $accessToken) {
+    private function getDocument($uri, $accessToken) {
         $request = new Request();
 
         // GET request needs an authorization header with given access token
         $response = $request->header('Content-Type', 'application/json')
                             ->header('Authorization', 'Bearer ' . $accessToken)
-                            ->get($url);
+                            ->get($uri);
 
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
             $err = "Got unexpected non-HTTP-200 response and/or empty document
-                    while retrieving \"$url\" with access Token: \"$accessToken\": \n " . print_r($response, true);
+                    while retrieving \"$uri\" with access Token: \"$accessToken\": \n " . print_r($response, true);
             throw new \Exception($err);
             return;
         }
@@ -127,14 +127,14 @@ class CollectionDocJson
     }
 
     /**
-     * Does a PUT operation on the given URL using the internal JSON objects
-     * @param $url
-     *    the URL to use in the request
+     * Does a PUT operation on the given URI using the internal JSON objects
+     * @param $uri
+     *    the URI to use in the request
      * @param $accessToken
      *    the access token to use in the request
      * @return bool
      */
-    private function putDocument($url, $accessToken) {
+    private function putDocument($uri, $accessToken) {
 
         // Construct the document from the allowable properties in this object
         $document = new \stdClass();
@@ -149,7 +149,7 @@ class CollectionDocJson
         $response = $request->header('Content-Type', 'application/json')
                             ->header('Authorization', 'Bearer ' . $accessToken)
                             ->body(json_encode($document))
-                            ->put($url);
+                            ->put($uri);
 
         // Response code must be 202 in order to be successful
         if ($response['code'] != 202) {
@@ -227,10 +227,10 @@ class CollectionDocJson
     }
 
     /**
-     * Build the URL for saving the document
+     * Build the URI for saving the document
      * @return string
      */
-    public function getSaveUrl() {
+    public function getSaveUri() {
         $editFormLinks = $this->links("edit-form");
         if (!empty($editFormLinks[0])) {
 

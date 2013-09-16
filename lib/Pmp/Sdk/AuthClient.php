@@ -7,21 +7,24 @@ use restagent\Request as Request;
 class AuthClient
 {
 
-    // This is not a constant, because in the future we may want to
-    // have auth endpoint URL be dynamically deduced from the API itself.
+    /**
+     * This is not a constant, because in the future we may want to
+     * have the auth endpoint URI be dynamically deduced from the API itself
+     * @var string
+     */
     public $AUTH_ENDPOINT = 'auth/access_token';
 
-    private $host;
+    private $authUri;
 
     /**
-     * @param string $host
-     *    URL of the authentication host, e.g.: http://auth.pmp.io/
+     * @param string $authUri
+     *    URI of the authentication API, e.g.: http://auth.pmp.io/
      */
-    public function __construct($host) {
-        if (substr($host, -1) != '/') { // normalize
-            $host = $host . '/';
+    public function __construct($authUri) {
+        if (substr($authUri, -1) != '/') { // normalize
+            $authUri = $authUri . '/';
         }
-        $this->host = $host;
+        $this->authUri = $authUri;
     }
 
     /**
@@ -34,7 +37,7 @@ class AuthClient
      * @throws \Exception
      */
     public function getToken($clientId, $clientSecret) {
-        $url = $this->host . $this->AUTH_ENDPOINT;
+        $uri = $this->authUri . $this->AUTH_ENDPOINT;
 
         // Authorization header requires a hash of client ID and client secret
         $hash = base64_encode($clientId . ":" . $clientSecret);
@@ -42,7 +45,7 @@ class AuthClient
         // GET request needs an authorization header with the generated client hash
         $request = new Request();
         $response = $request->header('Authorization', 'CLIENT_CREDENTIALS ' . $hash)
-                            ->get($url);
+                            ->get($uri);
 
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
@@ -70,7 +73,7 @@ class AuthClient
      * @return bool
      */
     public function revokeToken($clientId, $clientSecret) {
-        $url = $this->host . $this->AUTH_ENDPOINT;
+        $uri = $this->authUri . $this->AUTH_ENDPOINT;
 
         // Authorization header requires a hash of client ID and client secret
         $hash = base64_encode($clientId . ":" . $clientSecret);
@@ -78,7 +81,7 @@ class AuthClient
         // GET request needs an authorization header with the generated client hash
         $request = new Request();
         $response = $request->header('Authorization', 'CLIENT_CREDENTIALS ' . $hash)
-            ->delete($url);
+            ->delete($uri);
 
         // Response code must be 204 in order to be successful
         if ($response['code'] != 204) {
