@@ -137,10 +137,7 @@ class CollectionDocJson
     private function putDocument($uri, $accessToken) {
 
         // Construct the document from the allowable properties in this object
-        $document = new \stdClass();
-        $document->version = (!empty($this->version)) ? $this->version : null;
-        $document->data = (!empty($this->data)) ? $this->data : null;
-        $document->links = (!empty($this->links)) ? $this->links : null;
+        $document = $this->buildDocument();
 
         $request = new Request();
 
@@ -208,11 +205,40 @@ class CollectionDocJson
     }
 
     /**
+     * Clears the current document from the object
+     * @return CollectionDocJson
+     */
+    public function clearDocument() {
+        unset($this->version);
+        unset($this->data);
+        unset($this->links);
+        unset($this->items);
+        unset($this->error);
+
+        return $this;
+    }
+
+    /**
+     * Builds the current document from the writeable document properties of the object
+     * @return \stdClass
+     */
+    public function buildDocument() {
+        $document = new \stdClass();
+        $document->version = (!empty($this->version)) ? $this->version : null;
+        $document->data = (!empty($this->data)) ? $this->data : null;
+        $document->links = (!empty($this->links)) ? $this->links : null;
+
+        return $document;
+    }
+
+    /**
      * Sets the given document on the object
      * @param \stdClass $document
      * @return CollectionDocJson
      */
     public function setDocument(\stdClass $document) {
+        $this->clearDocument();
+
         if (is_object($document)) {
             $properties = get_object_vars($document);
         } else {
