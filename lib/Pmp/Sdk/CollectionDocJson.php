@@ -50,21 +50,16 @@ class CollectionDocJson
      * @return CollectionDocJson
      */
     public function save() {
-        // Determine where to save the document
-        $editFormLinks = $this->links("edit-form");
-        if (!empty($editFormLinks[0])) {
-
-            // Make sure there is a guid to save to
-            if (empty($this->data->guid)) {
-                $this->data->guid = $this->generateGuid();
-            }
-
-            // Build the URL for saving the document
-            $saveUrl = $editFormLinks[0]->href . '/' . $this->data->guid;
-
-            // Save the document
-            $this->putDocument($saveUrl, $this->accessToken);
+        // Make sure there is a guid to save to
+        if (empty($this->data->guid)) {
+            $this->data->guid = $this->generateGuid();
         }
+
+        // Determine where to save the document
+        $saveUrl = $this->getSaveUrl();
+
+        // Save the document
+        $this->putDocument($saveUrl, $this->accessToken);
 
         return $this;
     }
@@ -229,5 +224,20 @@ class CollectionDocJson
         }
 
         return $this;
+    }
+
+    /**
+     * Build the URL for saving the document
+     * @return string
+     */
+    public function getSaveUrl() {
+        $editFormLinks = $this->links("edit-form");
+        if (!empty($editFormLinks[0])) {
+
+            if (!empty($this->data->guid)) {
+                return $editFormLinks[0]->href . '/' . $this->data->guid;
+            }
+        }
+        return '';
     }
 }
