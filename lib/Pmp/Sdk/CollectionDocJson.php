@@ -7,27 +7,26 @@ use restagent\Request as Request;
 
 class CollectionDocJson
 {
-    private $url;
     private $accessToken;
+    private $readOnlyLinks;
 
     /**
-     * @param string $url
-     *    URL for a Collection.doc+json document
+     * @param string $uri
+     *    URI for a Collection.doc+json document
      * @param string $accessToken
      *    access token retrieved from the authentication client
      */
-    public function __construct($url, $accessToken) {
-        $this->url = $url;
+    public function __construct($uri, $accessToken) {
         $this->accessToken = $accessToken;
 
         // Retrieve the document from the given URL. Document is never empty. It will throw exception if it is empty.
-        $document = $this->getDocument($url, $accessToken);
+        $document = $this->getDocument($uri, $accessToken);
+
+        // Extract read-only links needed by the client
+        $this->extractReadOnlyLinks($document);
 
         // Map the document properties to this object's properties
-        $properties = get_object_vars($document);
-        foreach($properties as $name => $value) {
-            $this->$name = $value;
-        }
+        $this->setDocument($document);
     }
 
     /**
@@ -38,7 +37,9 @@ class CollectionDocJson
      */
     public function links($relType) {
         $links = array();
-        if (!empty($this->links->$relType)) {
+        if (!empty($this->readOnlyLinks->$relType)) {
+            $links = $this->readOnlyLinks->$relType;
+        } else if (!empty($this->links->$relType)) {
             $links = $this->links->$relType;
         }
         return new CollectionDocJsonLinks($links, $this->accessToken);
@@ -103,12 +104,13 @@ class CollectionDocJson
     }
 
     /**
-     * Does a GET operation on the given URL and returns a JSON object
+     * Does a GET operation on the given URL and returns a JSON string
      * @param $url
      *    the URL to use in the request
      * @param $accessToken
      *    the access token to use in the request
-     * @return stdClass
+     * @return string
+     * @throws \Exception
      */
     private function getDocument($url, $accessToken) {
         $request = new Request();
@@ -191,5 +193,41 @@ class CollectionDocJson
             // 48 bits for "node"
             mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
         );
+    }
+
+    /**
+     * Extracts important read-only links from the document
+     * @param \stdClass $document
+     * @return CollectionDocJson
+     */
+    private function extractReadOnlyLinks(\stdClass $document) {
+        if (is_object($document)) {
+            if (!empty($document->links->search)) {
+                $this->readOnlyLinks->search = $document->links->search;
+            }
+            if (!empty($document->links->{"edit-form"})) {
+                $this->readOnlyLinks->{"edit-form"} = $document->links->{"edit-form"};
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Sets the given document on the object
+     * @param \stdClass $document
+     * @return CollectionDocJson
+     */
+    public function setDocument(\stdClass $document) {
+        if (is_object($document)) {
+            $properties = get_object_vars($document);
+        } else {
+            $properties = array();
+        }
+
+        foreach($properties as $name => $value) {
+            $this->$name = $value;
+        }
+
+        return $this;
     }
 }
