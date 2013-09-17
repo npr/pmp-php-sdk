@@ -15,6 +15,7 @@ class CollectionDocJson
      *    URI for a Collection.doc+json document
      * @param string $accessToken
      *    access token retrieved from the authentication client
+     * @throws \Exception
      */
     public function __construct($uri, $accessToken) {
         $this->accessToken = $accessToken;
@@ -48,6 +49,7 @@ class CollectionDocJson
     /**
      * Saves the current document
      * @return CollectionDocJson
+     * @throws \Exception
      */
     public function save() {
 
@@ -129,6 +131,7 @@ class CollectionDocJson
      * @param $accessToken
      *    the access token to use in the request
      * @return bool
+     * @throws \Exception
      */
     private function putDocument($uri, $accessToken) {
 
@@ -146,6 +149,9 @@ class CollectionDocJson
 
         // Response code must be 202 in order to be successful
         if ($response['code'] != 202) {
+            $err = "Got unexpected non-HTTP-202 response
+                    while sending \"$uri\" with access Token: \"$accessToken\": \n " . print_r($response, true);
+            throw new \Exception($err);
             return false;
         }
         return true;
