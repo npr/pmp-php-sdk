@@ -43,7 +43,7 @@ class CollectionDocJson
         } else if (!empty($this->links->$relType)) {
             $links = $this->links->$relType;
         }
-        return new CollectionDocJsonLinks($links, $this->accessToken);
+        return new CollectionDocJsonLinks($links, $this->getAccessToken());
     }
 
     /**
@@ -57,7 +57,7 @@ class CollectionDocJson
         $saveUri = $this->getSaveUri();
 
         // Save the document
-        $this->putDocument($saveUri, $this->accessToken);
+        $this->putDocument($saveUri, $this->getAccessToken());
 
         return $this;
     }
@@ -97,12 +97,12 @@ class CollectionDocJson
     }
 
     /**
-     * Does a GET operation on the given URI and returns a JSON string
+     * Does a GET operation on the given URI and returns a JSON object
      * @param $uri
      *    the URI to use in the request
      * @param $accessToken
      *    the access token to use in the request
-     * @return string
+     * @return stdClass
      * @throws \Exception
      */
     private function getDocument($uri, $accessToken) {
@@ -118,7 +118,7 @@ class CollectionDocJson
             $err = "Got unexpected non-HTTP-200 response and/or empty document
                     while retrieving \"$uri\" with access Token: \"$accessToken\": \n " . print_r($response, true);
             throw new \Exception($err);
-            return;
+            return null;
         }
         $document = json_decode($response['data']);
         return $document;
@@ -162,6 +162,23 @@ class CollectionDocJson
     }
 
     /**
+     * Creates a new guid, either from the API, or by generating a compatible UUID
+     * @return string
+     */
+    private function createGuid() {
+        try {
+            $guid = $this->getGuid($this->getGuidsUri(), $this->getAccessToken());
+            if ($guid) {
+                return $guid;
+            }
+        } catch (\Exception $e) {
+            // do nothing - just generate a UUID instead
+        }
+
+        return $this->generateUuid();
+    }
+
+    /**
      * Generates a guid using UUID v4 based on RFC 4122
      *
      * @see http://tools.ietf.org/html/rfc4122#section-4.4
@@ -169,7 +186,7 @@ class CollectionDocJson
      *
      * @return string
      */
-    public function generateGuid() {
+    private function generateUuid() {
         return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
 
             // 32 bits for "time-low"
@@ -187,6 +204,36 @@ class CollectionDocJson
             // 48 bits for "node"
             mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
         );
+    }
+
+    /**
+     * Does a POST operation on the given URI to get a new random guid
+     * @param $uri
+     *    the URI to use in the request
+     * @param $accessToken
+     *    the access token to use in the request
+     * @return string
+     * @throws \Exception
+     */
+    private function getGuid($uri, $accessToken) {
+
+        $request = new Request();
+
+        // POST request needs an authorization header with given access token
+        $response = $request->header('Authorization', 'Bearer ' . $accessToken)
+            ->body("count=1")
+            ->post($uri);
+
+        // Response code must be 200 in order to be successful
+        if ($response['code'] != 200) {
+            $err = "Got unexpected non-HTTP-200 response
+                    while POSTing to \"$uri\" with access Token: \"$accessToken\": \n " . print_r($response, true);
+            throw new \Exception($err);
+            return '';
+        }
+
+        $data = json_decode($response['data']);
+        return $data->guids[0];
     }
 
     /**
@@ -261,7 +308,7 @@ class CollectionDocJson
     public function getSaveUri() {
         // Make sure there is a guid to save to
         if (empty($this->data->guid)) {
-            $this->data->guid = $this->generateGuid();
+            $this->data->guid = $this->createGuid();
         }
 
         // Make sure there is an edit-form link to save to
@@ -273,5 +320,14 @@ class CollectionDocJson
         }
 
         return '';
+    }
+
+    /**
+     * Build the URI for retrieving guids
+     * @return string
+     * @todo needs to generate guids URI for correct domain
+     */
+    public function getGuidsUri() {
+        return 'http://stage.pmp.io/guids';
     }
 }
