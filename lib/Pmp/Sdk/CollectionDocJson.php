@@ -220,8 +220,9 @@ class CollectionDocJson
         $request = new Request();
 
         // POST request needs an authorization header with given access token
-        $response = $request->header('Authorization', 'Bearer ' . $accessToken)
-            ->body("count=1")
+        $response = $request->header('Content-Type', 'application/json')
+            ->header('Authorization', 'Bearer ' . $accessToken)
+            ->body('{"count":1}')
             ->post($uri);
 
         // Response code must be 200 in order to be successful
