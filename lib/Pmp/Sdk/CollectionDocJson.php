@@ -7,6 +7,7 @@ use restagent\Request as Request;
 
 class CollectionDocJson
 {
+    private $uri;
     private $accessToken;
     private $readOnlyLinks;
 
@@ -18,6 +19,8 @@ class CollectionDocJson
      * @throws \Exception
      */
     public function __construct($uri, $accessToken) {
+
+        $this->uri = $uri;
         $this->accessToken = $accessToken;
 
         // Retrieve the document from the given URL. Document is never empty. It will throw exception if it is empty.
@@ -329,9 +332,13 @@ class CollectionDocJson
     /**
      * Build the URI for retrieving guids
      * @return string
-     * @todo needs to generate guids URI for correct domain
+     * @todo needs to get guids URI from document links instead
      */
     public function getGuidsUri() {
-        return 'http://stage.pmp.io/guids';
+
+        // Generates the correct scheme and host from the current document's URI
+        // Also assumes the guids endpoint is "/guids"
+        $url = parse_url($this->uri);
+        return $url['scheme'] . '://' . $url['host'] . '/guids';
     }
 }
