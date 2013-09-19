@@ -253,8 +253,8 @@ class CollectionDocJson
             if (!empty($document->links->search)) {
                 $this->readOnlyLinks->search = $document->links->search;
             }
-            if (!empty($document->links->{"edit-form"})) {
-                $this->readOnlyLinks->{"edit-form"} = $document->links->{"edit-form"};
+            if (!empty($document->links->edit)) {
+                $this->readOnlyLinks->edit = $document->links->edit;
             }
         }
         return $this;
@@ -319,10 +319,10 @@ class CollectionDocJson
         }
 
         // Make sure there is an edit-form link to save to
-        $editFormLinks = $this->links("edit-form");
-        if (!empty($editFormLinks[0])) {
+        $editLinks = $this->links("edit");
+        if (!empty($editLinks[0])) {
             if (!empty($this->data->guid)) {
-                return $editFormLinks[0]->href . '/' . $this->data->guid;
+                return $editLinks[0]->href . '/' . $this->data->guid;
             }
         }
 
