@@ -163,18 +163,21 @@ class CollectionDocJson
 
     /**
      * Creates a new guid, either from the API, or by generating a compatible UUID
+     * @param bool $useApi
+     *     whether to go get the guid from the API first
      * @return string
      */
-    private function createGuid() {
-        try {
-            $guid = $this->getGuid($this->getGuidsUri(), $this->getAccessToken());
-            if ($guid) {
-                return $guid;
+    public function createGuid($useApi=false) {
+        if ($useApi) {
+            try {
+                $guid = $this->getGuid($this->getGuidsUri(), $this->getAccessToken());
+                if ($guid) {
+                    return $guid;
+                }
+            } catch (\Exception $e) {
+                // do nothing - just generate a UUID instead
             }
-        } catch (\Exception $e) {
-            // do nothing - just generate a UUID instead
         }
-
         return $this->generateUuid();
     }
 
