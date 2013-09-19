@@ -330,15 +330,15 @@ class CollectionDocJson
     }
 
     /**
-     * Build the URI for retrieving guids
+     * Get the URI for retrieving guids
      * @return string
-     * @todo needs to get guids URI from document links instead
      */
     public function getGuidsUri() {
-
-        // Generates the correct scheme and host from the current document's URI
-        // Also assumes the guids endpoint is "/guids"
-        $url = parse_url($this->uri);
-        return $url['scheme'] . '://' . $url['host'] . '/guids';
+        $guidsLink = $this->query("urn:pmp:query:guids");
+        if (!empty($guidsLink->href)) {
+            return $guidsLink->href;
+        } else {
+            return '';
+        }
     }
 }
