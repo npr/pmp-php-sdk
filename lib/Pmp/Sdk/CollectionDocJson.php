@@ -78,25 +78,25 @@ class CollectionDocJson
     }
 
     /**
-     * Gets a default "search" relation link that has the given URN
+     * Gets a default "query" relation link that has the given URN
      * @param string $urn
-     *    the URN associated with the desired "search" link
+     *    the URN associated with the desired "query" link
      * @return CollectionDocJsonLink
      */
-    public function search($urn) {
-        $urnSearchLink = null;
-        $searchLinks = $this->links('search');
+    public function query($urn) {
+        $urnQueryLink = null;
+        $queryLinks = $this->links('query');
 
-        // Lookup rels by given URN if search links found in document
-        if (!empty($searchLinks)) {
-            $urnSearchLinks = $searchLinks->rels(array($urn));
+        // Lookup rels by given URN if query links found in document
+        if (!empty($queryLinks)) {
+            $urnQueryLinks = $queryLinks->rels(array($urn));
 
             // Use the first link found for the given URN if found
-            if (!empty($urnSearchLinks[0])) {
-                $urnSearchLink = $urnSearchLinks[0];
+            if (!empty($urnQueryLinks[0])) {
+                $urnQueryLink = $urnQueryLinks[0];
             }
         }
-        return ($urnSearchLink) ? $urnSearchLink : new CollectionDocJsonLink(null, $searchLinks);
+        return ($urnQueryLink) ? $urnQueryLink : new CollectionDocJsonLink(null, $queryLinks);
     }
 
     /**
@@ -250,8 +250,8 @@ class CollectionDocJson
      */
     private function extractReadOnlyLinks(\stdClass $document) {
         if (is_object($document)) {
-            if (!empty($document->links->search)) {
-                $this->readOnlyLinks->search = $document->links->search;
+            if (!empty($document->links->query)) {
+                $this->readOnlyLinks->query = $document->links->query;
             }
             if (!empty($document->links->edit)) {
                 $this->readOnlyLinks->edit = $document->links->edit;
