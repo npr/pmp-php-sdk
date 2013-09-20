@@ -266,7 +266,7 @@ class CollectionDocJson
      */
     public function clearDocument() {
         unset($this->version);
-        unset($this->data);
+        unset($this->attributes);
         unset($this->links);
         unset($this->items);
         unset($this->error);
@@ -281,7 +281,7 @@ class CollectionDocJson
     public function buildDocument() {
         $document = new \stdClass();
         $document->version = (!empty($this->version)) ? $this->version : null;
-        $document->data = (!empty($this->data)) ? $this->data : null;
+        $document->attributes = (!empty($this->attributes)) ? $this->attributes : null;
         $document->links = (!empty($this->links)) ? $this->links : null;
 
         return $document;
@@ -314,15 +314,15 @@ class CollectionDocJson
      */
     public function getSaveUri() {
         // Make sure there is a guid to save to
-        if (empty($this->data->guid)) {
-            $this->data->guid = $this->createGuid();
+        if (empty($this->attributes->guid)) {
+            $this->attributes->guid = $this->createGuid();
         }
 
         // Make sure there is an edit-form link to save to
         $editLinks = $this->links("edit");
         if (!empty($editLinks[0])) {
-            if (!empty($this->data->guid)) {
-                return $editLinks[0]->href . '/' . $this->data->guid;
+            if (!empty($this->attributes->guid)) {
+                return $editLinks[0]->href . '/' . $this->attributes->guid;
             }
         }
 
