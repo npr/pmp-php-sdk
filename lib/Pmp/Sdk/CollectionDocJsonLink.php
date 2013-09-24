@@ -9,6 +9,7 @@ use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
 
 class CollectionDocJsonLink
 {
+    private $link;
     private $accessToken;
 
     /**
@@ -18,6 +19,7 @@ class CollectionDocJsonLink
      *    access token for the API
      */
     public function __construct($link, $accessToken) {
+        $this->link = $link;
         $this->accessToken = $accessToken;
 
         // Map the link properties to this object's properties
@@ -38,9 +40,16 @@ class CollectionDocJsonLink
      * @throws Exception
      */
     public function follow() {
-        // Retrieve the document at the other end of this URL
-        $document = new CollectionDocJson($this->href, $this->accessToken);
-        return $document;
+        if (!empty($this->href)) {
+            // Retrieve the document at the other end of this URL
+            $document = new CollectionDocJson($this->href, $this->accessToken);
+            return $document;
+        } else {
+            $err = "No href defined for this link";
+            $exception = new Exception($err);
+            $exception->setDetails(array($this->link));
+            throw $exception;
+        }
     }
 
     /**
@@ -51,13 +60,20 @@ class CollectionDocJsonLink
      * @throws Exception
      */
     public function submit(array $options) {
-        // Generate the URL from the template
-        $parser = new UriTemplate();
-        $url = $parser->expand($this->{'href-template'}, $this->convertOptions($options));
+        if (!empty($this->{'href-template'})) {
+            // Generate the URL from the template
+            $parser = new UriTemplate();
+            $url = $parser->expand($this->{'href-template'}, $this->convertOptions($options));
 
-        // Retrieve the document at the other end of this constructed URL
-        $document = new CollectionDocJson($url, $this->accessToken);
-        return $document;
+            // Retrieve the document at the other end of this constructed URL
+            $document = new CollectionDocJson($url, $this->accessToken);
+            return $document;
+        } else {
+            $err = "No href-template defined for this link";
+            $exception = new Exception($err);
+            $exception->setDetails(array($this->link));
+            throw $exception;
+        }
     }
 
     /**
