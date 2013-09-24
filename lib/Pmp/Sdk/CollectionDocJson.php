@@ -17,7 +17,7 @@ class CollectionDocJson
      *    URI for a Collection.doc+json document
      * @param string $accessToken
      *    access token retrieved from the authentication client
-     * @throws \Exception
+     * @throws Exception
      */
     public function __construct($uri, $accessToken) {
 
@@ -53,7 +53,7 @@ class CollectionDocJson
     /**
      * Saves the current document
      * @return CollectionDocJson
-     * @throws \Exception
+     * @throws Exception
      */
     public function save() {
 
@@ -107,7 +107,7 @@ class CollectionDocJson
      * @param $accessToken
      *    the access token to use in the request
      * @return stdClass
-     * @throws \Exception
+     * @throws Exception
      */
     private function getDocument($uri, $accessToken) {
         $request = new Request();
@@ -136,7 +136,7 @@ class CollectionDocJson
      * @param $accessToken
      *    the access token to use in the request
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     private function putDocument($uri, $accessToken) {
 
@@ -222,7 +222,7 @@ class CollectionDocJson
      * @param $accessToken
      *    the access token to use in the request
      * @return string
-     * @throws \Exception
+     * @throws Exception
      */
     private function getGuid($uri, $accessToken) {
 

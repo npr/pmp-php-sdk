@@ -35,6 +35,7 @@ class CollectionDocJsonLink
     /**
      * Follows the link href to retrieve a document
      * @return CollectionDocJson
+     * @throws Exception
      */
     public function follow() {
         // Retrieve the document at the other end of this URL
@@ -47,6 +48,7 @@ class CollectionDocJsonLink
      * @param array $options
      *    the mapping of template parameter values
      * @return CollectionDocJson
+     * @throws Exception
      */
     public function submit(array $options) {
         // Generate the URL from the template
