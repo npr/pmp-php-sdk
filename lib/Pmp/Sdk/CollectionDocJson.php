@@ -2,6 +2,7 @@
 namespace Pmp\Sdk;
 
 require_once('CollectionDocJsonLinks.php');
+require_once('Exception.php');
 require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
 use restagent\Request as Request;
 
@@ -118,9 +119,10 @@ class CollectionDocJson
 
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
-            $err = "Got unexpected non-HTTP-200 response and/or empty document
-                    while retrieving \"$uri\" with access Token: \"$accessToken\": \n " . print_r($response, true);
-            throw new \Exception($err);
+            $err = "Got unexpected non-HTTP-200 response and/or empty document while retrieving \"$uri\" with access Token: \"$accessToken\"";
+            $exception = new Exception($err);
+            $exception->setDetails($response);
+            throw $exception;
             return null;
         }
         $document = json_decode($response['data']);
@@ -152,9 +154,10 @@ class CollectionDocJson
 
         // Response code must be 202 in order to be successful
         if ($response['code'] != 202) {
-            $err = "Got unexpected non-HTTP-202 response
-                    while sending \"$uri\" with access Token: \"$accessToken\": \n " . print_r($response, true);
-            throw new \Exception($err);
+            $err = "Got unexpected non-HTTP-202 response while sending \"$uri\" with access Token: \"$accessToken\"";
+            $exception = new Exception($err);
+            $exception->setDetails($response);
+            throw $exception;
             return false;
         }
         return true;
@@ -233,9 +236,10 @@ class CollectionDocJson
 
         // Response code must be 200 in order to be successful
         if ($response['code'] != 200) {
-            $err = "Got unexpected non-HTTP-200 response
-                    while POSTing to \"$uri\" with access Token: \"$accessToken\": \n " . print_r($response, true);
-            throw new \Exception($err);
+            $err = "Got unexpected non-HTTP-200 response while POSTing to \"$uri\" with access Token: \"$accessToken\"";
+            $exception = new Exception($err);
+            $exception->setDetails($response);
+            throw $exception;
             return '';
         }
 

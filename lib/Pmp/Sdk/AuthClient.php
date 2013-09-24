@@ -1,6 +1,7 @@
 <?php
 namespace Pmp\Sdk;
 
+require_once('Exception.php');
 require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
 use restagent\Request as Request;
 
@@ -49,15 +50,19 @@ class AuthClient
 
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
-            $err = "Got non-HTTP-200 and/or empty response from the authentication server: \n " . print_r($response, true);
-            throw new \Exception($err);
+            $err = "Got non-HTTP-200 and/or empty response from the authentication server";
+            $exception = new Exception($err);
+            $exception->setDetails($response);
+            throw $exception;
             return;
         }
 
         $data = json_decode($response['data']);
         if (empty($data->access_token)) {
-            $err = "Got unexpected empty token from the authentication server: \n " . print_r($response, true);
-            throw new \Exception($err);
+            $err = "Got unexpected empty token from the authentication server";
+            $exception = new Exception($err);
+            $exception->setDetails($response);
+            throw $exception;
             return;
         }
 
@@ -71,6 +76,7 @@ class AuthClient
      * @param string $clientSecret
      *    the client secret to use for the request
      * @return bool
+     * @throws Exception
      */
     public function revokeToken($clientId, $clientSecret) {
         $uri = $this->authUri . $this->AUTH_ENDPOINT;
@@ -85,8 +91,10 @@ class AuthClient
 
         // Response code must be 204 in order to be successful
         if ($response['code'] != 204) {
-            $err = "Got unexpected response code from the authentication server: \n " . print_r($response, true);
-            throw new \Exception($err);
+            $err = "Got unexpected response code from the authentication server";
+            $exception = new Exception($err);
+            $exception->setDetails($response);
+            throw $exception;
             return false;
         }
         return true;
