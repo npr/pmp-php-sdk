@@ -48,6 +48,8 @@ class AuthClient
      */
     public function getToken($refresh=false) {
         if (!$refresh && !empty($this->accessToken)) {
+            $this->accessToken->expires_in = $this->accessToken->expires_in - (time() - $this->accessToken->lastTS);
+            $this->accessToken->lastTS = time();
             return $this->accessToken;
         }
 
@@ -80,6 +82,8 @@ class AuthClient
         }
 
         $this->accessToken = $data;
+        //-- Record when was expires_in last retrieved so that when we get auth token from cache, we fix expires_in
+        $this->accessToken->lastTS = time();
         return $data;
     }
 
