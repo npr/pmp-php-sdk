@@ -16,7 +16,7 @@ $client_secret = '...';
 
 $auth = new \Pmp\Sdk\AuthClient($host, $client_id, $client_secret);
 
-if ($auth->getToken()->expires_in < 10) {
+if ($auth->getToken()->token_expires_in < 10) {
     die("Access token expires too soon. Not enough time to make a request. Mayday, mayday");
 }
 
