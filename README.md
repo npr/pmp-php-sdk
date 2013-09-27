@@ -8,15 +8,19 @@ This is a core SDK for Public Media Platform for PHP.
 
 ```php
 require_once('path/to/lib/Pmp/Sdk/AuthClient.php');
+
+// Stage
+$host = 'http://stage.pmp.io';
 $client_id = '...';
 $client_secret = '...';
-$auth = new \Pmp\Sdk\AuthClient('http://stage.pmp.io', $client_id, $client_secret);
 
-$token = $auth->getToken();
-if ($token->expires_in < 10) {
-    die("Access token expires too soon. Not enough time to make a request. Mayday, mayday!");
+$auth = new \Pmp\Sdk\AuthClient($host, $client_id, $client_secret);
+
+if ($auth->getToken()->expires_in < 10) {
+    die("Access token expires too soon. Not enough time to make a request. Mayday, mayday");
 }
-$access_token = $token->access_token;
+
+print_r($auth->getToken());
 ```
 
 ### Making a request
@@ -28,7 +32,7 @@ $doc = new \Pmp\Sdk\CollectionDocJson($host, $auth);
 $URN = 'urn:pmp:query:docs';
 
 $options = array(
-    "language" => "en"
+    "tags" => "samplecontent"
 );
 
 print_r ( $doc->query($URN)->submit($options) );
