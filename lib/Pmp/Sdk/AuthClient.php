@@ -35,6 +35,8 @@ class AuthClient
         $this->authUri = $authUri;
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
+        //-- Need to initialize token firs time around, otherwise fresh auth object is useless.
+        $this->getToken();
     }
 
     /**
