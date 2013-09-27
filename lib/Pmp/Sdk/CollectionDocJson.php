@@ -9,23 +9,27 @@ use restagent\Request as Request;
 class CollectionDocJson
 {
     private $uri;
-    private $accessToken;
+    private $auth;
     private $readOnlyLinks;
 
     /**
      * @param string $uri
      *    URI for a Collection.doc+json document
-     * @param string $accessToken
-     *    access token retrieved from the authentication client
+     * @param AuthClient $auth
+     *    authentication client
      * @throws Exception
      */
-    public function __construct($uri, $accessToken) {
+    public function __construct($uri, $auth) {
 
         $this->uri = $uri;
-        $this->accessToken = $accessToken;
+        $this->auth = $auth;
 
         // Retrieve the document from the given URL. Document is never empty. It will throw exception if it is empty.
-        $document = $this->getDocument($uri, $accessToken);
+        try {
+            $document = $this->getDocument($uri);
+        } catch (Exception $e) {
+
+        }
 
         // Extract read-only links needed by the client
         $this->extractReadOnlyLinks($document);
@@ -47,7 +51,7 @@ class CollectionDocJson
         } else if (!empty($this->links->$relType)) {
             $links = $this->links->$relType;
         }
-        return new CollectionDocJsonLinks($links, $this->getAccessToken());
+        return new CollectionDocJsonLinks($links, $this->auth);
     }
 
     /**
@@ -61,7 +65,7 @@ class CollectionDocJson
         $saveUri = $this->getSaveUri();
 
         // Save the document
-        $this->putDocument($saveUri, $this->getAccessToken());
+        $this->putDocument($saveUri);
 
         return $this;
     }
@@ -97,25 +101,32 @@ class CollectionDocJson
                 $urnQueryLink = $urnQueryLinks[0];
             }
         }
-        return ($urnQueryLink) ? $urnQueryLink : new CollectionDocJsonLink(null, $queryLinks);
+        return ($urnQueryLink) ? $urnQueryLink : new CollectionDocJsonLink(null, $this->auth);
     }
 
     /**
      * Does a GET operation on the given URI and returns a JSON object
      * @param $uri
      *    the URI to use in the request
-     * @param $accessToken
-     *    the access token to use in the request
      * @return stdClass
      * @throws Exception
      */
-    private function getDocument($uri, $accessToken) {
+    private function getDocument($uri) {
         $request = new Request();
 
         // GET request needs an authorization header with given access token
+        $accessToken = $this->getAccessToken();
         $response = $request->header('Content-Type', 'application/json')
                             ->header('Authorization', 'Bearer ' . $accessToken)
                             ->get($uri);
+
+        // Retry authentication if request was unauthorized
+        if ($response['code'] == 401) {
+            $accessToken = $this->getAccessToken(true);
+            $response = $request->header('Content-Type', 'application/json')
+                ->header('Authorization', 'Bearer ' . $accessToken)
+                ->get($uri);
+        }
 
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
@@ -125,6 +136,7 @@ class CollectionDocJson
             throw $exception;
             return null;
         }
+
         $document = json_decode($response['data']);
         return $document;
     }
@@ -133,24 +145,32 @@ class CollectionDocJson
      * Does a PUT operation on the given URI using the internal JSON objects
      * @param $uri
      *    the URI to use in the request
-     * @param $accessToken
-     *    the access token to use in the request
      * @return bool
      * @throws Exception
      */
-    private function putDocument($uri, $accessToken) {
+    private function putDocument($uri) {
 
         // Construct the document from the allowable properties in this object
-        $document = $this->buildDocument();
+        $document = json_encode($this->buildDocument());
 
         $request = new Request();
 
         // PUT request needs an authorization header with given access token and
         // the JSON-encoded body based on the document content
+        $accessToken = $this->getAccessToken();
         $response = $request->header('Content-Type', 'application/json')
                             ->header('Authorization', 'Bearer ' . $accessToken)
-                            ->body(json_encode($document))
+                            ->body($document)
                             ->put($uri);
+
+        // Retry authentication if request was unauthorized
+        if ($response['code'] == 401) {
+            $accessToken = $this->getAccessToken(true);
+            $response = $request->header('Content-Type', 'application/json')
+                ->header('Authorization', 'Bearer ' . $accessToken)
+                ->body($document)
+                ->put($uri);
+        }
 
         // Response code must be 202 in order to be successful
         if ($response['code'] != 202) {
@@ -160,11 +180,18 @@ class CollectionDocJson
             throw $exception;
             return false;
         }
+
         return true;
     }
 
-    public function getAccessToken() {
-        return $this->accessToken;
+    /**
+     * Gets an access token from the authentication client
+     * @param bool $refresh
+     *   whether to refresh the token
+     * @return string
+     */
+    public function getAccessToken($refresh=false) {
+        return $this->auth->getToken($refresh)->access_token;
     }
 
     /**
@@ -176,7 +203,7 @@ class CollectionDocJson
     public function createGuid($useApi=false) {
         if ($useApi) {
             try {
-                $guid = $this->getGuid($this->getGuidsUri(), $this->getAccessToken());
+                $guid = $this->getGuid($this->getGuidsUri());
                 if ($guid) {
                     return $guid;
                 }
@@ -219,20 +246,27 @@ class CollectionDocJson
      * Does a POST operation on the given URI to get a new random guid
      * @param $uri
      *    the URI to use in the request
-     * @param $accessToken
-     *    the access token to use in the request
      * @return string
      * @throws Exception
      */
-    private function getGuid($uri, $accessToken) {
-
+    private function getGuid($uri) {
         $request = new Request();
 
         // POST request needs an authorization header with given access token
+        $accessToken = $this->getAccessToken();
         $response = $request->header('Content-Type', 'application/json')
             ->header('Authorization', 'Bearer ' . $accessToken)
             ->body('{"count":1}')
             ->post($uri);
+
+        // Retry authentication if request was unauthorized
+        if ($response['code'] == 401) {
+            $accessToken = $this->getAccessToken(true);
+            $response = $request->header('Content-Type', 'application/json')
+                ->header('Authorization', 'Bearer ' . $accessToken)
+                ->body('{"count":1}')
+                ->post($uri);
+        }
 
         // Response code must be 200 in order to be successful
         if ($response['code'] != 200) {

@@ -16,32 +16,43 @@ class AuthClient
     public $AUTH_ENDPOINT = 'auth/access_token';
 
     private $authUri;
+    private $clientId;
+    private $clientSecret;
+    private $accessToken;
 
     /**
      * @param string $authUri
      *    URI of the authentication API, e.g.: http://auth.pmp.io/
+     * @param string $clientId
+     *    the client ID to use for authentication requests
+     * @param string $clientSecret
+     *    the client secret to use for authentication requests
      */
-    public function __construct($authUri) {
+    public function __construct($authUri, $clientId, $clientSecret) {
         if (substr($authUri, -1) != '/') { // normalize
             $authUri = $authUri . '/';
         }
         $this->authUri = $authUri;
+        $this->clientId = $clientId;
+        $this->clientSecret = $clientSecret;
     }
 
     /**
      * Gets a token for the given client id and secret
-     * @param string $clientId
-     *    the client ID to use for the request
-     * @param string $clientSecret
-     *    the client secret to use for the request
+     * @param bool $refresh
+     *   whether to get a refreshed token from the API
      * @return string
      * @throws Exception
      */
-    public function getToken($clientId, $clientSecret) {
+    public function getToken($refresh=false) {
+        if (!$refresh && !empty($this->accessToken)) {
+            return $this->accessToken;
+        }
+
         $uri = $this->authUri . $this->AUTH_ENDPOINT;
 
         // Authorization header requires a hash of client ID and client secret
-        $hash = base64_encode($clientId . ":" . $clientSecret);
+        $hash = base64_encode($this->clientId . ":" . $this->clientSecret);
 
         // GET request needs an authorization header with the generated client hash
         $request = new Request();
@@ -66,23 +77,20 @@ class AuthClient
             return;
         }
 
+        $this->accessToken = $data;
         return $data;
     }
 
     /**
      * Revokes a token for the given client id and secret
-     * @param string $clientId
-     *    the client ID to use for the request
-     * @param string $clientSecret
-     *    the client secret to use for the request
      * @return bool
      * @throws Exception
      */
-    public function revokeToken($clientId, $clientSecret) {
+    public function revokeToken() {
         $uri = $this->authUri . $this->AUTH_ENDPOINT;
 
         // Authorization header requires a hash of client ID and client secret
-        $hash = base64_encode($clientId . ":" . $clientSecret);
+        $hash = base64_encode($this->clientId . ":" . $this->clientSecret);
 
         // GET request needs an authorization header with the generated client hash
         $request = new Request();
@@ -97,6 +105,7 @@ class AuthClient
             throw $exception;
             return false;
         }
+        $this->accessToken = null;
         return true;
     }
 }

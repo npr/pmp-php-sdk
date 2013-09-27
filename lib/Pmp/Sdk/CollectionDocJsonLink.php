@@ -10,17 +10,17 @@ use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
 class CollectionDocJsonLink
 {
     private $link;
-    private $accessToken;
+    private $auth;
 
     /**
      * @param string $link
      *    the raw link data
-     * @param string $accessToken
-     *    access token for the API
+     * @param AuthClient $auth
+     *    authentication client for the API
      */
-    public function __construct($link, $accessToken) {
+    public function __construct($link, $auth) {
         $this->link = $link;
-        $this->accessToken = $accessToken;
+        $this->auth = $auth;
 
         // Map the link properties to this object's properties
         if (is_object($link)) {
@@ -42,7 +42,7 @@ class CollectionDocJsonLink
     public function follow() {
         if (!empty($this->href)) {
             // Retrieve the document at the other end of this URL
-            $document = new CollectionDocJson($this->href, $this->accessToken);
+            $document = new CollectionDocJson($this->href, $this->auth);
             return $document;
         } else {
             $err = "No href defined for this link";
@@ -66,7 +66,7 @@ class CollectionDocJsonLink
             $url = $parser->expand($this->{'href-template'}, $this->convertOptions($options));
 
             // Retrieve the document at the other end of this constructed URL
-            $document = new CollectionDocJson($url, $this->accessToken);
+            $document = new CollectionDocJson($url, $this->auth);
             return $document;
         } else {
             $err = "No href-template defined for this link";

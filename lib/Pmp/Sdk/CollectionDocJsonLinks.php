@@ -10,14 +10,14 @@ class CollectionDocJsonLinks implements \ArrayAccess
     /**
      * @param array $links
      *    the raw links array
-     * @param string $accessToken
-     *    access token for the API
+     * @param AuthClient $auth
+     *    authentication client for the API
      */
-    public function __construct(array $links, $accessToken) {
+    public function __construct(array $links, $auth) {
         // Create link objects for each raw link
         $this->links = array();
         foreach($links as $link) {
-            $this->links[] = new CollectionDocJsonLink($link, $accessToken);
+            $this->links[] = new CollectionDocJsonLink($link, $auth);
         }
     }
 
