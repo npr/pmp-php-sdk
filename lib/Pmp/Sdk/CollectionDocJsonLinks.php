@@ -54,6 +54,26 @@ class CollectionDocJsonLinks implements \ArrayAccess
         return $links;
     }
 
+
+    /**
+     * Convenience function. Gets the set of relationship types for query links.
+     * @return array
+     */
+    public function queryRelTypes() {
+        $relTypes = array();
+
+        foreach($this->links as $link) {
+            //print_r($link->rels);
+            if (!empty($link->rels)) {
+                // Most query links only have one rel. Goof enough for now.
+                // @TODO improve
+                $relTypes[$link->rels[0]] = $link->title;
+            }
+        }
+
+        return $relTypes;
+    }
+
     /**
      * Required by the ArrayAccess interface
      * @param mixed $offset
