@@ -50,7 +50,9 @@ class AuthClient
      */
     public function getToken($refresh=false) {
         if (!$refresh && !empty($this->accessToken)) {
-            $this->accessToken->token_expires_in = $this->accessToken->token_expires_in - (time() - $this->tokenLastRetrievedTS);
+            if (!empty($this->tokenLastRetrievedTS)) {
+              $this->accessToken->token_expires_in = $this->accessToken->token_expires_in - (time() - $this->tokenLastRetrievedTS);
+            }
             $this->tokenLastRetrievedTS = time();
             return $this->accessToken;
         }
