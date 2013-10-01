@@ -5,7 +5,10 @@ require_once('CollectionDocJsonLinks.php');
 require_once('CollectionDocJsonItems.php');
 require_once('Exception.php');
 require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
+require_once(dirname(__FILE__) . '/../../guzzle.phar');
+
 use restagent\Request as Request;
+use Guzzle\Http\Client as Client;
 
 class CollectionDocJson
 {
@@ -101,6 +104,16 @@ class CollectionDocJson
         return ($urnQueryLink) ? $urnQueryLink : new CollectionDocJsonLink(null, $this->auth);
     }
 
+
+    /**
+     * Uploads the given media file and returns its new URL
+     * @param $filepath
+     * @return string
+     */
+    public function upload($filepath) {
+        return $this->postFile($this->getFilesUri(), $filepath);
+    }
+
     /**
      * Does a GET operation on the given URI and returns a JSON object
      * @param $uri
@@ -179,6 +192,54 @@ class CollectionDocJson
         }
 
         return true;
+    }
+
+    /**
+     * Does a POST operation on the given URI using the given file path. Returns the URL of the upload file.
+     * @param $uri
+     *    the URI to use in the request
+     * @param $file
+     *    the file path to use for uploading
+     * @return string
+     * @throws Exception
+     */
+    private function postFile($uri, $file) {
+
+        // Using Guzzle instead of Restagent because of file stream upload support
+        $request = new Client();
+
+        // POST request needs an authorization header with given access token and
+        // the multipart form-data body
+        $accessToken = $this->getAccessToken();
+        $response = $request->post($uri, array(
+            'Authorization' => 'Bearer ' . $accessToken
+        ))->addPostFile('submission', $file)->send();
+
+        // Retry authentication if request was unauthorized
+        if ($response->getStatusCode() == 401) {
+            $accessToken = $this->getAccessToken(true);
+            $response = $request->post($uri, array(
+                'Authorization' => 'Bearer ' . $accessToken
+            ))->addPostFile('submission', $file)->send();
+        }
+
+        // Response code must be 202 in order to be successful
+        if ($response->getStatusCode() != 202) {
+            $err = "Got unexpected non-HTTP-202 response while sending \"$uri\" with access Token: \"$accessToken\"";
+            $exception = new Exception($err);
+            $exception->setDetails($response);
+            throw $exception;
+            return '';
+        }
+
+        $body = $response->getBody();
+        if (!empty($body)) {
+            $body = json_decode($body);
+            if (!empty($body->url)) {
+                return $body->url;
+            }
+        }
+        return '';
     }
 
     /**
@@ -372,6 +433,19 @@ class CollectionDocJson
         $guidsLink = $this->query("urn:pmp:query:guids");
         if (!empty($guidsLink->href)) {
             return $guidsLink->href;
+        } else {
+            return '';
+        }
+    }
+
+    /**
+     * Get the URI for uploading files
+     * @return string
+     */
+    public function getFilesUri() {
+        $filesLink = $this->query("urn:pmp:query:files");
+        if (!empty($filesLink->href)) {
+            return $filesLink->href;
         } else {
             return '';
         }
