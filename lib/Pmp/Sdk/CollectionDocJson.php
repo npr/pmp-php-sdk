@@ -182,9 +182,9 @@ class CollectionDocJson
                 ->put($uri);
         }
 
-        // Response code must be 202 in order to be successful
-        if ($response['code'] != 202) {
-            $err = "Got unexpected non-HTTP-202 response while sending \"$uri\" with access Token: \"$accessToken\"";
+        // Response code must be 200 or 202 in order to be successful
+        if ($response['code'] != 200 && $response['code'] != 202) {
+            $err = "Got unexpected non-HTTP-200 and non-HTTP-202 response while sending \"$uri\" with access Token: \"$accessToken\"";
             $exception = new Exception($err);
             $exception->setDetails($response);
             throw $exception;
