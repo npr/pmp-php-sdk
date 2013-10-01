@@ -25,11 +25,7 @@ class CollectionDocJson
         $this->auth = $auth;
 
         // Retrieve the document from the given URL. Document is never empty. It will throw exception if it is empty.
-        try {
-            $document = $this->getDocument($uri);
-        } catch (Exception $e) {
-
-        }
+        $document = $this->getDocument($uri);
 
         // Extract read-only links needed by the client
         $this->extractReadOnlyLinks($document);
