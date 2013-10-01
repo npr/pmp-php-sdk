@@ -1,6 +1,8 @@
 <?php
 namespace Pmp\Sdk;
 
+require_once('CollectionDocJsonItems.php');
+
 class PageIterator
 {
     private $_items;
