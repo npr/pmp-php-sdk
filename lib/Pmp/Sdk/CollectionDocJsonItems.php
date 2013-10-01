@@ -35,4 +35,11 @@ class CollectionDocJsonItems
     public function getIterator() {
         return new PageIterator($this);
     }
+
+    /**
+     * Return array of items
+     */
+    public function toArray() {
+        return $this->items;
+    }
 }

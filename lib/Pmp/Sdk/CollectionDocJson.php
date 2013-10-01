@@ -2,6 +2,7 @@
 namespace Pmp\Sdk;
 
 require_once('CollectionDocJsonLinks.php');
+require_once('CollectionDocJsonItems.php');
 require_once('Exception.php');
 require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
 use restagent\Request as Request;
