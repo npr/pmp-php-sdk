@@ -6,7 +6,7 @@ require_once('PageIterator.php');
 class CollectionDocJsonItems implements \ArrayAccess
 {
     public $_document;
-    private $items;
+    private $_items;
 
     /**
      * @param array $items
@@ -16,7 +16,7 @@ class CollectionDocJsonItems implements \ArrayAccess
      */
     public function __construct(array $items, $document) {
         $this->_document = $document;
-        $this->items = $items;
+        $this->_items = $items;
     }
 
     /**
@@ -40,7 +40,7 @@ class CollectionDocJsonItems implements \ArrayAccess
      * Return array of items
      */
     public function toArray() {
-        return $this->items;
+        return $this->_items;
     }
 
     /**
@@ -49,7 +49,7 @@ class CollectionDocJsonItems implements \ArrayAccess
      * @return bool
      */
     public function offsetExists($offset) {
-        return isset($this->items[$offset]);
+        return isset($this->_items[$offset]);
     }
 
     /**
@@ -58,7 +58,7 @@ class CollectionDocJsonItems implements \ArrayAccess
      * @return mixed
      */
     public function offsetGet($offset) {
-        return $this->items[$offset];
+        return $this->_items[$offset];
     }
 
     /**
@@ -67,7 +67,7 @@ class CollectionDocJsonItems implements \ArrayAccess
      * @param mixed $value
      */
     public function offsetSet($offset , $value) {
-        $this->items[$offset] = $value;
+        $this->_items[$offset] = $value;
     }
 
     /**
@@ -75,6 +75,6 @@ class CollectionDocJsonItems implements \ArrayAccess
      * @param mixed $offset
      */
     public function offsetUnset($offset) {
-        unset($this->items[$offset]);
+        unset($this->_items[$offset]);
     }
 }

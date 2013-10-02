@@ -25,8 +25,8 @@ class CollectionDocJson
      */
     public function __construct($uri, $auth) {
 
-        $this->uri = $uri;
-        $this->auth = $auth;
+        $this->_uri = $uri;
+        $this->_auth = $auth;
 
         // Retrieve the document from the given URL. Document is never empty. It will throw exception if it is empty.
         $document = $this->getDocument($uri);
@@ -65,7 +65,12 @@ class CollectionDocJson
         $saveUri = $this->getSaveUri();
 
         // Save the document
-        $this->putDocument($saveUri);
+        $uri = $this->putDocument($saveUri);
+
+        // Set new document URI
+        if (!empty($uri)) {
+            $this->_uri = $uri;
+        }
 
         return $this;
     }
@@ -101,7 +106,7 @@ class CollectionDocJson
                 $urnQueryLink = $urnQueryLinks[0];
             }
         }
-        return ($urnQueryLink) ? $urnQueryLink : new CollectionDocJsonLink(null, $this->auth);
+        return ($urnQueryLink) ? $urnQueryLink : new CollectionDocJsonLink(null, $this->_auth);
     }
 
 
@@ -155,7 +160,7 @@ class CollectionDocJson
      * Does a PUT operation on the given URI using the internal JSON objects
      * @param $uri
      *    the URI to use in the request
-     * @return bool
+     * @return string
      * @throws Exception
      */
     private function putDocument($uri) {
@@ -182,16 +187,22 @@ class CollectionDocJson
                 ->put($uri);
         }
 
-        // Response code must be 202 in order to be successful
-        if ($response['code'] != 202) {
-            $err = "Got unexpected non-HTTP-202 response while sending \"$uri\" with access Token: \"$accessToken\"";
+        // Response code must be 200 or 202 in order to be successful
+        if ($response['code'] != 200 && $response['code'] != 202) {
+            $err = "Got unexpected non-HTTP-200 and non-HTTP-202 response while sending \"$uri\" with access Token: \"$accessToken\"";
             $exception = new Exception($err);
             $exception->setDetails($response);
             throw $exception;
-            return false;
+            return '';
         }
 
-        return true;
+        // Return saved document URI if available
+        if (!empty($response['data'])) {
+            $data = json_decode($response['data']);
+            return $data->url;
+        } else {
+            return '';
+        }
     }
 
     /**
@@ -249,7 +260,7 @@ class CollectionDocJson
      * @return string
      */
     public function getAccessToken($refresh=false) {
-        return $this->auth->getToken($refresh)->access_token;
+        return $this->_auth->getToken($refresh)->access_token;
     }
 
     /**
@@ -449,5 +460,13 @@ class CollectionDocJson
         } else {
             return '';
         }
+    }
+
+    /**
+     * Get the URI of the current document
+     * @return string
+     */
+    public function getUri() {
+        return $this->_uri;
     }
 }
