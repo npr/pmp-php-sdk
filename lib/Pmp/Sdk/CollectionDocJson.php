@@ -12,7 +12,7 @@ use Guzzle\Http\Client as Client;
 
 class CollectionDocJson
 {
-    private $uri;
+    private $_uri;
     private $auth;
     private $readOnlyLinks;
 
@@ -55,7 +55,7 @@ class CollectionDocJson
         } else if (!empty($this->links->$relType)) {
             $links = $this->links->$relType;
         }
-        return new CollectionDocJsonLinks($links, $this->auth);
+        return new CollectionDocJsonLinks($links, $this->_auth);
     }
 
     /**
@@ -473,4 +473,15 @@ class CollectionDocJson
     public function getUri() {
         return $this->_uri;
     }
+}
+
+
+
+function pmp_backtrace() {
+    $trace = debug_backtrace();
+    foreach ($trace as &$t) {
+        unset($t['args']);
+        unset($t['object']);
+    }
+    return $trace;
 }

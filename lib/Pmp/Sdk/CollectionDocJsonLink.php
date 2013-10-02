@@ -17,8 +17,16 @@ class CollectionDocJsonLink
      *    the raw link data
      * @param AuthClient $auth
      *    authentication client for the API
+     *
+     * @throws Exception
      */
     public function __construct($link, $auth) {
+
+        if (empty($auth) || !is_object($auth)) {
+            $err = "Authorization parameter passed to CollectionDocJsonLink constructor is empty or nor an object.";
+            $exception = new Exception($err);
+            throw $exception;
+        }
         $this->_link = $link;
         $this->_auth = $auth;
 
@@ -45,7 +53,7 @@ class CollectionDocJsonLink
             $document = new CollectionDocJson($this->href, $this->_auth);
             return $document;
         } else {
-            $err = "No href defined for this link";
+            $err = "No href defined for the link: " . $this->_link;
             $exception = new Exception($err);
             $exception->setDetails(array($this->_link));
             throw $exception;
@@ -69,7 +77,7 @@ class CollectionDocJsonLink
             $document = new CollectionDocJson($url, $this->_auth);
             return $document;
         } else {
-            $err = "No href-template defined for this link";
+            $err = "No href-template defined for link: " . $this->_link;
             $exception = new Exception($err);
             $exception->setDetails(array($this->_link));
             throw $exception;
