@@ -32,7 +32,7 @@ $doc = new \Pmp\Sdk\CollectionDocJson($host, $auth);
 $URN = 'urn:pmp:query:docs';
 
 $options = array(
-    "tags" => "samplecontent"
+    "tag" => "samplecontent"
 );
 
 print_r ( $doc->query($URN)->submit($options) );
