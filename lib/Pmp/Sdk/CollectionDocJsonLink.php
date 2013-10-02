@@ -53,7 +53,7 @@ class CollectionDocJsonLink
             $document = new CollectionDocJson($this->href, $this->_auth);
             return $document;
         } else {
-            $err = "No href defined for the link: " . $this->_link;
+            $err = "Can't follow link because no href defined";
             $exception = new Exception($err);
             $exception->setDetails(array($this->_link));
             throw $exception;
@@ -77,7 +77,7 @@ class CollectionDocJsonLink
             $document = new CollectionDocJson($url, $this->_auth);
             return $document;
         } else {
-            $err = "No href-template defined for link: " . $this->_link;
+            $err = "Can't submit against link because no href-template defined";
             $exception = new Exception($err);
             $exception->setDetails(array($this->_link));
             throw $exception;
