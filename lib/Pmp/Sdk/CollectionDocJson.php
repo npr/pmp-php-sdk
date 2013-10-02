@@ -13,8 +13,8 @@ use Guzzle\Http\Client as Client;
 class CollectionDocJson
 {
     private $_uri;
-    private $auth;
-    private $readOnlyLinks;
+    private $_auth;
+    private $_readOnlyLinks;
 
     /**
      * @param string $uri
@@ -23,7 +23,7 @@ class CollectionDocJson
      *    authentication client
      * @throws Exception
      */
-    public function __construct($uri, $auth) {
+    public function __construct($uri, AuthClient $auth) {
 
         if (substr($uri, -1) == '/') { //trailing slash is not a good idea here
             $uri = substr($uri, 0, -1);
@@ -50,8 +50,8 @@ class CollectionDocJson
      */
     public function links($relType) {
         $links = array();
-        if (!empty($this->readOnlyLinks->$relType)) {
-            $links = $this->readOnlyLinks->$relType;
+        if (!empty($this->_readOnlyLinks->$relType)) {
+            $links = $this->_readOnlyLinks->$relType;
         } else if (!empty($this->links->$relType)) {
             $links = $this->links->$relType;
         }
@@ -362,10 +362,10 @@ class CollectionDocJson
     private function extractReadOnlyLinks(\stdClass $document) {
         if (is_object($document)) {
             if (!empty($document->links->query)) {
-                $this->readOnlyLinks->query = $document->links->query;
+                $this->_readOnlyLinks->query = $document->links->query;
             }
             if (!empty($document->links->edit)) {
-                $this->readOnlyLinks->edit = $document->links->edit;
+                $this->_readOnlyLinks->edit = $document->links->edit;
             }
         }
         return $this;

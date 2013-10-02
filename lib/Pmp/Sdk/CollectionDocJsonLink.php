@@ -13,14 +13,14 @@ class CollectionDocJsonLink
     private $_auth;
 
     /**
-     * @param string $link
+     * @param \stdClass $link
      *    the raw link data
      * @param AuthClient $auth
      *    authentication client for the API
      *
      * @throws Exception
      */
-    public function __construct($link, $auth) {
+    public function __construct(\stdClass $link, AuthClient $auth) {
 
         if (empty($auth) || !is_object($auth)) {
             $err = "Authorization parameter passed to CollectionDocJsonLink constructor is empty or nor an object.";
