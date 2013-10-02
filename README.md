@@ -9,8 +9,8 @@ This is a core SDK for Public Media Platform for PHP.
 ```php
 require_once('path/to/lib/Pmp/Sdk/AuthClient.php');
 
-// Stage
-$host = 'http://stage.pmp.io';
+// Sandbox
+$host = 'https://api-sandbox.pmp.io';
 $client_id = '...';
 $client_secret = '...';
 
