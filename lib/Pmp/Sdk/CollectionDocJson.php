@@ -25,6 +25,10 @@ class CollectionDocJson
      */
     public function __construct($uri, $auth) {
 
+        if (substr($uri, -1) == '/') { trailing slash is not a good idea here
+            $uri = substr($uri, 0, -1);
+        }
+
         $this->_uri = $uri;
         $this->_auth = $auth;
 
