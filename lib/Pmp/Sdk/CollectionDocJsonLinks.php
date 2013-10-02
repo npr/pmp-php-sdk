@@ -5,7 +5,7 @@ require_once('CollectionDocJsonLink.php');
 
 class CollectionDocJsonLinks implements \ArrayAccess
 {
-    private $links;
+    private $_links;
 
     /**
      * @param array $links
@@ -15,9 +15,9 @@ class CollectionDocJsonLinks implements \ArrayAccess
      */
     public function __construct(array $links, $auth) {
         // Create link objects for each raw link
-        $this->links = array();
+        $this->_links = array();
         foreach($links as $link) {
-            $this->links[] = new CollectionDocJsonLink($link, $auth);
+            $this->_links[] = new CollectionDocJsonLink($link, $auth);
         }
     }
 
@@ -26,7 +26,7 @@ class CollectionDocJsonLinks implements \ArrayAccess
      * @return array
      */
     public function getLinks() {
-        return $this->links;
+        return $this->_links;
     }
 
     /**
@@ -39,7 +39,7 @@ class CollectionDocJsonLinks implements \ArrayAccess
         $count = count($urns);
         $links = array();
 
-        foreach($this->links as $link) {
+        foreach($this->_links as $link) {
 
             // array_diff gives elements of $urns that are not present in $link->rels,
             // so if the result is not the same length as $urns, then we have a match
@@ -62,7 +62,7 @@ class CollectionDocJsonLinks implements \ArrayAccess
     public function queryRelTypes() {
         $relTypes = array();
 
-        foreach($this->links as $link) {
+        foreach($this->_links as $link) {
             //print_r($link->rels);
             if (!empty($link->rels)) {
                 // Most query links only have one rel. Goof enough for now.
@@ -80,7 +80,7 @@ class CollectionDocJsonLinks implements \ArrayAccess
      * @return bool
      */
     public function offsetExists($offset) {
-        return isset($this->links[$offset]);
+        return isset($this->_links[$offset]);
     }
 
     /**
@@ -89,7 +89,7 @@ class CollectionDocJsonLinks implements \ArrayAccess
      * @return mixed
      */
     public function offsetGet($offset) {
-        return $this->links[$offset];
+        return $this->_links[$offset];
     }
 
     /**
@@ -98,7 +98,7 @@ class CollectionDocJsonLinks implements \ArrayAccess
      * @param mixed $value
      */
     public function offsetSet($offset , $value) {
-        $this->links[$offset] = $value;
+        $this->_links[$offset] = $value;
     }
 
     /**
@@ -106,6 +106,6 @@ class CollectionDocJsonLinks implements \ArrayAccess
      * @param mixed $offset
      */
     public function offsetUnset($offset) {
-        unset($this->links[$offset]);
+        unset($this->_links[$offset]);
     }
 }

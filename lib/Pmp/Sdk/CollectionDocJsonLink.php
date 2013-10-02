@@ -9,8 +9,8 @@ use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
 
 class CollectionDocJsonLink
 {
-    private $link;
-    private $auth;
+    private $_link;
+    private $_auth;
 
     /**
      * @param string $link
@@ -19,8 +19,8 @@ class CollectionDocJsonLink
      *    authentication client for the API
      */
     public function __construct($link, $auth) {
-        $this->link = $link;
-        $this->auth = $auth;
+        $this->_link = $link;
+        $this->_auth = $auth;
 
         // Map the link properties to this object's properties
         if (is_object($link)) {
@@ -42,12 +42,12 @@ class CollectionDocJsonLink
     public function follow() {
         if (!empty($this->href)) {
             // Retrieve the document at the other end of this URL
-            $document = new CollectionDocJson($this->href, $this->auth);
+            $document = new CollectionDocJson($this->href, $this->_auth);
             return $document;
         } else {
             $err = "No href defined for this link";
             $exception = new Exception($err);
-            $exception->setDetails(array($this->link));
+            $exception->setDetails(array($this->_link));
             throw $exception;
         }
     }
@@ -66,12 +66,12 @@ class CollectionDocJsonLink
             $url = $parser->expand($this->{'href-template'}, $this->convertOptions($options));
 
             // Retrieve the document at the other end of this constructed URL
-            $document = new CollectionDocJson($url, $this->auth);
+            $document = new CollectionDocJson($url, $this->_auth);
             return $document;
         } else {
             $err = "No href-template defined for this link";
             $exception = new Exception($err);
-            $exception->setDetails(array($this->link));
+            $exception->setDetails(array($this->_link));
             throw $exception;
         }
     }
