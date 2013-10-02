@@ -21,12 +21,6 @@ class CollectionDocJsonLink
      * @throws Exception
      */
     public function __construct(\stdClass $link, AuthClient $auth) {
-
-        if (empty($auth) || !is_object($auth)) {
-            $err = "Authorization parameter passed to CollectionDocJsonLink constructor is empty or nor an object.";
-            $exception = new Exception($err);
-            throw $exception;
-        }
         $this->_link = $link;
         $this->_auth = $auth;
 
