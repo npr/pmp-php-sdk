@@ -85,6 +85,22 @@ class CollectionDocJsonLink
     }
 
     /**
+     * Return available options for a query type.
+     * @return Object
+     */
+    public function options() {
+        if (!empty($this->{'href-template'}) && !empty($this->{'href-vars'})) {
+            return $this->{'href-vars'};
+        } else {
+            $err = "Link: " . $this->_link . " is not a properly defined href template";
+            $exception = new Exception($err);
+            $exception->setDetails(array($this->_link));
+            throw $exception;
+        }
+
+    }
+
+    /**
      * Converts the given option set into API-compatible query string form
      * @param array $option
      *    the mapping of a template parameter to values
