@@ -12,14 +12,9 @@ class CollectionDocJsonLinks implements \ArrayAccess
      *    the raw links array
      * @param AuthClient $auth
      *    authentication client for the API
+     * @throws Exception
      */
-    public function __construct(array $links, $auth) {
-
-        if (empty($auth) || !is_object($auth)) {
-            $err = "Authorization parameter passed to CollectionDocJsonLink constructor is empty or nor an object.";
-            $exception = new Exception($err);
-            throw $exception;
-        }
+    public function __construct(array $links, AuthClient $auth) {
 
         // Create link objects for each raw link
         $this->_links = array();

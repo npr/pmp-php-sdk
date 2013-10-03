@@ -12,7 +12,7 @@ class PageIterator
      * @param CollectionDocJsonItems $items
      *    the items object that contains this iterator
      */
-    public function __construct($items) {
+    public function __construct(CollectionDocJsonItems $items) {
         $this->_items = $items;
         $this->_navigationLinks = $this->_items->_document->links('navigation');
     }
