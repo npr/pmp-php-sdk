@@ -81,17 +81,17 @@ class CollectionDocJsonLink
     /**
      * Return available options for a query type.
      * @return Object
+     * @throws Exception
      */
     public function options() {
         if (!empty($this->{'href-template'}) && !empty($this->{'href-vars'})) {
             return $this->{'href-vars'};
         } else {
-            $err = "Link: " . $this->_link . " is not a properly defined href template";
+            $err = "Can't give link options because link is not a properly defined href template";
             $exception = new Exception($err);
             $exception->setDetails(array($this->_link));
             throw $exception;
         }
-
     }
 
     /**
