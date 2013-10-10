@@ -65,6 +65,8 @@ class AuthClient
         // GET request needs an authorization header with the generated client hash
         $request = new Request();
         $response = $request->header('Authorization', 'Basic ' . $hash)
+                            ->header('Content-Type', 'application/x-www-form-urlencoded')
+                            ->data('grant_type', 'client_credentials')
                             ->post($uri);
 
         // Response code must be 200 and data must be found in response in order to continue
@@ -105,7 +107,7 @@ class AuthClient
         // GET request needs an authorization header with the generated client hash
         $request = new Request();
         $response = $request->header('Authorization', 'Basic ' . $hash)
-            ->delete($uri);
+                            ->delete($uri);
 
         // Response code must be 204 in order to be successful
         if ($response['code'] != 204) {
