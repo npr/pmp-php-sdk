@@ -185,7 +185,7 @@ class CollectionDocJson
         // Retry authentication if request was unauthorized
         if ($response['code'] == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->header('Content-Type', 'application/json')
+            $response = $request->header('Content-Type', 'application/vnd.pmp.collection.doc+json')
                 ->header('Authorization', 'Bearer ' . $accessToken)
                 ->body($document)
                 ->put($uri);
