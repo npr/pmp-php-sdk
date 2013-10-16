@@ -177,7 +177,7 @@ class CollectionDocJson
         // PUT request needs an authorization header with given access token and
         // the JSON-encoded body based on the document content
         $accessToken = $this->getAccessToken();
-        $response = $request->header('Content-Type', 'application/json')
+        $response = $request->header('Content-Type', 'application/vnd.pmp.collection.doc+json')
                             ->header('Authorization', 'Bearer ' . $accessToken)
                             ->body($document)
                             ->put($uri);
