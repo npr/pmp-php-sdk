@@ -13,7 +13,7 @@ class AuthClient
      * have the auth endpoint URI be dynamically deduced from the API itself
      * @var string
      */
-    public $AUTH_ENDPOINT = 'auth/access_token';
+    public $AUTH_ENDPOINT = '/auth/access_token'; // make sure to include leading slash
 
     private $authUri;
     private $clientId;
@@ -30,10 +30,7 @@ class AuthClient
      *    the client secret to use for authentication requests
      */
     public function __construct($authUri, $clientId, $clientSecret) {
-        if (substr($authUri, -1) != '/') { // normalize
-            $authUri = $authUri . '/';
-        }
-        $this->authUri = $authUri;
+        $this->authUri = trim($authUri, '/'); // no trailing slash
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
 

@@ -65,9 +65,8 @@ class CollectionDocJsonLinks implements \ArrayAccess
         $relTypes = array();
 
         foreach($this->_links as $link) {
-            //print_r($link->rels);
             if (!empty($link->rels)) {
-                // Most query links only have one rel. Goof enough for now.
+                // Most query links only have one rel. Good enough for now.
                 // @TODO improve
                 $relTypes[$link->rels[0]] = $link->title;
             }

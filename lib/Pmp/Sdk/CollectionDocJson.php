@@ -24,12 +24,7 @@ class CollectionDocJson
      * @throws Exception
      */
     public function __construct($uri, AuthClient $auth) {
-
-        if (substr($uri, -1) == '/') { //trailing slash is not a good idea here
-            $uri = substr($uri, 0, -1);
-        }
-
-        $this->_uri = $uri;
+        $this->_uri = trim($uri, '/'); // no trailing slash
         $this->_auth = $auth;
 
         // Retrieve the document from the given URL. Document is never empty. It will throw exception if it is empty.
