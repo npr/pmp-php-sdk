@@ -130,16 +130,14 @@ class CollectionDocJson
 
         // GET request needs an authorization header with given access token
         $accessToken = $this->getAccessToken();
-        $response = $request->header('Content-Type', 'application/json')
-                            ->header('Authorization', 'Bearer ' . $accessToken)
+        $response = $request->header('Authorization', 'Bearer ' . $accessToken)
                             ->get($uri);
 
         // Retry authentication if request was unauthorized
         if ($response['code'] == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->header('Content-Type', 'application/json')
-                ->header('Authorization', 'Bearer ' . $accessToken)
-                ->get($uri);
+            $response = $request->header('Authorization', 'Bearer ' . $accessToken)
+                                ->get($uri);
         }
 
         // Response code must be 200 and data must be found in response in order to continue
@@ -323,17 +321,17 @@ class CollectionDocJson
         // POST request needs an authorization header with given access token
         $accessToken = $this->getAccessToken();
         $response = $request->header('Content-Type', 'application/json')
-            ->header('Authorization', 'Bearer ' . $accessToken)
-            ->body('{"count":1}')
-            ->post($uri);
+                            ->header('Authorization', 'Bearer ' . $accessToken)
+                            ->body('{"count":1}')
+                            ->post($uri);
 
         // Retry authentication if request was unauthorized
         if ($response['code'] == 401) {
             $accessToken = $this->getAccessToken(true);
             $response = $request->header('Content-Type', 'application/json')
-                ->header('Authorization', 'Bearer ' . $accessToken)
-                ->body('{"count":1}')
-                ->post($uri);
+                                ->header('Authorization', 'Bearer ' . $accessToken)
+                                ->body('{"count":1}')
+                                ->post($uri);
         }
 
         // Response code must be 200 in order to be successful
