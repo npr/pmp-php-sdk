@@ -9,6 +9,8 @@ require_once(dirname(__FILE__) . '/../../guzzle.phar');
 
 use restagent\Request as Request;
 use Guzzle\Http\Client as Client;
+use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
+
 
 class CollectionDocJson
 {
@@ -106,6 +108,28 @@ class CollectionDocJson
             }
         }
         return ($urnQueryLink) ? $urnQueryLink : new CollectionDocJsonLink(null, $this->_auth);
+    }
+
+    /**
+     * Gets a default "edit" relation link that has the given URN
+     * @param string $urn
+     *    the URN associated with the desired "edit" link
+     * @return CollectionDocJsonLink
+     */
+    public function edit($urn) {
+        $urnEditLink = null;
+        $editLinks = $this->links('edit');
+
+        // Lookup rels by given URN if edit links found in document
+        if (!empty($editLinks)) {
+            $urnEditLinks = $editLinks->rels(array($urn));
+
+            // Use the first link found for the given URN if found
+            if (!empty($urnEditLinks[0])) {
+                $urnEditLink = $urnEditLinks[0];
+            }
+        }
+        return ($urnEditLink) ? $urnEditLink : new CollectionDocJsonLink(null, $this->_auth);
     }
 
 
@@ -423,10 +447,12 @@ class CollectionDocJson
         }
 
         // Make sure there is an edit-form link to save to
-        $editLinks = $this->links("edit");
-        if (!empty($editLinks[0])) {
+        $editLink = $this->edit("urn:pmp:form:documentsave");
+        if (!empty($editLink->{'href-template'})) {
             if (!empty($this->attributes->guid)) {
-                return $editLinks[0]->href . '/' . $this->attributes->guid;
+                $parser = new UriTemplate();
+                $url = $parser->expand($editLink->{'href-template'}, array('guid' => $this->attributes->guid));
+                return $url;
             }
         }
 
@@ -451,7 +477,7 @@ class CollectionDocJson
      * @return string
      */
     public function getFilesUri() {
-        $filesLink = $this->query("urn:pmp:query:files");
+        $filesLink = $this->edit("urn:pmp:form:mediaupload");
         if (!empty($filesLink->href)) {
             return $filesLink->href;
         } else {
