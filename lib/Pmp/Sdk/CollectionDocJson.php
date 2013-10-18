@@ -107,7 +107,7 @@ class CollectionDocJson
                 $urnQueryLink = $urnQueryLinks[0];
             }
         }
-        return ($urnQueryLink) ? $urnQueryLink : new CollectionDocJsonLink(null, $this->_auth);
+        return ($urnQueryLink) ? $urnQueryLink : new CollectionDocJsonLink(new \stdClass, $this->_auth);
     }
 
     /**
@@ -129,7 +129,7 @@ class CollectionDocJson
                 $urnEditLink = $urnEditLinks[0];
             }
         }
-        return ($urnEditLink) ? $urnEditLink : new CollectionDocJsonLink(null, $this->_auth);
+        return ($urnEditLink) ? $urnEditLink : new CollectionDocJsonLink(new \stdClass, $this->_auth);
     }
 
 
