@@ -117,4 +117,42 @@ class AuthClient
         $this->accessToken = null;
         return true;
     }
+
+    /**
+     * Create credentials for a given user/pass pair.
+     * @return Object $creds
+     * @throws Exception
+     */
+    public function createCredentials(array $options) {
+        if (!isset($options['username']) || !isset($options['password'])) {
+            throw new Exception("username and password required");
+        }
+        $username = $options['username'];
+        $password = $options['password'];
+        $scope    = isset($options['scope']) ? $options['scope'] : 'read';
+        $expires  = isset($options['expires']) ? $options['expires'] : 86400;
+        $label    = isset($options['label']) ? $options['label'] : 'null';
+        
+        $uri      = $this->authUri . '/auth/credentials';
+        $hash     = base64_encode($username . ':' . $password);
+        $request  = new Request();
+        $response = $request->header('Authorization', 'Basic ' . $hash)
+                            ->header('Content-Type', 'application/x-www-form-urlencoded')
+                            ->header('Accept', 'application/json')
+                            ->data('scope', $scope)
+                            ->data('token_expires_in', $expires)
+                            ->data('label', $label)
+                            ->post($uri);
+
+        // Response code must be 200 and data must be found in response in order to continue
+        if ($response['code'] != 200 || empty($response['data'])) {
+            $err = "Got non-HTTP-200 and/or empty response from the authentication server";
+            $exception = new Exception($err);
+            $exception->setDetails($response);
+            throw $exception;
+            return;
+        }   
+
+        return json_decode($response['data']);
+    }
 }
