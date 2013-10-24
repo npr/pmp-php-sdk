@@ -211,13 +211,13 @@ ok( $org3_client = new AuthClient($host, $org3_creds->client_id, $org3_creds->cl
 // org1 should see doc1, doc2, doc3
 // org2 should see doc1, doc3
 // org3 should see doc3
-ok( $org1_res = $org1_client->search(array( 'tag' => 'pmp_sdk_php_test_doc' )),
+ok( $org1_res = CollectionDocJson::search($host, $org1_client, array( 'tag' => 'pmp_sdk_php_test_doc' )),
     "org1 search"
 );
-ok(  $org2_res = $org2_client->search(array( 'tag' => 'pmp_sdk_php_test_doc' )),
+ok(  $org2_res = CollectionDocJson::search($host, $org2_client, array( 'tag' => 'pmp_sdk_php_test_doc' )),
     "org2 search"
 );
-ok(  $org3_res = $org3_client->search(array( 'tag' => 'pmp_sdk_php_test_doc' )),
+ok(  $org3_res = CollectionDocJson::search($host, $org3_client, array( 'tag' => 'pmp_sdk_php_test_doc' )),
     "org3 search"
 );
 
@@ -305,7 +305,7 @@ function clean_up_test_docs($host, $auth) {
     $profiles = array('story', 'organization', 'user', 'group');
     foreach ($profiles as $profile) {
         $options = array('profile' => $profile, 'text' => 'pmp_sdk_php', 'limit' => 100, );
-        $results = $auth->search($options);
+        $results = CollectionDocJson::search($host, $auth, $options);
         if ($results) {
             foreach ($results->items()->toArray() as $item) {
                 $doc = new CollectionDocJson($host, $auth);
