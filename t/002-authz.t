@@ -255,18 +255,24 @@ function save_doc($host, $auth, $profile, $attr) {
     $profile_link = new \stdClass;
     $profile_link->href = $host . '/profiles/' . $profile;
     $doc->links->profile[0] = $profile_link;
+    if (isset($attr['links'])) {
+        foreach ($attr['links'] as $key=>$val) {
+            $doc->links->$key = json_decode(json_encode($val));
+        }
+    }
 
     // pmp doc object
+    $cdj = null;
     try {
-        $client = new CollectionDocJson($host, $auth);
-        $client->setDocument($doc);
-        $client->save();
+        $cdj = new CollectionDocJson($host, $auth);
+        $cdj->setDocument($doc);
+        $cdj->save();
     }
     catch (Exception $ex) {
         die( "Failed to save doc with attributes: " . var_export($attr, true) . "\n$ex\n" );
     }
 
-    return $client;
+    return $cdj;
 }
 
 
