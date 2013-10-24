@@ -70,12 +70,65 @@ ok( $org3 = save_doc($host, $auth, 'user', array( 'attributes' => array(
     ), "create org3"
 );
 
+// 4 groups, in different combinations of orgs
+ok( $group1 = save_doc($host, $auth, 'group', array(
+            'attributes' => array(
+                'title' => 'pmp_sdk_php permission group1',
+                'tags'  => array( 'pmp_sdk_php_test_authz' ),
+            ),
+            'links' => array(
+                'item' => array(
+                    array('href' => $org1->getUri()),
+                    array('href' => $org2->getUri()),
+                )
+            ),
+        )
+    ), "create group1");
+
+ok( $group2 = save_doc($host, $auth, 'group', array(
+            'attributes' => array(
+                'title' => 'pmp_sdk_php permission group2',
+                'tags'  => array( 'pmp_sdk_php_test_authz' ),
+            ),
+            'links' => array(
+                'item' => array(
+                    array('href' => $org1->getUri()),
+                )
+            ),
+        )
+    ), "create group2");
+
+ok( $group3 = save_doc($host, $auth, 'group', array(
+            'attributes' => array(
+                'title' => 'pmp_sdk_php permission group3',
+                'tags'  => array( 'pmp_sdk_php_test_authz' ),
+            ),
+            'links' => array(
+                'item' => array(
+                    array('href' => $org2->getUri()),
+                )
+            ),
+        )
+    ), "create group3");
+
+ok( $empty_group = save_doc($host, $auth, 'group', array(
+            'attributes' => array(
+                'title' => 'pmp_sdk_php permission group empty',
+                'tags'  => array( 'pmp_sdk_php_test_authz' ),
+            ),
+        )
+    ), "create empty group");
+
+
+// all done
+clean_up_test_docs($host, $auth);
+
 
 /**
  * helper functions
  *
- * @param unknown $host
- * @param unknown $auth
+ * @param string  $host
+ * @param AuthClient $auth
  * @param string  $profile
  * @param array   $attr
  * @return unknown
@@ -121,7 +174,7 @@ function clean_up_test_docs($host, $auth) {
             diag($ex->getMessage());
             exit(1);
         }
-        $options = array('profile' => $profile, 'text' => 'pmp_sdk_php', 'limit' => 100,);
+        $options = array('profile' => $profile, 'text' => 'pmp_sdk_php', 'limit' => 100, );
         $results = null;
         try {
             $results = $authz_test->query($urn_docs)->submit($options);
