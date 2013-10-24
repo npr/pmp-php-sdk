@@ -2,6 +2,7 @@
 namespace Pmp\Sdk;
 
 require_once('Exception.php');
+require_once(dirname(__FILE__) . '/CollectionDocJson.php');
 require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
 use restagent\Request as Request;
 
@@ -155,4 +156,28 @@ class AuthClient
 
         return json_decode($response['data']);
     }
+
+    /**
+     * Convenience method for searching the docs URN.
+     * @param array $options
+     * @return CollectionDocJson $results
+     * @throws Exception
+     */
+    public function search(array $options) {
+        $searcher = new CollectionDocJson($this->authUri, $this);
+        $results  = null;
+        try {
+            $results = $searcher->query('urn:pmp:query:docs')->submit($options);
+        } catch (Exception $ex) {
+
+            // 404 throws an exception. seems pretty unfriendly
+            // for a search, which can easily have no results
+            if (!preg_match('/^Got unexpected non-HTTP-200 response/', $ex->getMessage())) {
+                // re-throw
+                throw $ex;
+            }
+        }
+        return $results;
+    }
+
 }
