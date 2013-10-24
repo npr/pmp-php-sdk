@@ -9,7 +9,7 @@ use \Pmp\Sdk\CollectionDocJson as CollectionDocJson;
 use \Pmp\Sdk\Exception as Exception;
 
 if (getenv('PMP_CLIENT_ID') && getenv('PMP_CLIENT_SECRET')) {
-    plan(15);
+    plan(30);
 }
 else {
     plan('skip_all', 'set PMP_CLIENT_ID and PMP_CLIENT_SECRET to run server tests');
@@ -225,14 +225,29 @@ diag_search_results($org2_res);
 diag('org3_res');
 diag_search_results($org3_res);
 
+// basic count check
 is( count($org1_res->items()->toArray()), 3, "org1 has 3 items" );
 is( count($org2_res->items()->toArray()), 2, "org2 has 2 items" );
 is( count($org3_res->items()->toArray()), 1, "org3 has 1 item" );
 
+// specific title checks
+foreach ($org1_res->items()->toArray() as $r) {
+    $title = $r->attributes->title;
+    like($title, '/i am test document (one|two|three)$/', "org1 has doc $title");
+}
+foreach ($org2_res->items()->toArray() as $r) {
+    $title = $r->attributes->title;
+    like($title, '/i am test document (one|three)$/', "org2 has doc $title");
+}
+foreach ($org3_res->items()->toArray() as $r) {
+    $title = $r->attributes->title;
+    like($title, '/i am test document three$/', "org3 has doc $title");
+}
+
 // all done
 clean_up_test_docs($host, $auth);
 
-
+/*************************************************************************/
 // helper functions
 
 
