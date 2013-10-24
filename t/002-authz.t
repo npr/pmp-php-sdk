@@ -9,7 +9,7 @@ use \Pmp\Sdk\CollectionDocJson as CollectionDocJson;
 use \Pmp\Sdk\Exception as Exception;
 
 if (getenv('PMP_CLIENT_ID') && getenv('PMP_CLIENT_SECRET')) {
-    plan(2);
+    plan(15);
 }
 else {
     plan('skip_all', 'set PMP_CLIENT_ID and PMP_CLIENT_SECRET to run server tests');
@@ -121,6 +121,7 @@ ok( $empty_group = save_doc($host, $auth, 'group', array(
 );
 
 // stories with permission combinations
+// allow group1 (org1 or org2)
 ok( $story1 = save_doc($host, $auth, 'story', array(
             'attributes' => array(
                 'title' => 'pmp_sdk_php i am test document one',
@@ -134,6 +135,7 @@ ok( $story1 = save_doc($host, $auth, 'story', array(
         )
     ), "create story1"
 );
+// disallow group3 (org2), allow group2 (org1)
 ok( $story2 = save_doc($host, $auth, 'story', array(
             'attributes' => array(
                 'title' => 'pmp_sdk_php i am test document two',
@@ -148,6 +150,7 @@ ok( $story2 = save_doc($host, $auth, 'story', array(
         )
     ), "create story2"
 );
+// no permissions, open to the world
 ok( $story3 = save_doc($host, $auth, 'story', array(
             'attributes' => array(
                 'title' => 'pmp_sdk_php i am test document three',
@@ -171,13 +174,70 @@ ok( $story_private = save_doc($host, $auth, 'story', array(
     ), "create story_private"
 );
 
+// fixtures all done.
+
+// create credentials and run the actual authz tests.
+ok( $org1_creds = $auth->createCredentials(array(
+            'username' => $org1->attributes->auth->user,
+            'password' => $org1_pass,
+        )),
+    "create org1 credentials"
+);
+ok( $org2_creds = $auth->createCredentials(array(
+            'username' => $org2->attributes->auth->user,
+            'password' => $org2_pass,
+        )),
+    "create org2 credentials"
+);
+ok( $org3_creds = $auth->createCredentials(array(
+            'username' => $org3->attributes->auth->user,
+            'password' => $org3_pass,
+        )),
+    "create org3 credentials"
+);
+
+sleep(2);    // give 202 responses time to catch up
+
+ok( $org1_client = new AuthClient($host, $org1_creds->client_id, $org1_creds->client_secret),
+    "create org1 client");
+ok( $org2_client = new AuthClient($host, $org2_creds->client_id, $org2_creds->client_secret),
+    "create org1 client");
+ok( $org3_client = new AuthClient($host, $org3_creds->client_id, $org3_creds->client_secret),
+    "create org1 client");
+
+// org1 should see doc1, doc2, doc3
+// org2 should see doc1, doc3
+// org3 should see doc3
+ok( $org1_res = $org1_client->search(array( 'tag' => 'pmp_sdk_php_test_doc' )),
+    "org1 search"
+);
+ok(  $org2_res = $org2_client->search(array( 'tag' => 'pmp_sdk_php_test_doc' )),
+    "org2 search"
+);
+ok(  $org3_res = $org3_client->search(array( 'tag' => 'pmp_sdk_php_test_doc' )),
+    "org3 search"
+);
+
+diag('org1_res');
+diag_search_results($org1_res);
+diag('org2_res');
+diag_search_results($org2_res);
+diag('org3_res');
+diag_search_results($org3_res);
+
+is( count($org1_res->items()->toArray()), 3, "org1 has 3 items" );
+is( count($org2_res->items()->toArray()), 2, "org2 has 2 items" );
+is( count($org3_res->items()->toArray()), 1, "org3 has 1 item" );
 
 // all done
 clean_up_test_docs($host, $auth);
 
 
+// helper functions
+
+
 /**
- * helper functions
+ * save array structure via CollectionDocJson
  *
  * @param string  $host
  * @param AuthClient $auth
@@ -220,23 +280,8 @@ function clean_up_test_docs($host, $auth) {
     $urn_docs = 'urn:pmp:query:docs';
     $profiles = array('story', 'organization', 'user', 'group');
     foreach ($profiles as $profile) {
-        try {
-            $authz_test = new CollectionDocJson($host, $auth);
-        } catch (Exception $ex) {
-            diag($ex->getMessage());
-            exit(1);
-        }
         $options = array('profile' => $profile, 'text' => 'pmp_sdk_php', 'limit' => 100, );
-        $results = null;
-        try {
-            $results = $authz_test->query($urn_docs)->submit($options);
-        } catch (Exception $ex) {
-            // 404 throws an exception. seems pretty unfriendly
-            // for a search, which can easily have no results
-            if (!preg_match('/^Got unexpected non-HTTP-200 response/', $ex->getMessage())) {
-                die("$ex");
-            }
-        }
+        $results = $auth->search($options);
         if ($results) {
             foreach ($results->items()->toArray() as $item) {
                 $doc = new CollectionDocJson($host, $auth);
@@ -249,4 +294,16 @@ function clean_up_test_docs($host, $auth) {
         diag("finished clean-up check for $profile");
     }
     diag("clean-up complete");
+}
+
+
+/**
+ *
+ *
+ * @param unknown $results
+ */
+function diag_search_results($results) {
+    foreach ($results->items()->toArray() as $r) {
+        diag(sprintf("result: %s [%s]", $r->attributes->title, $r->attributes->guid));
+    }
 }
