@@ -201,9 +201,9 @@ sleep(2);    // give 202 responses time to catch up
 ok( $org1_client = new AuthClient($host, $org1_creds->client_id, $org1_creds->client_secret),
     "create org1 client");
 ok( $org2_client = new AuthClient($host, $org2_creds->client_id, $org2_creds->client_secret),
-    "create org1 client");
+    "create org2 client");
 ok( $org3_client = new AuthClient($host, $org3_creds->client_id, $org3_creds->client_secret),
-    "create org1 client");
+    "create org3 client");
 
 // org1 should see doc1, doc2, doc3
 // org2 should see doc1, doc3
