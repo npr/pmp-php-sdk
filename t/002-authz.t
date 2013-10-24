@@ -177,19 +177,22 @@ ok( $story_private = save_doc($host, $auth, 'story', array(
 // fixtures all done.
 
 // create credentials and run the actual authz tests.
-ok( $org1_creds = $auth->createCredentials(array(
+ok( $org1_creds = AuthClient::createCredentials(array(
+            'host'     => $host,
             'username' => $org1->attributes->auth->user,
             'password' => $org1_pass,
         )),
     "create org1 credentials"
 );
-ok( $org2_creds = $auth->createCredentials(array(
+ok( $org2_creds = AuthClient::createCredentials(array(
+            'host'     => $host,
             'username' => $org2->attributes->auth->user,
             'password' => $org2_pass,
         )),
     "create org2 credentials"
 );
-ok( $org3_creds = $auth->createCredentials(array(
+ok( $org3_creds = AuthClient::createCredentials(array(
+            'host'     => $host,
             'username' => $org3->attributes->auth->user,
             'password' => $org3_pass,
         )),
