@@ -83,8 +83,8 @@ ok( $group1 = save_doc($host, $auth, 'group', array(
                 )
             ),
         )
-    ), "create group1");
-
+    ), "create group1"
+);
 ok( $group2 = save_doc($host, $auth, 'group', array(
             'attributes' => array(
                 'title' => 'pmp_sdk_php permission group2',
@@ -96,8 +96,8 @@ ok( $group2 = save_doc($host, $auth, 'group', array(
                 )
             ),
         )
-    ), "create group2");
-
+    ), "create group2"
+);
 ok( $group3 = save_doc($host, $auth, 'group', array(
             'attributes' => array(
                 'title' => 'pmp_sdk_php permission group3',
@@ -109,15 +109,67 @@ ok( $group3 = save_doc($host, $auth, 'group', array(
                 )
             ),
         )
-    ), "create group3");
-
+    ), "create group3"
+);
 ok( $empty_group = save_doc($host, $auth, 'group', array(
             'attributes' => array(
                 'title' => 'pmp_sdk_php permission group empty',
                 'tags'  => array( 'pmp_sdk_php_test_authz' ),
             ),
         )
-    ), "create empty group");
+    ), "create empty group"
+);
+
+// stories with permission combinations
+ok( $story1 = save_doc($host, $auth, 'story', array(
+            'attributes' => array(
+                'title' => 'pmp_sdk_php i am test document one',
+                'tags'  => array('pmp_sdk_php_test_authz', 'pmp_sdk_php_test_doc'),
+            ),
+            'links' => array(
+                'permission' => array(
+                    array('href' => $group1->getUri(), 'operation' => 'read')
+                )
+            ),
+        )
+    ), "create story1"
+);
+ok( $story2 = save_doc($host, $auth, 'story', array(
+            'attributes' => array(
+                'title' => 'pmp_sdk_php i am test document two',
+                'tags'  => array('pmp_sdk_php_test_authz', 'pmp_sdk_php_test_doc'),
+            ),
+            'links' => array(
+                'permission' => array(
+                    array('href' => $group3->getUri(), 'operation' => 'read', 'blacklist' => true),
+                    array('href' => $group2->getUri(), 'operation' => 'read')
+                )
+            ),
+        )
+    ), "create story2"
+);
+ok( $story3 = save_doc($host, $auth, 'story', array(
+            'attributes' => array(
+                'title' => 'pmp_sdk_php i am test document three',
+                'tags'  => array('pmp_sdk_php_test_authz', 'pmp_sdk_php_test_doc'),
+            )
+        )
+    ), "create story3"
+);
+// private story should only be visible to the creator
+ok( $story_private = save_doc($host, $auth, 'story', array(
+            'attributes' => array(
+                'title' => 'pmp_sdk_php i am test document private',
+                'tags'  => array('pmp_sdk_php_test_authz', 'pmp_sdk_php_test_doc'),
+            ),
+            'links' => array(
+                'permission' => array(
+                    array('href' => $empty_group->getUri(), 'operation' => 'read')
+                )
+            ),
+        )
+    ), "create story_private"
+);
 
 
 // all done
@@ -190,7 +242,7 @@ function clean_up_test_docs($host, $auth) {
                 $doc = new CollectionDocJson($host, $auth);
                 $doc->setDocument($item);
                 $uri = $doc->getSaveUri();
-                diag( "cleaning up $uri" );
+                diag( "cleaning up $profile $uri" );
                 $doc->delete();
             }
         }
