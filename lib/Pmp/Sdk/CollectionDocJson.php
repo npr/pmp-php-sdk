@@ -77,6 +77,26 @@ class CollectionDocJson
     }
 
     /**
+     * Deletes the current document
+     * @return CollectionDocJson
+     * @throws Exception
+     */
+    public function delete() {
+
+        // Determine uri
+        $uri = $this->getSaveUri();
+        if (!$uri) {
+            $exception = new Exception("Cannot delete a document with no URI set");
+            throw $exception;
+        }
+
+        // Delete the document
+        $this->deleteDocument($uri);
+
+        return $this;
+    }
+
+    /**
      * Gets the set of items from the document
      * @return CollectionDocJsonItems
      */
@@ -175,6 +195,42 @@ class CollectionDocJson
 
         $document = json_decode($response['data']);
         return $document;
+    }
+
+    /**
+     * Does a DELETE operation on the given URI and returns true on success
+     * @param $uri
+     *    the URI to use in the request
+     * @return true on success
+     * @throws Exception
+     */
+    private function deleteDocument($uri) {
+        $request = new Request();
+
+        // DELETE request needs an authorization header with given access token
+        $accessToken = $this->getAccessToken();
+        $response = $request->header('Authorization', 'Bearer ' . $accessToken)
+                            ->delete($uri);
+
+        // Retry authentication if request was unauthorized
+        if ($response['code'] == 401) {
+            $accessToken = $this->getAccessToken(true);
+            $response = $request->header('Authorization', 'Bearer ' . $accessToken)
+                                ->header('Content-Type', 'application/vnd.pmp.collection.doc+json')
+                                ->delete($uri);
+        }   
+
+        // Response code must be 204 (no content)
+        if ($response['code'] != 204) {
+            $err = sprintf("Got HTTP response %s, expected 204, for DELETE '%s' with access Token: '%s'",
+                   $response['code'], $uri, $accessToken);
+            $exception = new Exception($err);
+            $exception->setDetails($response);
+            throw $exception;
+            return null;
+        }   
+
+        return true;
     }
 
     /**
@@ -492,6 +548,33 @@ class CollectionDocJson
     public function getUri() {
         return $this->_uri;
     }
+
+
+    /** 
+     * Convenience static method for searching the docs URN.
+     * @param string $host
+     * @param AuthClient $auth
+     * @param array $options
+     * @return CollectionDocJson $results
+     * @throws Exception
+     */
+    public static function search($host, $auth, array $options) {
+        $searcher = new CollectionDocJson($host, $auth);
+        $results  = null;
+        try {
+            $results = $searcher->query('urn:pmp:query:docs')->submit($options);
+        } catch (Exception $ex) {
+
+            // 404 throws an exception. seems pretty unfriendly
+            // for a search, which can easily have no results
+            if (!preg_match('/^Got unexpected non-HTTP-200 response/', $ex->getMessage())) {
+                // re-throw
+                throw $ex;
+            }   
+        }   
+        return $results;
+    }   
+
 }
 
 
