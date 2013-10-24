@@ -14,8 +14,6 @@ $host = 'https://api-sandbox.pmp.io';
 $client_id = getenv('PMP_CLIENT_ID');
 $client_secret = getenv('PMP_CLIENT_SECRET');
 
-
-
 ok( $auth = new \Pmp\Sdk\AuthClient($host, $client_id, $client_secret),
     "instantiate new AuthClient");
 
