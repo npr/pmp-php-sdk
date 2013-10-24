@@ -121,29 +121,47 @@ class AuthClient
 
     /**
      * Create credentials for a given user/pass pair.
+     * Static method.
      * @return Object $creds
      * @throws Exception
      */
-    public function createCredentials(array $options) {
-        if (!isset($options['username']) || !isset($options['password'])) {
-            throw new Exception("username and password required");
+    public static function createCredentials(array $options) {
+        if (
+           !isset($options['username']) 
+           || 
+           !isset($options['password'])
+           ||
+           !isset($options['host'])
+        ) {
+            throw new Exception("host and username and password required");
         }
+        $host     = $options['host'];
         $username = $options['username'];
         $password = $options['password'];
-        $scope    = isset($options['scope']) ? $options['scope'] : 'read';
-        $expires  = isset($options['expires']) ? $options['expires'] : 86400;
-        $label    = isset($options['label']) ? $options['label'] : 'null';
+        $scope    = isset($options['scope']) ? $options['scope'] : null;
+        $expires  = isset($options['expires']) ? $options['expires'] : null;
+        $label    = isset($options['label']) ? $options['label'] : null;
         
-        $uri      = $this->authUri . '/auth/credentials';
+        $uri      = $host . '/auth/credentials';
         $hash     = base64_encode($username . ':' . $password);
+
+        // build request...
         $request  = new Request();
-        $response = $request->header('Authorization', 'Basic ' . $hash)
-                            ->header('Content-Type', 'application/x-www-form-urlencoded')
-                            ->header('Accept', 'application/json')
-                            ->data('scope', $scope)
-                            ->data('token_expires_in', $expires)
-                            ->data('label', $label)
-                            ->post($uri);
+        $request->header('Authorization', 'Basic ' . $hash)
+                ->header('Content-Type', 'application/x-www-form-urlencoded')
+                ->header('Accept', 'application/json');
+        if ($scope) {
+            $request->data('scope', $scope);
+        }
+        if ($expires) {
+            $request->data('token_expires_in', $expires);
+        }
+        if ($label) {
+            $request->data('label', $label);
+        }
+
+        // ...and, send it
+        $response = $request->post($uri);
 
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
