@@ -58,7 +58,7 @@ class CollectionDocJsonLink
      * Follows the link href-template to retrieve a document
      * @param array $options
      *    the mapping of template parameter values
-     * @return CollectionDocJson
+     * @return CollectionDocJson or 0 (zero) on 404
      * @throws Exception
      */
     public function submit(array $options) {
@@ -67,8 +67,17 @@ class CollectionDocJsonLink
             $parser = new UriTemplate();
             $url = $parser->expand($this->{'href-template'}, $this->convertOptions($options));
 
-            // Retrieve the document at the other end of this constructed URL
-            $document = new CollectionDocJson($url, $this->_auth);
+            // Retrieve the document at the other end of this constructed URL.
+            // If 404 response, return 0 rather than document.
+            try {
+                $document = new CollectionDocJson($url, $this->_auth);
+            catch (Exception $ex) {
+                if ($ex->code != '404') {
+                    // re-throw
+                    throw $ex;
+                }
+                return 0;
+            }
             return $document;
         } else {
             $err = "Can't submit against link because no href-template defined";
