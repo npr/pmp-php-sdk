@@ -38,3 +38,7 @@ $options = array(
 print_r ( $doc->query($URN)->submit($options) );
 ```
 
+### See more
+
+[Getting started documentation](https://github.com/publicmediaplatform/pmpdocs/wiki#getting-started)
+
