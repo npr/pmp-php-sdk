@@ -550,6 +550,31 @@ class CollectionDocJson
         return $this->_uri;
     }
 
+    /** 
+     * Convenience static method for searching the docs URN.
+     * @param string $host
+     * @param AuthClient $auth
+     * @param array $options
+     * @return CollectionDocJson $results
+     * @throws Exception
+     */
+    public static function search($host, $auth, array $options) {
+        $searcher = new CollectionDocJson($host, $auth);
+        $results  = null;
+        try {
+            $results = $searcher->query('urn:pmp:query:docs')->submit($options);
+        } catch (Exception $ex) {
+
+            // 404 throws an exception, but no results on a search is normal.
+            if ($ex->getCode() != 404) {
+                // re-throw if response was not 200 or 404
+                throw $ex;
+            }   
+        }   
+        return $results;
+    }   
+
+
 }
 
 
