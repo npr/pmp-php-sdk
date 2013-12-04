@@ -188,6 +188,7 @@ class CollectionDocJson
         if ($response['code'] != 200 || empty($response['data'])) {
             $err = "Got unexpected non-HTTP-200 response and/or empty document while retrieving \"$uri\" with access Token: \"$accessToken\"";
             $exception = new Exception($err);
+            $exception->code = $response['code'];
             $exception->setDetails($response);
             throw $exception;
             return null;
