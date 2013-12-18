@@ -218,7 +218,7 @@ class CollectionDocJson
             $response = $request->header('Authorization', 'Bearer ' . $accessToken)
                                 ->header('Content-Type', 'application/vnd.pmp.collection.doc+json')
                                 ->delete($uri);
-        }   
+        }
 
         // Response code must be 204 (no content)
         if ($response['code'] != 204) {
@@ -228,7 +228,7 @@ class CollectionDocJson
             $exception->setDetails($response);
             throw $exception;
             return null;
-        }   
+        }
 
         return true;
     }
@@ -250,7 +250,7 @@ class CollectionDocJson
         // PUT request needs an authorization header with given access token and
         // the JSON-encoded body based on the document content
         $accessToken = $this->getAccessToken();
-        $response = $request->header('Content-Type', 'application/vnd.pmp.collection.doc+json')
+        $response = $request->header('Content-Type', 'application/vnd.collection.doc+json')
                             ->header('Authorization', 'Bearer ' . $accessToken)
                             ->body($document)
                             ->put($uri);
@@ -258,7 +258,7 @@ class CollectionDocJson
         // Retry authentication if request was unauthorized
         if ($response['code'] == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->header('Content-Type', 'application/vnd.pmp.collection.doc+json')
+            $response = $request->header('Content-Type', 'application/vnd.collection.doc+json')
                 ->header('Authorization', 'Bearer ' . $accessToken)
                 ->body($document)
                 ->put($uri);
