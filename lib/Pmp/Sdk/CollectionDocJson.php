@@ -503,7 +503,7 @@ class CollectionDocJson
         }
 
         // Make sure there is an edit-form link to save to
-        $editLink = $this->edit("urn:pmp:form:documentsave");
+        $editLink = $this->edit("urn:collectiondoc:form:documentsave");
         if (!empty($editLink->{'href-template'})) {
             if (!empty($this->attributes->guid)) {
                 $parser = new UriTemplate();
@@ -520,7 +520,7 @@ class CollectionDocJson
      * @return string
      */
     public function getGuidsUri() {
-        $guidsLink = $this->query("urn:pmp:query:guids");
+        $guidsLink = $this->query("urn:collectiondoc:query:guids");
         if (!empty($guidsLink->href)) {
             return $guidsLink->href;
         } else {
@@ -533,7 +533,7 @@ class CollectionDocJson
      * @return string
      */
     public function getFilesUri() {
-        $filesLink = $this->edit("urn:pmp:form:mediaupload");
+        $filesLink = $this->edit("urn:collectiondoc:form:mediaupload");
         if (!empty($filesLink->href)) {
             return $filesLink->href;
         } else {
