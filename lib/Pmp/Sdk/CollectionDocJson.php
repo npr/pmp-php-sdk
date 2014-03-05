@@ -435,6 +435,9 @@ class CollectionDocJson
      */
     private function extractReadOnlyLinks(\stdClass $document) {
         if (is_object($document)) {
+            if (!isset($this->_readOnlyLinks)) {
+                $this->_readOnlyLinks = new \stdClass;
+            }
             if (!empty($document->links->query)) {
                 $this->_readOnlyLinks->query = $document->links->query;
             }
