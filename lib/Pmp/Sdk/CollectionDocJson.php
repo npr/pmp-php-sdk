@@ -188,6 +188,7 @@ class CollectionDocJson
         if ($response['code'] != 200 || empty($response['data'])) {
             $err = "Got unexpected non-HTTP-200 response and/or empty document while retrieving \"$uri\" with access Token: \"$accessToken\"";
             $exception = new Exception($err);
+            $exception->code = $response['code'];
             $exception->setDetails($response);
             throw $exception;
             return null;
@@ -564,10 +565,9 @@ class CollectionDocJson
             $results = $searcher->query('urn:pmp:query:docs')->submit($options);
         } catch (Exception $ex) {
 
-            // 404 throws an exception. seems pretty unfriendly
-            // for a search, which can easily have no results
-            if (!preg_match('/^Got unexpected non-HTTP-200 response/', $ex->getMessage())) {
-                // re-throw
+            // 404 throws an exception, but no results on a search is normal.
+            if ($ex->getCode() != 404) {
+                // re-throw if response was not 200 or 404
                 throw $ex;
             }   
         }   
