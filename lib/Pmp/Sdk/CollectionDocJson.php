@@ -549,6 +549,31 @@ class CollectionDocJson
         return $this->_uri;
     }
 
+    /** 
+     * Convenience static method for searching the docs URN.
+     * @param string $host
+     * @param AuthClient $auth
+     * @param array $options
+     * @return CollectionDocJson $results
+     * @throws Exception
+     */
+    public static function search($host, $auth, array $options) {
+        $searcher = new CollectionDocJson($host, $auth);
+        $results  = null;
+        try {
+            $results = $searcher->query('urn:pmp:query:docs')->submit($options);
+        } catch (Exception $ex) {
+
+            // 404 throws an exception. seems pretty unfriendly
+            // for a search, which can easily have no results
+            if (!preg_match('/^Got unexpected non-HTTP-200 response/', $ex->getMessage())) {
+                // re-throw
+                throw $ex;
+            }   
+        }   
+        return $results;
+    }   
+
 }
 
 
