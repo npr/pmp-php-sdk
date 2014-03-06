@@ -552,7 +552,6 @@ class CollectionDocJson
         return $this->_uri;
     }
 
-
     /** 
      * Convenience static method for searching the docs URN.
      * @param string $host
@@ -568,10 +567,9 @@ class CollectionDocJson
             $results = $searcher->query('urn:collectiondoc:query:docs')->submit($options);
         } catch (Exception $ex) {
 
-            // 404 throws an exception. seems pretty unfriendly
-            // for a search, which can easily have no results
-            if (!preg_match('/^Got unexpected non-HTTP-200 response/', $ex->getMessage())) {
-                // re-throw
+            // 404 throws an exception, but no results on a search is normal.
+            if ($ex->getCode() != 404) {
+                // re-throw if response was not 200 or 404
                 throw $ex;
             }   
         }   
