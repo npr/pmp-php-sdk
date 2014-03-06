@@ -187,8 +187,7 @@ class CollectionDocJson
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
             $err = "Got unexpected non-HTTP-200 response and/or empty document while retrieving \"$uri\" with access Token: \"$accessToken\"";
-            $exception = new Exception($err);
-            $exception->code = $response['code'];
+            $exception = new Exception($err, $response['code']);
             $exception->setDetails($response);
             throw $exception;
             return null;
@@ -566,7 +565,7 @@ class CollectionDocJson
         $searcher = new CollectionDocJson($host, $auth);
         $results  = null;
         try {
-            $results = $searcher->query('urn:pmp:query:docs')->submit($options);
+            $results = $searcher->query('urn:collectiondoc:query:docs')->submit($options);
         } catch (Exception $ex) {
 
             // 404 throws an exception. seems pretty unfriendly
