@@ -177,29 +177,30 @@ ok( $story_private = save_doc($host, $auth, 'story', array(
 // fixtures all done.
 
 // create credentials and run the actual authz tests.
+$credentials_uri = AuthClient::getCredentialsURI($host);
 ok( $org1_creds = AuthClient::createCredentials(array(
-            'host'     => $host,
+            'uri'      => $credentials_uri,
             'username' => $org1->attributes->auth->user,
             'password' => $org1_pass,
         )),
     "create org1 credentials"
 );
 ok( $org2_creds = AuthClient::createCredentials(array(
-            'host'     => $host,
+            'uri'      => $credentials_uri,
             'username' => $org2->attributes->auth->user,
             'password' => $org2_pass,
         )),
     "create org2 credentials"
 );
 ok( $org3_creds = AuthClient::createCredentials(array(
-            'host'     => $host,
+            'uri'      => $credentials_uri,
             'username' => $org3->attributes->auth->user,
             'password' => $org3_pass,
         )),
     "create org3 credentials"
 );
 
-sleep(2);    // give 202 responses time to catch up
+sleep(10);    // give 202 responses time to catch up
 
 ok( $org1_client = new AuthClient($host, $org1_creds->client_id, $org1_creds->client_secret),
     "create org1 client");
@@ -301,7 +302,7 @@ function save_doc($host, $auth, $profile, $attr) {
  * @param PmpSdkAuthClient $auth
  */
 function clean_up_test_docs($host, $auth) {
-    $urn_docs = 'urn:pmp:query:docs';
+    $urn_docs = 'urn:collectiondoc:query:docs';
     $profiles = array('story', 'organization', 'user', 'group');
     foreach ($profiles as $profile) {
         $options = array('profile' => $profile, 'text' => 'pmp_sdk_php', 'limit' => 100, );
