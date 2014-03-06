@@ -194,6 +194,7 @@ class CollectionDocJson
         }
 
         $document = json_decode($response['data']);
+        $document->raw_response = $response;
         return $document;
     }
 
