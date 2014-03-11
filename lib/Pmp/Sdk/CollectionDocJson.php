@@ -55,6 +55,11 @@ class CollectionDocJson
         return new CollectionDocJsonLinks($links, $this->_auth);
     }
 
+    public function getProfile() {
+        $links = $this->links('profile');
+        return $links[0];
+    }
+
     /**
      * Saves the current document
      * @return CollectionDocJson
