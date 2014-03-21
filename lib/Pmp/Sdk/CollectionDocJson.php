@@ -187,7 +187,7 @@ class CollectionDocJson
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
             $err = "Got unexpected non-HTTP-200 response and/or empty document while retrieving \"$uri\" with access Token: \"$accessToken\"";
-            $exception = new Exception($err);
+            $exception = new Exception($err, $response['code']);
             $exception->setDetails($response);
             throw $exception;
             return null;
@@ -548,6 +548,31 @@ class CollectionDocJson
     public function getUri() {
         return $this->_uri;
     }
+
+    /** 
+     * Convenience static method for searching the docs URN.
+     * @param string $host
+     * @param AuthClient $auth
+     * @param array $options
+     * @return CollectionDocJson $results
+     * @throws Exception
+     */
+    public static function search($host, $auth, array $options) {
+        $searcher = new CollectionDocJson($host, $auth);
+        $results  = null;
+        try {
+            $results = $searcher->query('urn:collectiondoc:query:docs')->submit($options);
+        } catch (Exception $ex) {
+
+            // 404 throws an exception, but no results on a search is normal.
+            if ($ex->getCode() != 404) {
+                // re-throw if response was not 200 or 404
+                throw $ex;
+            }   
+        }   
+        return $results;
+    }   
+
 
 }
 
