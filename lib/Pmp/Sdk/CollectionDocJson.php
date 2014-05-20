@@ -28,7 +28,9 @@ class CollectionDocJson
     public function __construct($uri, AuthClient $auth) {
         $this->_uri = trim($uri, '/'); // no trailing slash
         $this->_auth = $auth;
-
+		$this->_readOnlyLinks = new \stdClass();
+        
+        
         // Retrieve the document from the given URL. Document is never empty. It will throw exception if it is empty.
         $document = $this->getDocument($uri);
 
