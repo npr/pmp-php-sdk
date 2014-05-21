@@ -29,7 +29,7 @@ print_r($auth->getToken());
 require_once('path/to/lib/Pmp/Sdk/CollectionDocJson.php');
 $doc = new \Pmp\Sdk\CollectionDocJson($host, $auth);
 
-$URN = 'urn:pmp:query:docs';
+$URN = 'urn:collectiondoc:query:docs';
 
 $options = array(
     "tag" => "samplecontent"
