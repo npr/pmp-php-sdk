@@ -1,6 +1,8 @@
 <?php
 namespace Pmp\Sdk;
 
+require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
+
 class AuthClient
 {
 
