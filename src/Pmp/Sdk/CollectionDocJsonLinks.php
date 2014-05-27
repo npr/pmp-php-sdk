@@ -1,8 +1,6 @@
 <?php
 namespace Pmp\Sdk;
 
-require_once('CollectionDocJsonLink.php');
-
 class CollectionDocJsonLinks implements \ArrayAccess
 {
     private $_links;

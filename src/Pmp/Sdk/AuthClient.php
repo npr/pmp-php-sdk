@@ -1,10 +1,6 @@
 <?php
 namespace Pmp\Sdk;
 
-require_once('Exception.php');
-require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
-use restagent\Request as Request;
-
 class AuthClient
 {
 

@@ -1,11 +1,7 @@
 <?php
 namespace Pmp\Sdk;
 
-require_once('CollectionDocJsonLinks.php');
-require_once('CollectionDocJsonItems.php');
-require_once('Exception.php');
 require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
-require_once(dirname(__FILE__) . '/../../guzzle.phar');
 
 use restagent\Request as Request;
 use Guzzle\Http\Client as Client;
@@ -172,18 +168,20 @@ class CollectionDocJson
      * @throws Exception
      */
     private function getDocument($uri) {
-        $request = new Request();
+        $request = new Client();
 
         // GET request needs an authorization header with given access token
         $accessToken = $this->getAccessToken();
-        $response = $request->header('Authorization', 'Bearer ' . $accessToken)
-                            ->get($uri);
+        $response = $request->get($uri)
+                            ->setHeader('Authorization', 'Bearer ' . $accessToken)
+                            ->send();
 
         // Retry authentication if request was unauthorized
-        if ($response['code'] == 401) {
+        if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->header('Authorization', 'Bearer ' . $accessToken)
-                                ->get($uri);
+            $response = $request->get($uri)
+                                ->setHeader('Authorization', 'Bearer ' . $accessToken)
+                                ->send();
         }
 
         // Response code must be 200 and data must be found in response in order to continue

@@ -1,10 +1,6 @@
 <?php
 namespace Pmp\Sdk;
 
-require_once('CollectionDocJson.php');
-
-require_once(dirname(__FILE__) . '/../../guzzle.phar');
-
 use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
 
 class CollectionDocJsonLink

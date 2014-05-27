@@ -1,8 +1,6 @@
 <?php
 namespace Pmp\Sdk;
 
-require_once('PageIterator.php');
-
 class CollectionDocJsonItems implements \ArrayAccess
 {
     public $_document;

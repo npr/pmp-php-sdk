@@ -2,7 +2,7 @@
 
 namespace restagent;
 
-require_once (__DIR__ . '/TestCase.class.php');
+require_once(__DIR__ . '/TestCase.class.php');
 require_once (realpath(__DIR__ . '/../restagent.lib.php'));
 
 /**
