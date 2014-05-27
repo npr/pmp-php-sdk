@@ -1,7 +1,7 @@
 {
   "name":"npr/pmp-phpsdk",
   "autoload":{
-    "psr-4": {
+    "psr-0": {
       "Pmp\\":"src/"
     }
   },
