@@ -168,20 +168,18 @@ class CollectionDocJson
      * @throws Exception
      */
     private function getDocument($uri) {
-        $request = new Client();
+        $request = new Request();
 
         // GET request needs an authorization header with given access token
         $accessToken = $this->getAccessToken();
-        $response = $request->get($uri)
-                            ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                            ->send();
+        $response = $request->header('Authorization', 'Bearer ' . $accessToken)
+            ->get($uri);
 
         // Retry authentication if request was unauthorized
-        if ($response->getStatusCode() == 401) {
+        if ($response['code'] == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->get($uri)
-                                ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                                ->send();
+            $response = $request->header('Authorization', 'Bearer ' . $accessToken)
+                ->get($uri);
         }
 
         // Response code must be 200 and data must be found in response in order to continue
