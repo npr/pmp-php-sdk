@@ -62,6 +62,7 @@ class AuthClient
 
         // GET request needs an authorization header with the generated client hash
         $request = new Request();
+        $request->timeout(20000);
         $response = $request->header('Authorization', 'Basic ' . $hash)
                             ->header('Content-Type', 'application/x-www-form-urlencoded')
                             ->data('grant_type', 'client_credentials')
@@ -104,6 +105,7 @@ class AuthClient
 
         // GET request needs an authorization header with the generated client hash
         $request = new Request();
+        $request->timeout(20000);
         $response = $request->header('Authorization', 'Basic ' . $hash)
                             ->delete($uri);
 
@@ -161,6 +163,7 @@ class AuthClient
 
         // build request...
         $request  = new Request();
+        $request->timeout(20000);
         $request->header('Authorization', 'Basic ' . $hash)
                 ->header('Content-Type', 'application/x-www-form-urlencoded')
                 ->header('Accept', 'application/json');
