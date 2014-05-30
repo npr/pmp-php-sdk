@@ -489,6 +489,8 @@ class CollectionDocJson
             $this->$name = $value;
         }
 
+        $this->_uri = (!empty($this->href)) ? $this->href : null;
+
         return $this;
     }
 
