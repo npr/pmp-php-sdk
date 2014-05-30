@@ -13,6 +13,14 @@ class CollectionDocJsonItems extends \ArrayObject
      */
     public function __construct(array $items, CollectionDocJson $document) {
         $this->_document = $document;
+
+        $itemDocs = array();
+        foreach ($items as $item) {
+            $itemDoc = clone $document;
+            $itemDoc->setDocument($item);
+            $itemDocs[] = $itemDoc;
+        }
+
         parent::__construct($items);
     }
 
