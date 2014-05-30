@@ -25,8 +25,8 @@ class CollectionDocJson
         $this->_uri = trim($uri, '/'); // no trailing slash
         $this->_auth = $auth;
 		$this->_readOnlyLinks = new \stdClass();
-        
-        
+
+
         // Retrieve the document from the given URL. Document is never empty. It will throw exception if it is empty.
         $document = $this->getDocument($uri);
 
@@ -448,6 +448,7 @@ class CollectionDocJson
      */
     public function clearDocument() {
         unset($this->version);
+        unset($this->href);
         unset($this->attributes);
         unset($this->links);
         unset($this->items);
@@ -463,6 +464,7 @@ class CollectionDocJson
     public function buildDocument() {
         $document = new \stdClass();
         $document->version = (!empty($this->version)) ? $this->version : null;
+        $document->href = (!empty($this->href)) ? $this->href : null;
         $document->attributes = (!empty($this->attributes)) ? $this->attributes : null;
         $document->links = (!empty($this->links)) ? $this->links : null;
 
@@ -547,7 +549,7 @@ class CollectionDocJson
         return $this->_uri;
     }
 
-    /** 
+    /**
      * Convenience static method for searching the docs URN.
      * @param string $host
      * @param AuthClient $auth
@@ -566,10 +568,10 @@ class CollectionDocJson
             if ($ex->getCode() != 404) {
                 // re-throw if response was not 200 or 404
                 throw $ex;
-            }   
-        }   
+            }
+        }
         return $results;
-    }   
+    }
 
 
 }
