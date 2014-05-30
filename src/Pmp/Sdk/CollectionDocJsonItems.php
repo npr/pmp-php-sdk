@@ -21,7 +21,7 @@ class CollectionDocJsonItems extends \ArrayObject
             $itemDocs[] = $itemDoc;
         }
 
-        parent::__construct($items);
+        parent::__construct($itemDocs);
     }
 
     /**
