@@ -69,6 +69,7 @@ class CollectionDocJson
         // Set new document URI
         if (!empty($uri)) {
             $this->_uri = $uri;
+            $this->href = $uri;
         }
 
         return $this;
@@ -464,9 +465,12 @@ class CollectionDocJson
     public function buildDocument() {
         $document = new \stdClass();
         $document->version = (!empty($this->version)) ? $this->version : null;
-        $document->href = (!empty($this->href)) ? $this->href : null;
         $document->attributes = (!empty($this->attributes)) ? $this->attributes : null;
         $document->links = (!empty($this->links)) ? $this->links : null;
+
+        if (!empty($this->href)) {
+            $document->href = $this->href;
+        }
 
         return $document;
     }
