@@ -1,9 +1,7 @@
 <?php
 namespace Pmp\Sdk;
 
-require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
-
-use restagent\Request as Request;
+use Guzzle\Http\Client;
 
 class AuthClient
 {
@@ -60,26 +58,27 @@ class AuthClient
         $hash = base64_encode($this->clientId . ":" . $this->clientSecret);
 
         // GET request needs an authorization header with the generated client hash
-        $request = new Request();
-        $response = $request->header('Authorization', 'Basic ' . $hash)
-                            ->header('Content-Type', 'application/x-www-form-urlencoded')
-                            ->data('grant_type', 'client_credentials')
-                            ->post($uri);
+        $request = new Client();
+        $response = $request->post($uri)
+                            ->addHeader('Authorization', 'Basic ' . $hash)
+                            ->addHeader('Content-Type', 'application/x-www-form-urlencoded')
+                            ->setPostField('grant_type', 'client_credentials')
+                            ->send();
 
         // Response code must be 200 and data must be found in response in order to continue
-        if ($response['code'] != 200 || empty($response['data'])) {
+        if ($response->getStatusCode() != 200 || empty($response->getBody())) {
             $err = "Got non-HTTP-200 and/or empty response from the authentication server";
             $exception = new Exception($err);
-            $exception->setDetails($response);
+            $exception->setDetails($response->getInfo());
             throw $exception;
             return;
         }
 
-        $data = json_decode($response['data']);
+        $data = json_decode($response->getBody(true));
         if (empty($data->access_token)) {
             $err = "Got unexpected empty token from the authentication server";
             $exception = new Exception($err);
-            $exception->setDetails($response);
+            $exception->setDetails($response->getInfo());
             throw $exception;
             return;
         }
@@ -102,15 +101,16 @@ class AuthClient
         $hash = base64_encode($this->clientId . ":" . $this->clientSecret);
 
         // GET request needs an authorization header with the generated client hash
-        $request = new Request();
-        $response = $request->header('Authorization', 'Basic ' . $hash)
-                            ->delete($uri);
+        $request = new Client();
+        $response = $request->delete($uri)
+                            ->addHeader('Authorization', 'Basic ' . $hash)
+                            ->send();
 
         // Response code must be 204 in order to be successful
-        if ($response['code'] != 204) {
+        if ($response->getStatusCode() != 204) {
             $err = "Got unexpected response code from the authentication server";
             $exception = new Exception($err);
-            $exception->setDetails($response);
+            $exception->setDetails($response->getInfo());
             throw $exception;
             return false;
         }

@@ -1,7 +1,7 @@
 <?php
 namespace Pmp\Sdk;
 
-use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
+use Guzzle\Parser\UriTemplate\UriTemplate;
 
 class CollectionDocJsonLink
 {

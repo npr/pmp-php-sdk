@@ -1,12 +1,8 @@
 <?php
 namespace Pmp\Sdk;
 
-require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
-
-use restagent\Request as Request;
-use Guzzle\Http\Client as Client;
-use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
-
+use Guzzle\Http\Client;
+use Guzzle\Parser\UriTemplate\UriTemplate;
 
 class CollectionDocJson
 {
@@ -169,30 +165,32 @@ class CollectionDocJson
      * @throws Exception
      */
     private function getDocument($uri) {
-        $request = new Request();
+        $request = new Client();
 
         // GET request needs an authorization header with given access token
         $accessToken = $this->getAccessToken();
-        $response = $request->header('Authorization', 'Bearer ' . $accessToken)
-            ->get($uri);
+        $response = $request->get($uri)
+                            ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                            ->send();
 
         // Retry authentication if request was unauthorized
-        if ($response['code'] == 401) {
+        if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->header('Authorization', 'Bearer ' . $accessToken)
-                ->get($uri);
+            $response = $request->get($uri)
+                                ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                                ->send();
         }
 
         // Response code must be 200 and data must be found in response in order to continue
-        if ($response['code'] != 200 || empty($response['data'])) {
+        if ($response->getStatusCode() != 200 || empty($response->getBody())) {
             $err = "Got unexpected non-HTTP-200 response and/or empty document while retrieving \"$uri\" with access Token: \"$accessToken\"";
-            $exception = new Exception($err, $response['code']);
-            $exception->setDetails($response);
+            $exception = new Exception($err, $response->getStatusCode());
+            $exception->setDetails($response->getInfo());
             throw $exception;
             return null;
         }
 
-        $document = json_decode($response['data']);
+        $document = json_decode($response->getBody(true));
         return $document;
     }
 
@@ -204,27 +202,28 @@ class CollectionDocJson
      * @throws Exception
      */
     private function deleteDocument($uri) {
-        $request = new Request();
+        $request = new Client();
 
         // DELETE request needs an authorization header with given access token
         $accessToken = $this->getAccessToken();
-        $response = $request->header('Authorization', 'Bearer ' . $accessToken)
-                            ->delete($uri);
+        $response = $request->delete($uri)
+                            ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                            ->send();
 
         // Retry authentication if request was unauthorized
-        if ($response['code'] == 401) {
+        if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->header('Authorization', 'Bearer ' . $accessToken)
-                                ->header('Content-Type', 'application/vnd.pmp.collection.doc+json')
-                                ->delete($uri);
+            $response = $request->delete($uri)
+                                ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                                ->send();
         }
 
         // Response code must be 204 (no content)
-        if ($response['code'] != 204) {
+        if ($response->getStatusCode() != 204) {
             $err = sprintf("Got HTTP response %s, expected 204, for DELETE '%s' with access Token: '%s'",
-                   $response['code'], $uri, $accessToken);
+                   $response->getStatusCode(), $uri, $accessToken);
             $exception = new Exception($err);
-            $exception->setDetails($response);
+            $exception->setDetails($response->getInfo());
             throw $exception;
             return null;
         }
@@ -244,37 +243,39 @@ class CollectionDocJson
         // Construct the document from the allowable properties in this object
         $document = json_encode($this->buildDocument());
 
-        $request = new Request();
+        $request = new Client();
 
         // PUT request needs an authorization header with given access token and
         // the JSON-encoded body based on the document content
         $accessToken = $this->getAccessToken();
-        $response = $request->header('Content-Type', 'application/vnd.collection.doc+json')
-                            ->header('Authorization', 'Bearer ' . $accessToken)
-                            ->body($document)
-                            ->put($uri);
+        $response = $request->put($uri)
+                            ->addHeader('Content-Type', 'application/vnd.collection.doc+json')
+                            ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                            ->setBody($document)
+                            ->send();
 
         // Retry authentication if request was unauthorized
-        if ($response['code'] == 401) {
+        if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->header('Content-Type', 'application/vnd.collection.doc+json')
-                ->header('Authorization', 'Bearer ' . $accessToken)
-                ->body($document)
-                ->put($uri);
+            $response = $request->put($uri)
+                                ->addHeader('Content-Type', 'application/vnd.collection.doc+json')
+                                ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                                ->setBody($document)
+                                ->send();
         }
 
         // Response code must be 200 or 202 in order to be successful
-        if ($response['code'] != 200 && $response['code'] != 202) {
+        if ($response->getStatusCode() != 200 && $response->getStatusCode() != 202) {
             $err = "Got unexpected non-HTTP-200 and non-HTTP-202 response while sending \"$uri\" with access Token: \"$accessToken\"";
             $exception = new Exception($err);
-            $exception->setDetails($response);
+            $exception->setDetails($response->getInfo());
             throw $exception;
             return '';
         }
 
         // Return saved document URI if available
-        if (!empty($response['data'])) {
-            $data = json_decode($response['data']);
+        if (!empty($response->getBody())) {
+            $data = json_decode($response->getBody(true));
             return $data->url;
         } else {
             return '';
@@ -298,30 +299,31 @@ class CollectionDocJson
         // POST request needs an authorization header with given access token and
         // the multipart form-data body
         $accessToken = $this->getAccessToken();
-        $response = $request->post($uri, array(
-            'Authorization' => 'Bearer ' . $accessToken
-        ))->addPostFile('submission', $file)->send();
+        $response = $request->post($uri)
+                            ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                            ->addPostFile('submission', $file)
+                            ->send();
 
         // Retry authentication if request was unauthorized
         if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->post($uri, array(
-                'Authorization' => 'Bearer ' . $accessToken
-            ))->addPostFile('submission', $file)->send();
+            $response = $request->post($uri)
+                                ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                                ->addPostFile('submission', $file)
+                                ->send();
         }
 
         // Response code must be 202 in order to be successful
         if ($response->getStatusCode() != 202) {
             $err = "Got unexpected non-HTTP-202 response while sending \"$uri\" with access Token: \"$accessToken\"";
             $exception = new Exception($err);
-            $exception->setDetails($response);
+            $exception->setDetails($response->getInfo());
             throw $exception;
             return '';
         }
 
-        $body = $response->getBody();
-        if (!empty($body)) {
-            $body = json_decode($body);
+        if (!empty($response->getBody())) {
+            $body = json_decode($response->getBody(true));
             if (!empty($body->url)) {
                 return $body->url;
             }
@@ -395,34 +397,36 @@ class CollectionDocJson
      * @throws Exception
      */
     private function getGuid($uri) {
-        $request = new Request();
+        $request = new Client();
 
         // POST request needs an authorization header with given access token
         $accessToken = $this->getAccessToken();
-        $response = $request->header('Content-Type', 'application/json')
-                            ->header('Authorization', 'Bearer ' . $accessToken)
-                            ->body('{"count":1}')
-                            ->post($uri);
+        $response = $request->post($uri)
+                            ->addHeader('Content-Type', 'application/json')
+                            ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                            ->setBody('{"count":1}')
+                            ->send();
 
         // Retry authentication if request was unauthorized
-        if ($response['code'] == 401) {
+        if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->header('Content-Type', 'application/json')
-                                ->header('Authorization', 'Bearer ' . $accessToken)
-                                ->body('{"count":1}')
-                                ->post($uri);
+            $response = $request->post($uri)
+                                ->addHeader('Content-Type', 'application/json')
+                                ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                                ->setBody('{"count":1}')
+                                ->send();
         }
 
         // Response code must be 200 in order to be successful
-        if ($response['code'] != 200) {
+        if ($response->getStatusCode() != 200) {
             $err = "Got unexpected non-HTTP-200 response while POSTing to \"$uri\" with access Token: \"$accessToken\"";
             $exception = new Exception($err);
-            $exception->setDetails($response);
+            $exception->setDetails($response->getInfo());
             throw $exception;
             return '';
         }
 
-        $data = json_decode($response['data']);
+        $data = json_decode($response->getBody(true));
         return $data->guids[0];
     }
 
