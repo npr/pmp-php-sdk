@@ -521,14 +521,16 @@ class CollectionDocJson
 
     /**
      * Sets the given document on the object
-     * @param \stdClass $document
+     * @param array|\stdClass $document
      * @return CollectionDocJson
      */
-    public function setDocument(\stdClass $document) {
+    public function setDocument($document) {
         $this->clearDocument();
 
         if (is_object($document)) {
             $properties = get_object_vars($document);
+        } else if (is_array($document)) {
+            $properties = get_object_vars(json_decode(json_encode($document), false));
         } else {
             $properties = array();
         }
