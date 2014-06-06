@@ -170,14 +170,14 @@ class CollectionDocJson
         // GET request needs an authorization header with given access token
         $accessToken = $this->getAccessToken();
         $response = $request->get($uri)
-                            ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                            ->setHeader('Authorization', 'Bearer ' . $accessToken)
                             ->send();
 
         // Retry authentication if request was unauthorized
         if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
             $response = $request->get($uri)
-                                ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                                ->setHeader('Authorization', 'Bearer ' . $accessToken)
                                 ->send();
         }
 
@@ -207,14 +207,14 @@ class CollectionDocJson
         // DELETE request needs an authorization header with given access token
         $accessToken = $this->getAccessToken();
         $response = $request->delete($uri)
-                            ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                            ->setHeader('Authorization', 'Bearer ' . $accessToken)
                             ->send();
 
         // Retry authentication if request was unauthorized
         if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
             $response = $request->delete($uri)
-                                ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                                ->setHeader('Authorization', 'Bearer ' . $accessToken)
                                 ->send();
         }
 
@@ -249,18 +249,18 @@ class CollectionDocJson
         // the JSON-encoded body based on the document content
         $accessToken = $this->getAccessToken();
         $response = $request->put($uri)
-                            ->addHeader('Content-Type', 'application/vnd.collection.doc+json')
-                            ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                            ->setHeader('Authorization', 'Bearer ' . $accessToken)
                             ->setBody($document)
+                            ->setHeader('Content-Type', 'application/vnd.collection.doc+json')
                             ->send();
 
         // Retry authentication if request was unauthorized
         if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
             $response = $request->put($uri)
-                                ->addHeader('Content-Type', 'application/vnd.collection.doc+json')
-                                ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                                ->setHeader('Authorization', 'Bearer ' . $accessToken)
                                 ->setBody($document)
+                                ->setHeader('Content-Type', 'application/vnd.collection.doc+json')
                                 ->send();
         }
 
@@ -300,7 +300,7 @@ class CollectionDocJson
         // the multipart form-data body
         $accessToken = $this->getAccessToken();
         $response = $request->post($uri)
-                            ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                            ->setHeader('Authorization', 'Bearer ' . $accessToken)
                             ->addPostFile('submission', $file)
                             ->send();
 
@@ -308,7 +308,7 @@ class CollectionDocJson
         if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
             $response = $request->post($uri)
-                                ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                                ->setHeader('Authorization', 'Bearer ' . $accessToken)
                                 ->addPostFile('submission', $file)
                                 ->send();
         }
@@ -402,18 +402,18 @@ class CollectionDocJson
         // POST request needs an authorization header with given access token
         $accessToken = $this->getAccessToken();
         $response = $request->post($uri)
-                            ->addHeader('Content-Type', 'application/json')
-                            ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                            ->setHeader('Authorization', 'Bearer ' . $accessToken)
                             ->setBody('{"count":1}')
+                            ->setHeader('Content-Type', 'application/json')
                             ->send();
 
         // Retry authentication if request was unauthorized
         if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
             $response = $request->post($uri)
-                                ->addHeader('Content-Type', 'application/json')
-                                ->addHeader('Authorization', 'Bearer ' . $accessToken)
+                                ->setHeader('Authorization', 'Bearer ' . $accessToken)
                                 ->setBody('{"count":1}')
+                                ->setHeader('Content-Type', 'application/json')
                                 ->send();
         }
 
