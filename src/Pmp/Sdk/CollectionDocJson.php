@@ -169,16 +169,24 @@ class CollectionDocJson
 
         // GET request needs an authorization header with given access token
         $accessToken = $this->getAccessToken();
-        $response = $request->get($uri)
-                            ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                            ->send();
+        try {
+            $response = $request->get($uri)
+                ->setHeader('Authorization', 'Bearer ' . $accessToken)
+                ->send();
+        } catch (\Guzzle\Http\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+        }
 
         // Retry authentication if request was unauthorized
         if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->get($uri)
-                                ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                                ->send();
+            try {
+                $response = $request->get($uri)
+                    ->setHeader('Authorization', 'Bearer ' . $accessToken)
+                    ->send();
+            } catch (\Guzzle\Http\Exception\BadResponseException $e) {
+                $response = $e->getResponse();
+            }
         }
 
         // Response code must be 200 and data must be found in response in order to continue
@@ -206,16 +214,24 @@ class CollectionDocJson
 
         // DELETE request needs an authorization header with given access token
         $accessToken = $this->getAccessToken();
-        $response = $request->delete($uri)
-                            ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                            ->send();
+        try {
+            $response = $request->delete($uri)
+                ->setHeader('Authorization', 'Bearer ' . $accessToken)
+                ->send();
+        } catch (\Guzzle\Http\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+        }
 
         // Retry authentication if request was unauthorized
         if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->delete($uri)
-                                ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                                ->send();
+            try {
+                $response = $request->delete($uri)
+                    ->setHeader('Authorization', 'Bearer ' . $accessToken)
+                    ->send();
+            } catch (\Guzzle\Http\Exception\BadResponseException $e) {
+                $response = $e->getResponse();
+            }
         }
 
         // Response code must be 204 (no content)
@@ -248,20 +264,28 @@ class CollectionDocJson
         // PUT request needs an authorization header with given access token and
         // the JSON-encoded body based on the document content
         $accessToken = $this->getAccessToken();
-        $response = $request->put($uri)
-                            ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                            ->setBody($document)
-                            ->setHeader('Content-Type', 'application/vnd.collection.doc+json')
-                            ->send();
+        try {
+            $response = $request->put($uri)
+                ->setHeader('Authorization', 'Bearer ' . $accessToken)
+                ->setBody($document)
+                ->setHeader('Content-Type', 'application/vnd.collection.doc+json')
+                ->send();
+        } catch (\Guzzle\Http\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+        }
 
         // Retry authentication if request was unauthorized
         if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->put($uri)
-                                ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                                ->setBody($document)
-                                ->setHeader('Content-Type', 'application/vnd.collection.doc+json')
-                                ->send();
+            try {
+                $response = $request->put($uri)
+                    ->setHeader('Authorization', 'Bearer ' . $accessToken)
+                    ->setBody($document)
+                    ->setHeader('Content-Type', 'application/vnd.collection.doc+json')
+                    ->send();
+            } catch (\Guzzle\Http\Exception\BadResponseException $e) {
+                $response = $e->getResponse();
+            }
         }
 
         // Response code must be 200 or 202 in order to be successful
@@ -299,18 +323,26 @@ class CollectionDocJson
         // POST request needs an authorization header with given access token and
         // the multipart form-data body
         $accessToken = $this->getAccessToken();
-        $response = $request->post($uri)
-                            ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                            ->addPostFile('submission', $file)
-                            ->send();
+        try {
+            $response = $request->post($uri)
+                ->setHeader('Authorization', 'Bearer ' . $accessToken)
+                ->addPostFile('submission', $file)
+                ->send();
+        } catch (\Guzzle\Http\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+        }
 
         // Retry authentication if request was unauthorized
         if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->post($uri)
-                                ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                                ->addPostFile('submission', $file)
-                                ->send();
+            try {
+                $response = $request->post($uri)
+                    ->setHeader('Authorization', 'Bearer ' . $accessToken)
+                    ->addPostFile('submission', $file)
+                    ->send();
+            } catch (\Guzzle\Http\Exception\BadResponseException $e) {
+                $response = $e->getResponse();
+            }
         }
 
         // Response code must be 202 in order to be successful
@@ -401,20 +433,28 @@ class CollectionDocJson
 
         // POST request needs an authorization header with given access token
         $accessToken = $this->getAccessToken();
-        $response = $request->post($uri)
-                            ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                            ->setBody('{"count":1}')
-                            ->setHeader('Content-Type', 'application/json')
-                            ->send();
+        try {
+            $response = $request->post($uri)
+                ->setHeader('Authorization', 'Bearer ' . $accessToken)
+                ->setBody('{"count":1}')
+                ->setHeader('Content-Type', 'application/json')
+                ->send();
+        } catch (\Guzzle\Http\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+        }
 
         // Retry authentication if request was unauthorized
         if ($response->getStatusCode() == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->post($uri)
-                                ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                                ->setBody('{"count":1}')
-                                ->setHeader('Content-Type', 'application/json')
-                                ->send();
+            try {
+                $response = $request->post($uri)
+                    ->setHeader('Authorization', 'Bearer ' . $accessToken)
+                    ->setBody('{"count":1}')
+                    ->setHeader('Content-Type', 'application/json')
+                    ->send();
+            } catch (\Guzzle\Http\Exception\BadResponseException $e) {
+                $response = $e->getResponse();
+            }
         }
 
         // Response code must be 200 in order to be successful

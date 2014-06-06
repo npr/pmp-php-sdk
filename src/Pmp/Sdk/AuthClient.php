@@ -59,11 +59,15 @@ class AuthClient
 
         // GET request needs an authorization header with the generated client hash
         $request = new Client();
-        $response = $request->post($uri)
-                            ->setHeader('Authorization', 'Basic ' . $hash)
-                            ->setPostField('grant_type', 'client_credentials')
-                            ->setHeader('Content-Type', 'application/x-www-form-urlencoded')
-                            ->send();
+        try {
+            $response = $request->post($uri)
+                ->setHeader('Authorization', 'Basic ' . $hash)
+                ->setPostField('grant_type', 'client_credentials')
+                ->setHeader('Content-Type', 'application/x-www-form-urlencoded')
+                ->send();
+        } catch (\Guzzle\Http\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+        }
 
         // Response code must be 200 and data must be found in response in order to continue
         if ($response->getStatusCode() != 200 || empty($response->getBody())) {
@@ -102,9 +106,13 @@ class AuthClient
 
         // GET request needs an authorization header with the generated client hash
         $request = new Client();
-        $response = $request->delete($uri)
-                            ->setHeader('Authorization', 'Basic ' . $hash)
-                            ->send();
+        try {
+            $response = $request->delete($uri)
+                ->setHeader('Authorization', 'Basic ' . $hash)
+                ->send();
+        } catch (\Guzzle\Http\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+        }
 
         // Response code must be 204 in order to be successful
         if ($response->getStatusCode() != 204) {
