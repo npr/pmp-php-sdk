@@ -72,7 +72,7 @@ class PageIterator
     
     /**
      * The offset to use to get the previous page of items
-     * Returns -1, if at the end of the results
+     * Returns -1, if at the beginning of the results
      * @return int
      */
     public function previousOffset() {
