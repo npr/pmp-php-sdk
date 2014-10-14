@@ -187,8 +187,7 @@ class CollectionDocJson
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
             $err = "Got unexpected non-HTTP-200 response and/or empty document while retrieving \"$uri\" with access Token: \"$accessToken\"";
-            $exception = new Exception($err);
-            $exception->code = $response['code'];
+            $exception = new Exception($err, $response['code']);
             $exception->setDetails($response);
             throw $exception;
             return null;
@@ -219,7 +218,7 @@ class CollectionDocJson
             $response = $request->header('Authorization', 'Bearer ' . $accessToken)
                                 ->header('Content-Type', 'application/vnd.pmp.collection.doc+json')
                                 ->delete($uri);
-        }   
+        }
 
         // Response code must be 204 (no content)
         if ($response['code'] != 204) {
@@ -229,7 +228,7 @@ class CollectionDocJson
             $exception->setDetails($response);
             throw $exception;
             return null;
-        }   
+        }
 
         return true;
     }
@@ -251,7 +250,7 @@ class CollectionDocJson
         // PUT request needs an authorization header with given access token and
         // the JSON-encoded body based on the document content
         $accessToken = $this->getAccessToken();
-        $response = $request->header('Content-Type', 'application/vnd.pmp.collection.doc+json')
+        $response = $request->header('Content-Type', 'application/vnd.collection.doc+json')
                             ->header('Authorization', 'Bearer ' . $accessToken)
                             ->body($document)
                             ->put($uri);
@@ -259,7 +258,7 @@ class CollectionDocJson
         // Retry authentication if request was unauthorized
         if ($response['code'] == 401) {
             $accessToken = $this->getAccessToken(true);
-            $response = $request->header('Content-Type', 'application/vnd.pmp.collection.doc+json')
+            $response = $request->header('Content-Type', 'application/vnd.collection.doc+json')
                 ->header('Authorization', 'Bearer ' . $accessToken)
                 ->body($document)
                 ->put($uri);
@@ -342,22 +341,11 @@ class CollectionDocJson
     }
 
     /**
-     * Creates a new guid, either from the API, or by generating a compatible UUID
-     * @param bool $useApi
-     *     whether to go get the guid from the API first
+     * Creates a new guid by generating a compatible UUID V4
+     *
      * @return string
      */
-    public function createGuid($useApi=false) {
-        if ($useApi) {
-            try {
-                $guid = $this->getGuid($this->getGuidsUri());
-                if ($guid) {
-                    return $guid;
-                }
-            } catch (\Exception $e) {
-                // do nothing - just generate a UUID instead
-            }
-        }
+    public function createGuid() {
         return $this->generateUuid();
     }
 
@@ -504,7 +492,7 @@ class CollectionDocJson
         }
 
         // Make sure there is an edit-form link to save to
-        $editLink = $this->edit("urn:pmp:form:documentsave");
+        $editLink = $this->edit("urn:collectiondoc:form:documentsave");
         if (!empty($editLink->{'href-template'})) {
             if (!empty($this->attributes->guid)) {
                 $parser = new UriTemplate();
@@ -517,24 +505,11 @@ class CollectionDocJson
     }
 
     /**
-     * Get the URI for retrieving guids
-     * @return string
-     */
-    public function getGuidsUri() {
-        $guidsLink = $this->query("urn:pmp:query:guids");
-        if (!empty($guidsLink->href)) {
-            return $guidsLink->href;
-        } else {
-            return '';
-        }
-    }
-
-    /**
      * Get the URI for uploading files
      * @return string
      */
     public function getFilesUri() {
-        $filesLink = $this->edit("urn:pmp:form:mediaupload");
+        $filesLink = $this->edit("urn:collectiondoc:form:mediaupload");
         if (!empty($filesLink->href)) {
             return $filesLink->href;
         } else {
@@ -550,7 +525,7 @@ class CollectionDocJson
         return $this->_uri;
     }
 
-    /** 
+    /**
      * Convenience static method for searching the docs URN.
      * @param string $host
      * @param AuthClient $auth
@@ -562,17 +537,17 @@ class CollectionDocJson
         $searcher = new CollectionDocJson($host, $auth);
         $results  = null;
         try {
-            $results = $searcher->query('urn:pmp:query:docs')->submit($options);
+            $results = $searcher->query('urn:collectiondoc:query:docs')->submit($options);
         } catch (Exception $ex) {
 
             // 404 throws an exception, but no results on a search is normal.
             if ($ex->getCode() != 404) {
                 // re-throw if response was not 200 or 404
                 throw $ex;
-            }   
-        }   
+            }
+        }
         return $results;
-    }   
+    }
 
 }
 
