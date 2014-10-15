@@ -1,0 +1,5 @@
+{
+    "name": "publicmediaplatform/phpsdk",
+    "description": "This is a core SDK for Public Media Platform for PHP.",
+    "license": "MIT"
+}
