@@ -3,7 +3,7 @@
     "description": "This is a core SDK for Public Media Platform for PHP.",
     "license": "MIT",
     "autoload": {
-        "PSR-4": {"Pmp\\": "lib/Pmp/"},
+        "psr-4": {"Pmp\\": "lib/Pmp/"},
         "classmap": ["lib/restagent"]
     }
 }
