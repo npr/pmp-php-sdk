@@ -4,6 +4,6 @@
     "license": "MIT",
     "autoload": {
         "classmap": ["lib/restagent"],
-        "PSR-4": {"Pmp\\": "lib/Pmp"}
+        "PSR-4": {"Pmp\\": "lib/Pmp/"}
     }
 }
