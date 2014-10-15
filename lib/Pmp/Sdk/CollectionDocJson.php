@@ -525,6 +525,7 @@ class CollectionDocJson
         return $this->_uri;
     }
 
+
     /**
      * Convenience static method for searching the docs URN.
      * @param string $host
@@ -548,7 +549,6 @@ class CollectionDocJson
         }
         return $results;
     }
-
 
 }
 

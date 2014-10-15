@@ -2,6 +2,7 @@
 namespace Pmp\Sdk;
 
 require_once('Exception.php');
+require_once(dirname(__FILE__) . '/CollectionDocJson.php');
 require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
 use restagent\Request as Request;
 
@@ -117,4 +118,61 @@ class AuthClient
         $this->accessToken = null;
         return true;
     }
+
+    /**
+     * Create credentials for a given user/pass pair.
+     * Static method.
+     * @return Object $creds
+     * @throws Exception
+     */
+    public static function createCredentials(array $options) {
+        if (
+           !isset($options['username']) 
+           || 
+           !isset($options['password'])
+           ||
+           !isset($options['host'])
+        ) {
+            throw new Exception("host and username and password required");
+        }
+        $host     = $options['host'];
+        $username = $options['username'];
+        $password = $options['password'];
+        $scope    = isset($options['scope']) ? $options['scope'] : null;
+        $expires  = isset($options['expires']) ? $options['expires'] : null;
+        $label    = isset($options['label']) ? $options['label'] : null;
+        
+        $uri      = $host . '/auth/credentials';
+        $hash     = base64_encode($username . ':' . $password);
+
+        // build request...
+        $request  = new Request();
+        $request->header('Authorization', 'Basic ' . $hash)
+                ->header('Content-Type', 'application/x-www-form-urlencoded')
+                ->header('Accept', 'application/json');
+        if ($scope) {
+            $request->data('scope', $scope);
+        }
+        if ($expires) {
+            $request->data('token_expires_in', $expires);
+        }
+        if ($label) {
+            $request->data('label', $label);
+        }
+
+        // ...and, send it
+        $response = $request->post($uri);
+
+        // Response code must be 200 and data must be found in response in order to continue
+        if ($response['code'] != 200 || empty($response['data'])) {
+            $err = "Got non-HTTP-200 and/or empty response from the authentication server";
+            $exception = new Exception($err);
+            $exception->setDetails($response);
+            throw $exception;
+            return;
+        }   
+
+        return json_decode($response['data']);
+    }
+
 }
