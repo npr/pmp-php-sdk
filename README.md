@@ -38,10 +38,6 @@ $options = array(
 print_r ( $doc->query($URN)->submit($options) );
 ```
 
-### See more
-
-[Getting started documentation](https://github.com/publicmediaplatform/pmpdocs/wiki#getting-started)
-
 ## Tests
 
 The SDK unit tests use the TAP protocol (http://testanything.org/) and
@@ -61,3 +57,9 @@ Example:
 
 To debug the tests, set the *REST_AGENT_DEBUG* environment variable to
 a true value (*REST_AGENT_DEBUG=1*).
+
+
+### See more
+
+[Getting started documentation](https://github.com/publicmediaplatform/pmpdocs/wiki#getting-started)
+
