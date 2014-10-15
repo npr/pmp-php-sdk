@@ -55,6 +55,11 @@ class CollectionDocJson
         return new CollectionDocJsonLinks($links, $this->_auth);
     }
 
+    public function getProfile() {
+        $links = $this->links('profile');
+        return $links[0];
+    }
+
     /**
      * Saves the current document
      * @return CollectionDocJson
@@ -194,6 +199,7 @@ class CollectionDocJson
         }
 
         $document = json_decode($response['data']);
+        $document->raw_response = $response;
         return $document;
     }
 
@@ -423,6 +429,9 @@ class CollectionDocJson
      */
     private function extractReadOnlyLinks(\stdClass $document) {
         if (is_object($document)) {
+            if (!isset($this->_readOnlyLinks)) {
+                $this->_readOnlyLinks = new \stdClass;
+            }
             if (!empty($document->links->query)) {
                 $this->_readOnlyLinks->query = $document->links->query;
             }

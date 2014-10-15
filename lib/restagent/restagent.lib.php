@@ -39,6 +39,12 @@ class Request {
     if (defined('CURLOPT_TIMEOUT_MS')) {
         curl_setopt($this->curl, CURLOPT_TIMEOUT_MS, self::DEFAULT_TIMEOUT);
     }
+    elseif (defined('CURLOPT_CONNECTTIMEOUT_MS')) {
+        curl_setopt($this->curl, CURLOPT_CONNECTTIMEOUT_MS, self::DEFAULT_TIMEOUT);
+    }
+    elseif (defined('CURLOPT_CONNECTTIMEOUT')) {
+        curl_setopt($this->curl, CURLOPT_CONNECTTIMEOUT, (self::DEFAULT_TIMEOUT / 1000));
+    }
     curl_setopt($this->curl, CURLOPT_FORBID_REUSE, false); // Connection-pool for CURL
     curl_setopt($this->curl, CURLOPT_ENCODING , "gzip");
     curl_setopt($this->curl, CURLOPT_SSL_VERIFYPEER, true);
@@ -72,7 +78,18 @@ class Request {
    * @param $ms
    */
   public function timeout($ms) {
-    curl_setopt($this->curl, CURLOPT_TIMEOUT_MS, $ms);
+    if (defined('CURLOPT_TIMEOUT_MS')) {
+        curl_setopt($this->curl, CURLOPT_TIMEOUT_MS, $ms);
+    }
+    elseif (defined('CURLOPT_CONNECTTIMEOUT_MS')) {
+        curl_setopt($this->curl, CURLOPT_CONNECTTIMEOUT_MS, $ms);
+    }
+    elseif (defined('CURLOPT_CONNECTTIMEOUT')) {
+        curl_setopt($this->curl, CURLOPT_CONNECTTIMEOUT, ($ms/1000));
+    }
+    else {
+        throw new RestAgentException("Your version of CURL does not define CURLOPT_CONNECTTIMEOUT, CURLOPT_TIMEOUT_MS or CURLOPT_CONNECTTIMEOUT_MS");
+    }    
     return $this;
   }
 

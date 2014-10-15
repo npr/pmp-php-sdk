@@ -62,6 +62,7 @@ class AuthClient
 
         // GET request needs an authorization header with the generated client hash
         $request = new Request();
+        $request->timeout(20000);
         $response = $request->header('Authorization', 'Basic ' . $hash)
                             ->header('Content-Type', 'application/x-www-form-urlencoded')
                             ->data('grant_type', 'client_credentials')
@@ -104,6 +105,7 @@ class AuthClient
 
         // GET request needs an authorization header with the generated client hash
         $request = new Request();
+        $request->timeout(20000);
         $response = $request->header('Authorization', 'Basic ' . $hash)
                             ->delete($uri);
 
@@ -120,6 +122,21 @@ class AuthClient
     }
 
     /**
+     * Returns string for POST to create or revoke credentials, based on $host.
+     * Static method.
+     * @params string $host
+     * @return Object $uri
+     */
+    public static function getCredentialsURI($host) {
+        if ( preg_match('/api-sandbox/', $host)) { 
+            return 'https://publish-sandbox.pmp.io/auth/credentials';
+        }   
+        else {
+            return 'https://publish.pmp.io/auth/credentials';
+        }   
+    }
+
+    /**
      * Create credentials for a given user/pass pair.
      * Static method.
      * @return Object $creds
@@ -131,22 +148,22 @@ class AuthClient
            || 
            !isset($options['password'])
            ||
-           !isset($options['host'])
+           !isset($options['uri'])
         ) {
-            throw new Exception("host and username and password required");
+            throw new Exception("uri and username and password required");
         }
-        $host     = $options['host'];
+        $uri      = $options['uri'];
         $username = $options['username'];
         $password = $options['password'];
         $scope    = isset($options['scope']) ? $options['scope'] : null;
         $expires  = isset($options['expires']) ? $options['expires'] : null;
         $label    = isset($options['label']) ? $options['label'] : null;
         
-        $uri      = $host . '/auth/credentials';
         $hash     = base64_encode($username . ':' . $password);
 
         // build request...
         $request  = new Request();
+        $request->timeout(20000);
         $request->header('Authorization', 'Basic ' . $hash)
                 ->header('Content-Type', 'application/x-www-form-urlencoded')
                 ->header('Accept', 'application/json');
