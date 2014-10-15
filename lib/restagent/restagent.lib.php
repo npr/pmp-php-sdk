@@ -12,11 +12,11 @@ namespace restagent;
  */
 class Request {
 
-  const DEFAULT_TIMEOUT = 5500;
+  const DEFAULT_TIMEOUT = 15500;
 
   private $base_url = '';
   private $data = array();
-    private $rawBodyAlreadySet = false;
+  private $rawBodyAlreadySet = false;
   private $params = array();
   private $headers = array();
   private $method = '';
