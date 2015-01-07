@@ -204,7 +204,7 @@ class CollectionDocJson
 
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
-            $err = "Got unexpected non-HTTP-200 response and/or empty document while retrieving \"$uri\" with access Token: \"$accessToken\"";
+            $err = "Got unexpected non-HTTP-200 response and/or empty document while retrieving \"$uri\"";
             $exception = new Exception($err, $response['code']);
             $exception->setDetails($response);
             throw $exception;
@@ -241,9 +241,8 @@ class CollectionDocJson
 
         // Response code must be 204 (no content)
         if ($response['code'] != 204) {
-            $err = sprintf("Got HTTP response %s, expected 204, for DELETE '%s' with access Token: '%s'",
-                   $response['code'], $uri, $accessToken);
-            $exception = new Exception($err);
+            $err = "Got unexpected non-HTTP-204 response while deleting \"$uri\"";
+            $exception = new Exception($err, $response['code']);
             $exception->setDetails($response);
             throw $exception;
             return null;
@@ -285,8 +284,8 @@ class CollectionDocJson
 
         // Response code must be 200 or 202 in order to be successful
         if ($response['code'] != 200 && $response['code'] != 202) {
-            $err = "Got unexpected non-HTTP-200 and non-HTTP-202 response while sending \"$uri\" with access Token: \"$accessToken\"";
-            $exception = new Exception($err);
+            $err = "Got unexpected non-HTTP-200/202 response while sending \"$uri\"";
+            $exception = new Exception($err, $response['code']);
             $exception->setDetails($response);
             throw $exception;
             return '';
@@ -308,7 +307,12 @@ class CollectionDocJson
      * @return string
      */
     public function getAccessToken($refresh=false) {
-        return $this->_auth->getToken($refresh)->access_token;
+        if ($this->_auth) {
+            return $this->_auth->getToken($refresh)->access_token;
+        }
+        else {
+            return null;
+        }
     }
 
     /**

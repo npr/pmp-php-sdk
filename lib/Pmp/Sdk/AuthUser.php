@@ -118,10 +118,10 @@ class AuthUser
         // do it!
         $response = $request->send($href);
         if ($response['code'] > 299) {
-            $err = new Exception("Got {$response['code']} from $method $href");
-            $err->setHttpCode($response['code']);
-            $err->setDetails($response);
-            throw $err;
+            $err = "Got unexpected {$response['code']} from $method $href";
+            $exception = new Exception($err, $response['code']);
+            $exception->setDetails($response);
+            throw $exception;
         }
         return json_decode($response['data']);
     }
