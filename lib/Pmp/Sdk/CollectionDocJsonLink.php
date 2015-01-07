@@ -20,7 +20,7 @@ class CollectionDocJsonLink
      *
      * @throws Exception
      */
-    public function __construct(\stdClass $link, AuthClient $auth) {
+    public function __construct(\stdClass $link, AuthClient $auth = null) {
         $this->_link = $link;
         $this->_auth = $auth;
 

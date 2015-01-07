@@ -14,7 +14,7 @@ class CollectionDocJsonLinks implements \ArrayAccess
      *    authentication client for the API
      * @throws Exception
      */
-    public function __construct(array $links, AuthClient $auth) {
+    public function __construct(array $links, AuthClient $auth = null) {
 
         // Create link objects for each raw link
         $this->_links = array();

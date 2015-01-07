@@ -25,7 +25,7 @@ class CollectionDocJson
      *    authentication client
      * @throws Exception
      */
-    public function __construct($uri, AuthClient $auth) {
+    public function __construct($uri, AuthClient $auth = null) {
         $this->_uri = trim($uri, '/'); // no trailing slash
         $this->_auth = $auth;
 
@@ -177,13 +177,15 @@ class CollectionDocJson
     private function getDocument($uri) {
         $request = new Request();
 
-        // GET request needs an authorization header with given access token
-        $accessToken = $this->getAccessToken();
-        $response = $request->header('Authorization', 'Bearer ' . $accessToken)
-                            ->get($uri);
+        // include bearer token, if using auth
+        if ($this->_auth) {
+            $bearer = 'Bearer ' . $this->getAccessToken();
+            $request->header('Authorization', $bearer);
+        }
+        $response = $request->get($uri);
 
         // Retry authentication if request was unauthorized
-        if ($response['code'] == 401) {
+        if ($response['code'] == 401 && $this->_auth) {
             $accessToken = $this->getAccessToken(true);
             $response = $request->header('Authorization', 'Bearer ' . $accessToken)
                                 ->get($uri);
