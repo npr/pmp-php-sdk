@@ -41,5 +41,5 @@ ok( $token4 = $auth->getToken(), 'revoke get token' );
 isnt( $token4->access_token, $token->access_token, 'revoke get token - access_token changed' );
 is( $token4->token_type, 'Bearer', 'revoke get token - token_type same' );
 cmp_ok( $token4->token_issue_date, '>', $token->token_issue_date, 'revoke get token - token_issue_date bigger' );
-cmp_ok( $token4->token_expires_in, '>', $token->token_expires_in, 'revoke get token - token_expires_in bigger' );
+cmp_ok( $token4->token_expires_in, '>', 0, 'revoke get token - token_expires_in bigger' );
 $token4 = clone($token4);

@@ -32,12 +32,12 @@ cmp_ok( $items->total(), '>', 4, 'query items - total' );
 cmp_ok( $items->numPages(), '>', 1, 'query items - total pages' );
 
 // spot check the items
-$page_one_guids = array();
+$page_one = array();
 foreach ($items->toArray() as $idx => $item) {
     ok( $item, "query items - $idx not null" );
     ok( $item->attributes->guid, "query items - $idx guid" );
     ok( $item->attributes->title, "query items - $idx title" );
-    $page_one_guids[$item->attributes->guid] = true;
+    $page_one[$item->attributes->guid] = true;
 }
 
 // TODO: more extensive iteration tests
