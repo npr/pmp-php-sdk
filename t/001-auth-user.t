@@ -2,7 +2,8 @@
 <?php
 require_once 'Common.php';
 require_once 'lib/Pmp/Sdk/AuthUser.php';
-use \Pmp\Sdk\AuthUser   as AuthUser;
+
+use \Pmp\Sdk\AuthUser as AuthUser;
 
 $TEST_LABEL = 'pmp-php-sdk-test';
 

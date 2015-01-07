@@ -21,10 +21,10 @@ class AuthUser
     const URN_LIST   = 'urn:collectiondoc:form:listcredentials';
     const URN_CREATE = 'urn:collectiondoc:form:createcredentials';
     const URN_REMOVE = 'urn:collectiondoc:form:removecredentials';
-    const TIMEOUT_MS = 20000;
+    const TIMEOUT_MS = 5000;
 
     private $_home;
-    private $_basic_auth;
+    private $_user_auth;
 
     /**
      * Constructor
@@ -35,7 +35,7 @@ class AuthUser
      */
     public function __construct($host, $username, $password) {
         $this->_home = new \Pmp\Sdk\CollectionDocJson($host, null);
-        $this->_basic_auth = base64_encode($username . ':' . $password);
+        $this->_user_auth = 'Basic ' . base64_encode($username . ':' . $password);
     }
 
     /**
@@ -102,7 +102,7 @@ class AuthUser
         $request = new Request();
         $request->method($method);
         $request->timeout(self::TIMEOUT_MS);
-        $request->header('Authorization', 'Basic ' . $this->_basic_auth);
+        $request->header('Authorization', $this->_user_auth);
         $request->header('Accept', 'application/json');
 
         // optional POST data
