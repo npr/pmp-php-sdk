@@ -426,7 +426,14 @@ class CollectionDocJson
      * @param \stdClass $document
      * @return CollectionDocJson
      */
-    public function setDocument(\stdClass $document) {
+    public function setDocument($document) {
+        if (is_array($document)) {
+            $document = json_decode(json_encode($document)); // auto-convert
+        }
+        if (!is_a($document, stdClass)) {
+            throw new Exception('Invalid non-object document');
+        }
+
         $this->clearDocument();
 
         if (is_object($document)) {
