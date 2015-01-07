@@ -54,7 +54,7 @@ is( $next_page->pageNum(), 2, 'query next - page number' );
 foreach ($next_page->toArray() as $idx => $item) {
     ok( $item, "query next - $idx not null" );
     ok( $item->attributes->guid, "query next - $idx guid" );
-    ok( !$page_one[$item->attributes->guid], "query next - $idx not in page 1" );
+    ok( !isset($page_one[$item->attributes->guid]), "query next - $idx not in page 1" );
 }
 
 // query 404
