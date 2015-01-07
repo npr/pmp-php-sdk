@@ -20,12 +20,38 @@ class CollectionDocJsonItems implements \ArrayAccess
     }
 
     /**
+     * Number of items in this page
+     * @return int
+     */
+    public function count() {
+        return count($this->_items);
+    }
+
+    /**
+     * Total number of items
+     * @return int
+     */
+    public function total() {
+        $link = $this->_document->navigation('self');
+        return ($link && isset($link->totalitems)) ? $link->totalitems : null;
+    }
+
+    /**
      * Total number of pages
      * @return int
      */
     public function numPages() {
-        $links = $this->_document->links('self');
-        return $links[0]->totalpages;
+        $link = $this->_document->navigation('self');
+        return ($link && isset($link->totalpages)) ? $link->totalpages : null;
+    }
+
+    /**
+     * Current page number
+     * @return int
+     */
+    public function pageNum() {
+        $link = $this->_document->navigation('self');
+        return ($link && isset($link->pagenum)) ? $link->pagenum : null;
     }
 
     /**

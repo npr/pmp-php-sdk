@@ -159,7 +159,7 @@ class CollectionDocJson
     /**
      * Gets a default "auth" relation link that has the given URN
      * @param string $urn
-     *    the URN associated with the desired "edit" link
+     *    the URN associated with the desired "auth" link
      * @return CollectionDocJsonLink
      */
     public function auth($urn) {
@@ -176,6 +176,28 @@ class CollectionDocJson
             }
         }
         return ($urnAuthLink) ? $urnAuthLink : new CollectionDocJsonLink(new \stdClass, $this->_auth);
+    }
+
+    /**
+     * Gets the "navigation" relation link that has the given URN
+     * @param string $urn
+     *    the URN associated with the desired "navigation" link
+     * @return CollectionDocJsonLink
+     */
+    public function navigation($urn) {
+        $urnNavLink = null;
+        $navLinks = $this->links('navigation');
+
+        // Lookup rels by given URN if query links found in document
+        if (!empty($navLinks)) {
+            $urnNavLinks = $navLinks->rels(array($urn));
+
+            // Use the first link found for the given URN if found
+            if (!empty($urnNavLinks[0])) {
+                $urnNavLink = $urnNavLinks[0];
+            }
+        }
+        return ($urnNavLink) ? $urnNavLink : new CollectionDocJsonLink(new \stdClass, $this->_auth);
     }
 
     /**
