@@ -477,14 +477,3 @@ class CollectionDocJson
     }
 
 }
-
-
-
-function pmp_backtrace() {
-    $trace = debug_backtrace();
-    foreach ($trace as &$t) {
-        unset($t['args']);
-        unset($t['object']);
-    }
-    return $trace;
-}
