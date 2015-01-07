@@ -157,6 +157,27 @@ class CollectionDocJson
         return ($urnEditLink) ? $urnEditLink : new CollectionDocJsonLink(new \stdClass, $this->_auth);
     }
 
+    /**
+     * Gets a default "auth" relation link that has the given URN
+     * @param string $urn
+     *    the URN associated with the desired "edit" link
+     * @return CollectionDocJsonLink
+     */
+    public function auth($urn) {
+        $urnAuthLink = null;
+        $authLinks = $this->links('auth');
+
+        // Lookup rels by given URN if auth links found in document
+        if (!empty($authLinks)) {
+            $urnAuthLinks = $authLinks->rels(array($urn));
+
+            // Use the first link found for the given URN if found
+            if (!empty($urnAuthLinks[0])) {
+                $urnAuthLink = $urnAuthLinks[0];
+            }
+        }
+        return ($urnAuthLink) ? $urnAuthLink : new CollectionDocJsonLink(new \stdClass, $this->_auth);
+    }
 
     /**
      * Uploads the given media file and returns its new URL
