@@ -8,7 +8,6 @@ require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
 require_once(dirname(__FILE__) . '/../../guzzle.phar');
 
 use restagent\Request as Request;
-use Guzzle\Http\Client as Client;
 use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
 
 
@@ -180,15 +179,6 @@ class CollectionDocJson
     }
 
     /**
-     * Uploads the given media file and returns its new URL
-     * @param $filepath
-     * @return string
-     */
-    public function upload($filepath) {
-        return $this->postFile($this->getFilesUri(), $filepath);
-    }
-
-    /**
      * Does a GET operation on the given URI and returns a JSON object
      * @param $uri
      *    the URI to use in the request
@@ -312,54 +302,6 @@ class CollectionDocJson
     }
 
     /**
-     * Does a POST operation on the given URI using the given file path. Returns the URL of the upload file.
-     * @param $uri
-     *    the URI to use in the request
-     * @param $file
-     *    the file path to use for uploading
-     * @return string
-     * @throws Exception
-     */
-    private function postFile($uri, $file) {
-
-        // Using Guzzle instead of Restagent because of file stream upload support
-        $request = new Client();
-
-        // POST request needs an authorization header with given access token and
-        // the multipart form-data body
-        $accessToken = $this->getAccessToken();
-        $response = $request->post($uri, array(
-            'Authorization' => 'Bearer ' . $accessToken
-        ))->addPostFile('submission', $file)->send();
-
-        // Retry authentication if request was unauthorized
-        if ($response->getStatusCode() == 401) {
-            $accessToken = $this->getAccessToken(true);
-            $response = $request->post($uri, array(
-                'Authorization' => 'Bearer ' . $accessToken
-            ))->addPostFile('submission', $file)->send();
-        }
-
-        // Response code must be 202 in order to be successful
-        if ($response->getStatusCode() != 202) {
-            $err = "Got unexpected non-HTTP-202 response while sending \"$uri\" with access Token: \"$accessToken\"";
-            $exception = new Exception($err);
-            $exception->setDetails($response);
-            throw $exception;
-            return '';
-        }
-
-        $body = $response->getBody();
-        if (!empty($body)) {
-            $body = json_decode($body);
-            if (!empty($body->url)) {
-                return $body->url;
-            }
-        }
-        return '';
-    }
-
-    /**
      * Gets an access token from the authentication client
      * @param bool $refresh
      *   whether to refresh the token
@@ -404,45 +346,6 @@ class CollectionDocJson
             // 48 bits for "node"
             mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
         );
-    }
-
-    /**
-     * Does a POST operation on the given URI to get a new random guid
-     * @param $uri
-     *    the URI to use in the request
-     * @return string
-     * @throws Exception
-     */
-    private function getGuid($uri) {
-        $request = new Request();
-
-        // POST request needs an authorization header with given access token
-        $accessToken = $this->getAccessToken();
-        $response = $request->header('Content-Type', 'application/json')
-                            ->header('Authorization', 'Bearer ' . $accessToken)
-                            ->body('{"count":1}')
-                            ->post($uri);
-
-        // Retry authentication if request was unauthorized
-        if ($response['code'] == 401) {
-            $accessToken = $this->getAccessToken(true);
-            $response = $request->header('Content-Type', 'application/json')
-                                ->header('Authorization', 'Bearer ' . $accessToken)
-                                ->body('{"count":1}')
-                                ->post($uri);
-        }
-
-        // Response code must be 200 in order to be successful
-        if ($response['code'] != 200) {
-            $err = "Got unexpected non-HTTP-200 response while POSTing to \"$uri\" with access Token: \"$accessToken\"";
-            $exception = new Exception($err);
-            $exception->setDetails($response);
-            throw $exception;
-            return '';
-        }
-
-        $data = json_decode($response['data']);
-        return $data->guids[0];
     }
 
     /**
@@ -534,19 +437,6 @@ class CollectionDocJson
         }
 
         return '';
-    }
-
-    /**
-     * Get the URI for uploading files
-     * @return string
-     */
-    public function getFilesUri() {
-        $filesLink = $this->edit("urn:collectiondoc:form:mediaupload");
-        if (!empty($filesLink->href)) {
-            return $filesLink->href;
-        } else {
-            return '';
-        }
     }
 
     /**
