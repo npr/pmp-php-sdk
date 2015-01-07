@@ -12,11 +12,11 @@ namespace restagent;
  */
 class Request {
 
-  const DEFAULT_TIMEOUT = 15500;
+  const DEFAULT_TIMEOUT = 5500;
 
   private $base_url = '';
   private $data = array();
-  private $rawBodyAlreadySet = false;
+    private $rawBodyAlreadySet = false;
   private $params = array();
   private $headers = array();
   private $method = '';
@@ -37,19 +37,13 @@ class Request {
     curl_setopt($this->curl, CURLOPT_HEADER, 1);
     curl_setopt($this->curl, CURLOPT_FOLLOWLOCATION, 1);
     if (defined('CURLOPT_TIMEOUT_MS')) {
-        curl_setopt($this->curl, CURLOPT_TIMEOUT_MS, self::DEFAULT_TIMEOUT);
-    }
-    elseif (defined('CURLOPT_CONNECTTIMEOUT_MS')) {
-        curl_setopt($this->curl, CURLOPT_CONNECTTIMEOUT_MS, self::DEFAULT_TIMEOUT);
-    }
-    elseif (defined('CURLOPT_CONNECTTIMEOUT')) {
-        curl_setopt($this->curl, CURLOPT_CONNECTTIMEOUT, (self::DEFAULT_TIMEOUT / 1000));
+      curl_setopt($this->curl, CURLOPT_TIMEOUT_MS, self::DEFAULT_TIMEOUT);
     }
     curl_setopt($this->curl, CURLOPT_FORBID_REUSE, false); // Connection-pool for CURL
     curl_setopt($this->curl, CURLOPT_ENCODING , "gzip");
     curl_setopt($this->curl, CURLOPT_SSL_VERIFYPEER, true);
     if (getenv('REST_AGENT_DEBUG')) {
-        curl_setopt($this->curl, CURLOPT_VERBOSE, true);
+      curl_setopt($this->curl, CURLOPT_VERBOSE, true);
     }
     $pemPath = __DIR__ . '/cacert.pem';
     curl_setopt($this->curl, CURLOPT_CAINFO, $pemPath);
@@ -78,18 +72,7 @@ class Request {
    * @param $ms
    */
   public function timeout($ms) {
-    if (defined('CURLOPT_TIMEOUT_MS')) {
-        curl_setopt($this->curl, CURLOPT_TIMEOUT_MS, $ms);
-    }
-    elseif (defined('CURLOPT_CONNECTTIMEOUT_MS')) {
-        curl_setopt($this->curl, CURLOPT_CONNECTTIMEOUT_MS, $ms);
-    }
-    elseif (defined('CURLOPT_CONNECTTIMEOUT')) {
-        curl_setopt($this->curl, CURLOPT_CONNECTTIMEOUT, ($ms/1000));
-    }
-    else {
-        throw new RestAgentException("Your version of CURL does not define CURLOPT_CONNECTTIMEOUT, CURLOPT_TIMEOUT_MS or CURLOPT_CONNECTTIMEOUT_MS");
-    }    
+    curl_setopt($this->curl, CURLOPT_TIMEOUT_MS, $ms);
     return $this;
   }
 
