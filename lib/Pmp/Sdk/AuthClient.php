@@ -86,8 +86,8 @@ class AuthClient
      */
     private function makeRequest($urn, $data = null) {
         $link = $this->_home->auth($urn);
-        $href = $link->href;
-        if (!$href && $link->{'href-template'}) {
+        $href = property_exists($link, 'href') ? $link->href : null;
+        if (!$href && property_exists($link, 'href-template')) {
             $parser = new UriTemplate();
             $href = $parser->expand($link->{'href-template'}, $data);
         }

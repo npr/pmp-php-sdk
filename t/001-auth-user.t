@@ -22,6 +22,9 @@ is( $cred->label, $TEST_LABEL, 'create cred - label' );
 // list credentials
 ok( $list = $user->listCredentials(), 'list creds' );
 ok( count($list->clients) > 0, 'list creds - count' );
+
+// search for cred
+$my_cred = false;
 foreach ($list->clients as $list_client) {
   if ($list_client->client_id == $cred->client_id) {
     $my_cred = $list_client;
@@ -37,6 +40,9 @@ is( $my_cred->label, $TEST_LABEL, 'list creds - label' );
 // remove credential
 is( $user->removeCredential($cred->client_id), true, 'remove cred' );
 ok( $relist = $user->listCredentials(), 'remove cred - relist' );
+
+// search for removed cred
+$found_cred = false;
 foreach ($relist->clients as $list_client) {
   if ($list_client->client_id == $cred->client_id) {
     $found_cred = $list_client;
