@@ -25,7 +25,7 @@ if (!$host || !$user || !$pass || !$id || !$secret) {
   plan('skip_all', 'missing required PMP env variables: ' . $missing);
 }
 else {
-  plan(2);
+  plan(4);
 }
 
 // check user connection
