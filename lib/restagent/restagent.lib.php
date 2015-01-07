@@ -145,7 +145,7 @@ class Request {
     $this->headers = array();
     $this->method = '';
   }
-  
+
   /**
    * Backup PHP impl. for when PECL http_parse_headers() function is not available
    *
@@ -158,7 +158,7 @@ class Request {
     $fields = explode("\r\n", preg_replace('/\x0D\x0A[\x09\x20]+/', ' ', $header));
     foreach( $fields as $field ) {
       if( preg_match('/([^:]+): (.+)/m', $field, $match) ) {
-        $match[1] = preg_replace('/(?<=^|[\x09\x20\x2D])./e', 'strtoupper("\0")', strtolower(trim($match[1])));
+        $match[1] = preg_replace_callback('/(?<=^|[\x09\x20\x2D])./', function($matches){ return strtoupper($matches[0]); }, strtolower(trim($match[1])));
         if( isset($retVal[$match[1]]) ) {
           $retVal[$match[1]] = array($retVal[$match[1]], $match[2]);
         } else {
@@ -197,7 +197,7 @@ class Request {
       throw new RestAgentException("You should not set content-type for HTTP POST that is not either
                                    'application/x-www-form-urlencoded' or 'multipart/form-data'");
     }
-    
+
     return $this->http_request('POST', $uri, $this->data);
   }
 
@@ -241,12 +241,12 @@ class Request {
       $data = '';
     } else {
       if (is_array($_data)) {
-        $data = http_build_query($_data); 
+        $data = http_build_query($_data);
       } else {
         $data = $_data;
       }
     }
-    
+
     $http_method = strtoupper($http_method);
 
     if ($http_method == 'GET' && !empty($this->params) && is_array($this->params)) {
@@ -289,7 +289,7 @@ class Request {
     }
 
     $this->reset();
-    
+
     //$this->check_status($response, $full_url);
 
     $header_size = curl_getinfo($this->curl, CURLINFO_HEADER_SIZE);
@@ -366,9 +366,9 @@ class Request {
   public function body($rawdata) {
     $this->rawBodyAlreadySet = true;
     $this->data = $rawdata;
-    return $this;      
+    return $this;
   }
-  
+
   /**
    * Set a variable (query param or a data var)
    */
@@ -377,7 +377,7 @@ class Request {
       if ($this->rawBodyAlreadySet) {
         throw new RestAgentException("Raw HTTP Body was previously set. Cannot alter it with key/value form data");
       }
-      
+
       $args = func_get_arg(0);
       if (!is_array($args)) {
         throw new RestAgentException("If you only pass one argument to data() it must be an array");
