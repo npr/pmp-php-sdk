@@ -9,6 +9,8 @@ A set of PHP classes, providing an API client for the [Public Media Platform](ht
 Copy this repo into your project directory, and require the classes you need at
 the top of your files.  TODO: composer/packagist.
 
+The only requirement is a PHP version >= 5.3.
+
 ## Usage
 
 You can find some more in-depth examples in the [PMP API Docs](http://support.pmp.io/docs).  But if you've generated an oauth client using the [Support app](http://support.pmp.io/login), you can use the SDK as follows...
