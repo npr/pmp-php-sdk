@@ -18,25 +18,33 @@ class CollectionDocJson
     private $_readOnlyLinks;
 
     /**
-     * @param string $uri
-     *    URI for a Collection.doc+json document
+     * @param string|stdClass $uri_or_obj
+     *    URI for a Collection.doc+json document, or the doc object itself
      * @param AuthClient $auth
      *    authentication client
      * @throws Exception
      */
-    public function __construct($uri, AuthClient $auth = null) {
-        $this->_uri = trim($uri, '/'); // no trailing slash
+    public function __construct($uri_or_obj, AuthClient $auth = null) {
         $this->_auth = $auth;
 
-        // Retrieve the document from the given URL. Document is never empty. It will throw exception if it is empty.
-        $document = $this->getDocument($uri);
-
-        // Extract read-only links needed by the client
-        $this->extractReadOnlyLinks($document);
-
-        // Map the document properties to this object's properties
-        $this->setDocument($document);
+        // set doc or load from uri
+        if (is_string($uri_or_obj)) {
+            $this->_uri = trim($uri_or_obj, '/');
+            $document = $this->getDocument($uri_or_obj);
+            $this->extractReadOnlyLinks($document);
+            $this->setDocument($document);
+        }
+        else {
+            $this->_uri = $uri_or_obj->href;
+            $this->extractReadOnlyLinks($uri_or_obj);
+            $this->setDocument($uri_or_obj);
+        }
     }
+
+    /**
+     *
+     *
+     */
 
     /**
      * Gets the set of links from the document that are associated with the given link relation
@@ -109,7 +117,7 @@ class CollectionDocJson
         if (!empty($this->items)) {
             $items = $this->items;
         }
-        return new CollectionDocJsonItems($items, $this);
+        return new CollectionDocJsonItems($items, $this, $this->_auth);
     }
 
     /**

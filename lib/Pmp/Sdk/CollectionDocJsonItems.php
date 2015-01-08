@@ -14,9 +14,13 @@ class CollectionDocJsonItems implements \ArrayAccess
      * @param CollectionDocJson $document
      *    the document object that contains this items object
      */
-    public function __construct(array $items, CollectionDocJson $document) {
+    public function __construct(array $items, CollectionDocJson $document, AuthClient $auth = null) {
         $this->_document = $document;
-        $this->_items = $items;
+        $this->_items = array();
+        foreach ($items as $item) {
+            $item_doc = new CollectionDocJson($item, $auth);
+            array_push($this->_items, $item_doc);
+        }
     }
 
     /**
