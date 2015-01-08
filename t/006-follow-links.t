@@ -20,9 +20,11 @@ ok( $doc = $home->query('urn:collectiondoc:query:docs')->submit($opts), 'query d
 is( count($doc->items), 1, 'query docs - count items' );
 
 // load the creator link
-$first_item = $doc->items()[0];
-is( count($first_item->links('creator')), 1, 'links - has creator' );
-ok( $creator = $first_item->links('creator')[0]->follow(), 'links - follow creator' );
-is( $creator->href, $first_item->links('creator')[0]->href, 'links - creator href' );
+$items = $doc->items();
+$first_item = $items[0];
+$creator_links = $first_item->links('creator');
+is( count($creator_links), 1, 'links - has creator' );
+ok( $creator = $creator_links[0]->follow(), 'links - follow creator' );
+is( $creator->href, $creator_links[0]->href, 'links - creator href' );
 ok( $creator->attributes->guid, 'links - creator guid' );
 ok( $creator->attributes->title, 'links - creator title' );
