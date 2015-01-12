@@ -49,6 +49,11 @@ class CollectionDocJson
         return new CollectionDocJsonLinks($links, $this->_auth);
     }
 
+    public function getProfile() {
+        $links = $this->links('profile');
+        return $links[0];
+    }
+
     /**
      * Saves the current document
      * @return CollectionDocJson
@@ -374,22 +379,11 @@ class CollectionDocJson
     }
 
     /**
-     * Creates a new guid, either from the API, or by generating a compatible UUID
-     * @param bool $useApi
-     *     whether to go get the guid from the API first
+     * Creates a new guid by generating a compatible UUID V4
+     *
      * @return string
      */
-    public function createGuid($useApi=false) {
-        if ($useApi) {
-            try {
-                $guid = $this->getGuid($this->getGuidsUri());
-                if ($guid) {
-                    return $guid;
-                }
-            } catch (\Exception $e) {
-                // do nothing - just generate a UUID instead
-            }
-        }
+    public function createGuid() {
         return $this->generateUuid();
     }
 
@@ -477,6 +471,9 @@ class CollectionDocJson
      */
     private function extractReadOnlyLinks(\stdClass $document) {
         if (is_object($document)) {
+            if (!isset($this->_readOnlyLinks)) {
+                $this->_readOnlyLinks = new \stdClass;
+            }
             if (!empty($document->links->query)) {
                 $this->_readOnlyLinks->query = $document->links->query;
             }
@@ -568,19 +565,6 @@ class CollectionDocJson
     }
 
     /**
-     * Get the URI for retrieving guids
-     * @return string
-     */
-    public function getGuidsUri() {
-        $guidsLink = $this->query("urn:collectiondoc:query:guids");
-        if (!empty($guidsLink->href)) {
-            return $guidsLink->href;
-        } else {
-            return '';
-        }
-    }
-
-    /**
      * Get the URI for uploading files
      * @return string
      */
@@ -624,7 +608,6 @@ class CollectionDocJson
         }
         return $results;
     }
-
 
 }
 

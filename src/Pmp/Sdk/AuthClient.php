@@ -65,7 +65,8 @@ class AuthClient
                 ->setPostField('grant_type', 'client_credentials')
                 ->setHeader('Content-Type', 'application/x-www-form-urlencoded')
                 ->send();
-        } catch (\Guzzle\Http\Exception\BadResponseException $e) {
+        }
+        catch (\Guzzle\Http\Exception\BadResponseException $e) {
             $response = $e->getResponse();
         }
 
@@ -125,4 +126,79 @@ class AuthClient
         $this->accessToken = null;
         return true;
     }
+
+    /**
+     * Returns string for POST to create or revoke credentials, based on $host.
+     * Static method.
+     * @params string $host
+     * @return Object $uri
+     */
+    public static function getCredentialsURI($host) {
+        if ( preg_match('/api-sandbox/', $host)) {
+            return 'https://publish-sandbox.pmp.io/auth/credentials';
+        }
+        else {
+            return 'https://publish.pmp.io/auth/credentials';
+        }
+    }
+
+    /**
+     * Create credentials for a given user/pass pair.
+     * Static method.
+     * @return Object $creds
+     * @throws Exception
+     */
+    public static function createCredentials(array $options) {
+        if (
+           !isset($options['username'])
+           ||
+           !isset($options['password'])
+           ||
+           !isset($options['uri'])
+        ) {
+            throw new Exception("uri and username and password required");
+        }
+        $uri      = $options['uri'];
+        $username = $options['username'];
+        $password = $options['password'];
+        $scope    = isset($options['scope']) ? $options['scope'] : null;
+        $expires  = isset($options['expires']) ? $options['expires'] : null;
+        $label    = isset($options['label']) ? $options['label'] : null;
+
+        $hash     = base64_encode($username . ':' . $password);
+
+        // build request...
+        $request = new Client();
+        try {
+            $request->post($uri)
+                ->setHeader('Authorization', 'Basic ' . $hash)
+                ->setHeader('Content-Type', 'application/x-www-form-urlencoded')
+                ->setHeader('Accept', 'application/json');
+            if ($scope) {
+                $request->setPostField('scope', $scope);
+            }
+            if ($expires) {
+                $request->setPostField('token_expires_in', $expires);
+            }
+            if ($label) {
+                $request->setPostField('label', $label);
+            }
+            $response = $request->send();
+        }
+        catch (\Guzzle\Http\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+        }
+
+        // Response code must be 200 and data must be found in response in order to continue
+        if ($response->getStatusCode() != 200 || empty($response->getBody())) {
+            $err = "Got non-HTTP-200 and/or empty response from the authentication server";
+            $exception = new Exception($err);
+            $exception->setDetails($response->getInfo());
+            throw $exception;
+            return;
+        }
+
+        return json_decode($response->getBody(true));
+    }
+
 }
