@@ -9,7 +9,7 @@ $ARTS_TOPIC = '89944632-fe7c-47df-bc2c-b2036d823f98';
 $PMP_USER = 'af676335-21df-4486-ab43-e88c1b48f026';
 
 // plan and connect
-list($host, $client_id, $client_secret) = pmp_client_plan(45);
+list($host, $client_id, $client_secret) = pmp_client_plan(38);
 ok( $auth = new AuthClient($host, $client_id, $client_secret), 'instantiate new AuthClient' );
 
 // fetch the home doc
@@ -67,23 +67,4 @@ try {
 }
 catch (Exception $ex) {
     is( $ex->getCode(), 404, 'query 404 - exception thrown' );
-}
-
-// query via shortcut
-$opts = array('guid' => $ARTS_TOPIC . ';' . $PMP_USER);
-ok( $doc = CollectionDocJson::search($host, $auth, $opts), 'query by shortcut' );
-is( count($doc->items), 2, 'query by shortcut - count items' );
-is( count($doc->links->item), 2, 'query by shortcut - count item links' );
-is( $doc->items()->pageNum(), 1, 'query by shortcut - page number' );
-is( $doc->items()->totalItems(), 2, 'query by shortcut - total' );
-is( $doc->items()->totalPages(), 1, 'query by shortcut - total pages' );
-
-// query 404 via shortcut
-try {
-    $opts = array('profile' => 'foobar');
-    $doc = CollectionDocJson::search($host, $auth, $opts);
-    is( $doc, null, '404 by shortcut - returns null instead of throwing up');
-}
-catch (Exception $ex) {
-    fail('404 by shortcut - returns null instead of throwing up');
 }

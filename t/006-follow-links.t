@@ -1,8 +1,6 @@
 #!/usr/bin/env php
 <?php
 require_once 'Common.php';
-require_once 'lib/Pmp/Sdk/AuthClient.php';
-require_once 'lib/Pmp/Sdk/CollectionDocJson.php';
 
 use \Pmp\Sdk\AuthClient as AuthClient;
 use \Pmp\Sdk\CollectionDocJson as CollectionDocJson;

@@ -8,7 +8,7 @@ use \Pmp\Sdk\CollectionDocJson as CollectionDocJson;
 $ARTS_TOPIC = '89944632-fe7c-47df-bc2c-b2036d823f98';
 
 // plan and connect
-list($host, $client_id, $client_secret) = pmp_client_plan(16);
+list($host, $client_id, $client_secret) = pmp_client_plan(11);
 ok( $auth = new AuthClient($host, $client_id, $client_secret), 'instantiate new AuthClient' );
 
 // fetch the home doc
@@ -33,19 +33,4 @@ try {
 }
 catch (Exception $ex) {
     is( $ex->getCode(), 404, 'fetch 404 - exception thrown' );
-}
-
-// fetch via the query shortcut
-ok( $doc = CollectionDocJson::search($host, $auth, array('guid' => $ARTS_TOPIC)), 'fetch by shortcut' );
-is( $doc->attributes->guid, $ARTS_TOPIC, 'fetch by shortcut - guid' );
-is( $doc->attributes->title, 'Arts', 'fetch by shortcut - title' );
-like( $doc->getProfile()->href, '/profiles\/topic$/', 'fetch by shortcut - profile link' );
-
-// fetch 404 via the query shortcut
-try {
-    $doc = CollectionDocJson::search($host, $auth, array('guid' => 'foobar'));
-    is( $doc, null, '404 by shortcut - returns null instead of throwing up');
-}
-catch (Exception $ex) {
-    fail('404 by shortcut - returns null instead of throwing up');
 }
