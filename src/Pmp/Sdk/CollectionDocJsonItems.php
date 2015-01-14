@@ -1,43 +1,65 @@
 <?php
 namespace Pmp\Sdk;
 
+/**
+ * PMP CollectionDoc items
+ *
+ * An array-ish list of CollectionDoc items
+ *
+ */
 class CollectionDocJsonItems extends \ArrayObject
 {
-    public $_document;
+    private $_document;
 
     /**
-     * @param array $items
-     *    the raw items array
-     * @param CollectionDocJson $document
-     *    the document object that contains this items object
+     * Constructor
+     *
+     * @param array(stdClass) $items the raw items
+     * @param CollectionDocJson $doc the container document
      */
-    public function __construct(array $items, CollectionDocJson $document) {
-        $this->_document = $document;
+    public function __construct(array $items, CollectionDocJson $doc) {
+        $this->_document = $doc;
 
+        // init documents
         $itemDocs = array();
         foreach ($items as $item) {
-            $itemDoc = clone $document;
+            $itemDoc = clone $doc;
             $itemDoc->setDocument($item);
             $itemDocs[] = $itemDoc;
         }
 
+        // impersonate array
         parent::__construct($itemDocs);
     }
 
     /**
-     * Total number of pages
-     * @return int
+     * Total items in the parent doc
+     *
+     * @return int the total
      */
-    public function numPages() {
-        $links = $this->_document->links('self');
-        return $links[0]->totalpages;
+    public function totalItems() {
+        $link = $this->_document->navigation('self');
+        return ($link && isset($link->totalitems)) ? $link->totalitems : 0;
     }
 
     /**
-     * Gets the page iterator
-     * @return PageIterator
+     * Total pages in the parent doc
+     *
+     * @return int the total number of pages
      */
-    public function getPageIterator() {
-        return new PageIterator($this);
+    public function totalPages() {
+        $link = $this->_document->navigation('self');
+        return ($link && isset($link->totalpages)) ? $link->totalpages : 1;
     }
+
+    /**
+     * Current page of these items in the parent doc
+     *
+     * @return int the page number
+     */
+    public function pageNum() {
+        $link = $this->_document->navigation('self');
+        return ($link && isset($link->pagenum)) ? $link->pagenum : 1;
+    }
+
 }

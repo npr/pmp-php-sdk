@@ -1,166 +1,79 @@
 <?php
 namespace Pmp\Sdk;
 
-class PageIterator
+/**
+ * CollectionDoc Page Iterator
+ *
+ * An iterator for ALL the items attached to a doc
+ *
+ */
+class PageIterator implements \Iterator
 {
-    private $_items;
-    private $_navigationLinks;
+    private $_initialDoc;
+    private $_lastPageNumber;
+    private $_currentPageDoc;
 
     /**
-     * @param CollectionDocJsonItems $items
-     *    the items object that contains this iterator
+     * Constructor
+     *
+     * @param CollectionDocJson $doc the parent document to iterate over
+     * @param int $pageLimit the maximum number of pages to load
      */
-    public function __construct(CollectionDocJsonItems $items) {
-        $this->_items = $items;
-        $this->_navigationLinks = $this->_items->_document->links('navigation');
-    }
+    public function __construct(CollectionDocJson $doc, $pageLimit = null) {
+        $this->_initialDoc = $doc;
+        $this->_currentPageDoc = $doc;
 
-    /**
-     * Ordinal of the current page
-     * @return int
-     */
-    public function currentPageNum() {
-        $links = $this->_navigationLinks->rels(array('self'));
-        if (!empty($links[0])) {
-            return $links[0]->pagenum;
-        } else {
-            return 0;
-        }
-    }
-    
-    /**
-     * Number of total results availabe
-     * @return int
-     */
-    public function totalItems() {
-    	$links = $this->_navigationLinks->rels(array('self'));
-    	if (!empty($links[0])) {
-    		return $links[0]->totalitems;
-    	} else {
-    		return 0;
-    	}
-    }
-    
-    /**
-     * Number of total pages availabe
-     * @return int
-     */
-    public function totalPages() {
-    	$links = $this->_navigationLinks->rels(array('self'));
-    	if (!empty($links[0])) {
-    		return $links[0]->totalpages;
-    	} else {
-    		return 0;
-    	}
-    }
-    
-    /**
-     * The offset to use to get the next page of items
-     * Returns -1, if at the end of the results
-     * @return int
-     */
-    public function nextOffset() {
-    	$links = $this->_navigationLinks->rels(array('next'));
-    	if (!empty($links[0])) {
-    		$nextPageNum =  $links[0]->pagenum;
-    		$numItemsReturned = count($this->_items);
-    		return ($nextPageNum - 1) * $numItemsReturned;
-    	} else {
-    		return -1;
-    	}
-    }
-    
-    /**
-     * The offset to use to get the previous page of items
-     * Returns -1, if at the beginning of the results
-     * @return int
-     */
-    public function previousOffset() {
-    	$links = $this->_navigationLinks->rels(array('prev'));
-    	if (!empty($links[0])) {
-    		$prevPageNum =  $links[0]->pagenum;
-    		$numItemsReturned = count($this->_items);
-    		return ($prevPageNum - 1) * $numItemsReturned;
-    	} else {
-    		return -1;
-    	}
-    }
-    
-    /**
-     * Items on the current page
-     * @return CollectionDocJsonItems
-     */
-    public function current() {
-        return $this->_items;
-    }
-
-    /**
-     * Determine if there is a next page
-     * @return bool
-     */
-    public function hasNext() {
-        $links = $this->_navigationLinks->rels(array('next'));
-        return (!empty($links[0]));
-    }
-
-    /**
-     * Determine if there is a previous page
-     * @return bool
-     */
-    public function hasPrevious() {
-        $links = $this->_navigationLinks->rels(array('prev'));
-        return (!empty($links[0]));
-    }
-
-    /**
-     * Items on the next page
-     * @return CollectionDocJsonItems
-     */
-    public function next() {
-        $links = $this->_navigationLinks->rels(array('next'));
-        if (!empty($links[0])) {
-            return $links[0]->follow()->items();
-        } else {
-            return new CollectionDocJsonItems(array(), null);
+        // stop loading at the initial-doc-pagenum + limit
+        if ($pageLimit) {
+            $this->_lastPageNumber = $this->key() + ($pageLimit - 1);
         }
     }
 
     /**
-     * Items on the previous page
-     * @return CollectionDocJsonItems
+     * Back to the first page (already loaded)
      */
-    public function previous() {
-        $links = $this->_navigationLinks->rels(array('prev'));
-        if (!empty($links[0])) {
-            return $links[0]->follow()->items();
-        } else {
-            return new CollectionDocJsonItems(array(), null);
+    function rewind() {
+        $this->_currentPageDoc = $this->_initialDoc;
+    }
+
+    /**
+     * Get the current page
+     *
+     * @return CollectionDocJsonItems the current items
+     */
+    function current() {
+        return $this->_currentPageDoc->items();
+    }
+
+    /**
+     * Get the current page number
+     *
+     * @return int the page number
+     */
+    function key() {
+        return $this->_currentPageDoc->items()->pageNum();
+    }
+
+    /**
+     * Move forward a page
+     */
+    function next() {
+        $link = $this->_currentPageDoc->navigation('next');
+        if ($link && isset($link->pagenum) && $link->pagenum <= $this->_lastPageNumber) {
+            $this->_currentPageDoc = $link->follow();
+        }
+        else {
+            $this->_currentPageDoc = null;
         }
     }
 
     /**
-     * Items on the first page
-     * @return CollectionDocJsonItems
+     * Is the current page valid?
+     *
+     * @return bool whether the current page exists
      */
-    public function first() {
-        $links = $this->_navigationLinks->rels(array('first'));
-        if (!empty($links[0])) {
-            return $links[0]->follow()->items();
-        } else {
-            return new CollectionDocJsonItems(array(), null);
-        }
+    function valid() {
+        return $this->_currentPageDoc ? true : false;
     }
 
-    /**
-     * Items on the last page
-     * @return CollectionDocJsonItems
-     */
-    public function last() {
-        $links = $this->_navigationLinks->rels(array('last'));
-        if (!empty($links[0])) {
-            return $links[0]->follow()->items();
-        } else {
-            return new CollectionDocJsonItems(array(), null);
-        }
-    }
 }

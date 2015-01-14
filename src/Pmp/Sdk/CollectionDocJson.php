@@ -1,103 +1,290 @@
 <?php
 namespace Pmp\Sdk;
 
-use Guzzle\Http\Client;
-use Guzzle\Parser\UriTemplate\UriTemplate;
-
+/**
+ * PMP CollectionDoc+JSON
+ *
+ * Object representation of a remote CollectionDoc.
+ *
+ */
 class CollectionDocJson
 {
-    private $_uri;
+    const URN_SAVE  = 'urn:collectiondoc:form:documentsave';
+    const URN_FETCH = 'urn:collectiondoc:hreftpl:docs';
+    const URN_QUERY = 'urn:collectiondoc:query:docs';
+
+    // auth client
     private $_auth;
-    private $_readOnlyLinks;
+
+    // collection-doc accessors
+    public $version;
+    public $href;
+    public $attributes;
+    public $links;
+    public $items;
+    public $errors;
 
     /**
-     * @param string $uri
-     *    URI for a Collection.doc+json document
-     * @param AuthClient $auth
-     *    authentication client
-     * @throws Exception
+     * Constructor
+     *
+     * @param string $uri location of a Collection.doc+json object
+     * @param AuthClient $auth the authentication client
      */
-    public function __construct($uri, AuthClient $auth) {
-        $this->_uri = trim($uri, '/'); // no trailing slash
+    public function __construct($uri = null, AuthClient $auth = null) {
+        $this->clearDocument();
+
+        // init
+        $this->href  = is_string($uri) ? trim($uri, '/') : null;
         $this->_auth = $auth;
-		$this->_readOnlyLinks = new \stdClass();
 
-
-        // Retrieve the document from the given URL. Document is never empty. It will throw exception if it is empty.
-        $document = $this->getDocument($uri);
-
-        // Extract read-only links needed by the client
-        $this->extractReadOnlyLinks($document);
-
-        // Map the document properties to this object's properties
-        $this->setDocument($document);
+        // fetch the document, if a uri was passed
+        if (!empty($this->href)) {
+            $this->load();
+        }
     }
 
     /**
-     * Gets the set of links from the document that are associated with the given link relation
-     * @param string $relType
-     *     link relation of the set of links to get from the document
-     * @return CollectionDocJsonLinks
+     * Convenience static method for searching the docs URN.
+     *
+     * @param string $host the api host
+     * @param AuthClient $auth the authentication client
+     * @param array $options search options
+     * @return CollectionDocJson $results the search results
+     */
+    public static function search($host, $auth, array $options) {
+        $home = new CollectionDocJson($host, $auth);
+        $results = null;
+        try {
+            $results = $home->query(self::URN_QUERY)->submit($options);
+        }
+        catch (Exception $ex) {
+            if ($ex->getCode() != 403 && $ex->getCode() != 404) {
+                throw $ex;
+            }
+        }
+        return $results;
+    }
+
+    /**
+     * Set this document back to the default state
+     */
+    public function clearDocument() {
+        $this->version    = '1.0';
+        $this->href       = null;
+        $this->attributes = new \stdClass();
+        $this->links      = new \stdClass();
+        $this->items      = array();
+        $this->errors     = null;
+        return $this;
+    }
+
+    /**
+     * Set this documents payload
+     *
+     * @param stdClass|array $doc the document object
+     */
+    public function setDocument($doc) {
+        $this->clearDocument();
+        $doc = json_decode(json_encode($doc)); // convert arrays
+
+        // set known properties
+        if (!empty($doc->version)) {
+            $this->version = $doc->version;
+        }
+        if (!empty($doc->attributes)) {
+            $this->attributes = $doc->attributes;
+        }
+        if (!empty($doc->links)) {
+            $this->links = $doc->links;
+        }
+        if (!empty($doc->items)) {
+            $this->items = $doc->items;
+        }
+        if (!empty($doc->errors)) {
+            $this->errors = $doc->errors;
+        }
+        return $this;
+    }
+
+
+    /**
+     * Load this document from the remote server
+     */
+    public function load() {
+        if (empty($this->href)) {
+            throw new Exception('No href set for document!');
+        }
+        else {
+            $doc = $this->_request('get', $this->href);
+            $this->setDocument($doc);
+        }
+        return $this;
+    }
+
+    /**
+     * Persist this document to the remote server
+     */
+    public function save() {
+        $isNew = false;
+        if (empty($this->attributes->guid)) {
+            $this->attributes->guid = $this->createGuid();
+            $isNew = true;
+        }
+
+        // expand link template
+        $link = $this->edit(self::URN_SAVE);
+        if (!$link) {
+            $urn = self::URN_SAVE;
+            var_dump($this->links->edit);
+            throw new Exception("Unable to find link $urn - have you loaded the document yet?");
+        }
+        $url = $link->expand(array('guid' => $this->attributes->guid));
+
+        // create a saveable version of this doc
+        $json = new \stdClass();
+        $json->version    = $this->version;
+        $json->attributes = $this->attributes;
+        $json->links      = $this->links;
+
+        // remote save
+        $resp = $this->_request('put', $url, $json);
+        if (empty($resp->url)) {
+            $e = new Exception("Invalid PUT response missing url!");
+            $e->setDetails($resp);
+            throw $e;
+        }
+
+        // re-load new docs
+        if ($isNew) {
+            $this->href = $resp->url;
+            $this->load();
+        }
+        return $this;
+    }
+
+    /**
+     * Delete the current document on the remote server
+     */
+    public function delete() {
+        if (empty($this->attributes->guid)) {
+            throw new Exception('Document has no guid!');
+        }
+
+        // expand link template
+        $link = $this->edit(self::URN_DELETE);
+        if (!$link) {
+            $urn = self::URN_DELETE;
+            throw new Exception("Unable to find link $urn - have you loaded the document yet?");
+        }
+        $url = $link->expand(array('guid' => $this->attributes->guid));
+
+        // delete and clear document
+        $this->_request('delete', $url);
+        $this->clearDocument();
+        return $this;
+    }
+
+    /**
+     * Gets an access token from the authentication client
+     *
+     * @param bool $refresh whether to refresh the token
+     * @return string the auth token
+     */
+    public function getAccessToken($refresh = false) {
+        if ($this->_auth) {
+            return $this->_auth->getToken($refresh)->access_token;
+        }
+        else {
+            return null;
+        }
+    }
+
+    /**
+     * Creates a guid using UUID v4 based on RFC 4122
+     *
+     * @see http://tools.ietf.org/html/rfc4122#section-4.4
+     * @see http://www.php.net/manual/en/function.uniqid.php#94959
+     * @return string a uuid-v4
+     */
+    public function createGuid() {
+        return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+        );
+    }
+
+    /**
+     * Get a single link by urn, or relType + urn
+     *
+     * @param string $urn the uniform resource name to look for
+     * @return CollectionDocJsonLink the link object or null
+     */
+    public function link($urnOrRelType, $urn = null) {
+        $relTypeKeys = array_keys(get_object_vars($this->links));
+        if ($urn) {
+            $relTypeKeys = array($urnOrRelType);
+        }
+        else {
+            $urn = $urnOrRelType;
+        }
+
+        // look for a matching urn within the links
+        foreach ($relTypeKeys as $relType) {
+            $links = $this->links($relType);
+            $matching = $links->rel($urn);
+            if ($matching) {
+                return $matching;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get array of links by relation type
+     *
+     * @param string $relType type of relation
+     * @return CollectionDocJsonLinks the links object
      */
     public function links($relType) {
         $links = array();
-        if (!empty($this->_readOnlyLinks->$relType)) {
-            $links = $this->_readOnlyLinks->$relType;
-        } else if (!empty($this->links->$relType)) {
+        if (!empty($this->links->$relType)) {
             $links = $this->links->$relType;
         }
         return new CollectionDocJsonLinks($links, $this->_auth);
     }
 
+    /**
+     * Shortcut for the profile link
+     *
+     * @return CollectionDocJsonLink the profile link object
+     */
     public function getProfile() {
         $links = $this->links('profile');
         return $links[0];
     }
 
     /**
-     * Saves the current document
-     * @return CollectionDocJson
-     * @throws Exception
+     * Link shortcuts (could also just use the "link" method)
      */
-    public function save() {
-
-        // Determine where to save the document
-        $saveUri = $this->getSaveUri();
-
-        // Save the document
-        $uri = $this->putDocument($saveUri);
-
-        // Set new document URI
-        if (!empty($uri)) {
-            $this->_uri = $uri;
-            $this->href = $uri;
-        }
-
-        return $this;
+    public function query($urn) {
+        return $this->link('query', $urn);
+    }
+    public function edit($urn) {
+        return $this->link('edit', $urn);
+    }
+    public function auth($urn) {
+        return $this->link('auth', $urn);
+    }
+    public function navigation($urn) {
+        return $this->link('navigation', $urn);
     }
 
     /**
-     * Deletes the current document
-     * @return CollectionDocJson
-     * @throws Exception
-     */
-    public function delete() {
-
-        // Determine uri
-        $uri = $this->getSaveUri();
-        if (!$uri) {
-            $exception = new Exception("Cannot delete a document with no URI set");
-            throw $exception;
-        }
-
-        // Delete the document
-        $this->deleteDocument($uri);
-
-        return $this;
-    }
-
-    /**
-     * Gets the set of items from the document
+     * Return the set of document items
+     *
      * @return CollectionDocJsonItems
      */
     public function items() {
@@ -109,515 +296,42 @@ class CollectionDocJson
     }
 
     /**
-     * Gets a default "query" relation link that has the given URN
-     * @param string $urn
-     *    the URN associated with the desired "query" link
-     * @return CollectionDocJsonLink
-     */
-    public function query($urn) {
-        $urnQueryLink = null;
-        $queryLinks = $this->links('query');
-
-        // Lookup rels by given URN if query links found in document
-        if (!empty($queryLinks)) {
-            $urnQueryLinks = $queryLinks->rels(array($urn));
-
-            // Use the first link found for the given URN if found
-            if (!empty($urnQueryLinks[0])) {
-                $urnQueryLink = $urnQueryLinks[0];
-            }
-        }
-        return ($urnQueryLink) ? $urnQueryLink : new CollectionDocJsonLink(new \stdClass, $this->_auth);
-    }
-
-    /**
-     * Gets a default "edit" relation link that has the given URN
-     * @param string $urn
-     *    the URN associated with the desired "edit" link
-     * @return CollectionDocJsonLink
-     */
-    public function edit($urn) {
-        $urnEditLink = null;
-        $editLinks = $this->links('edit');
-
-        // Lookup rels by given URN if edit links found in document
-        if (!empty($editLinks)) {
-            $urnEditLinks = $editLinks->rels(array($urn));
-
-            // Use the first link found for the given URN if found
-            if (!empty($urnEditLinks[0])) {
-                $urnEditLink = $urnEditLinks[0];
-            }
-        }
-        return ($urnEditLink) ? $urnEditLink : new CollectionDocJsonLink(new \stdClass, $this->_auth);
-    }
-
-
-    /**
-     * Uploads the given media file and returns its new URL
-     * @param $filepath
-     * @return string
-     */
-    public function upload($filepath) {
-        return $this->postFile($this->getFilesUri(), $filepath);
-    }
-
-    /**
-     * Does a GET operation on the given URI and returns a JSON object
-     * @param $uri
-     *    the URI to use in the request
-     * @return stdClass
-     * @throws Exception
-     */
-    private function getDocument($uri) {
-        $request = new Client();
-
-        // GET request needs an authorization header with given access token
-        $accessToken = $this->getAccessToken();
-        try {
-            $response = $request->get($uri)
-                ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                ->send();
-        } catch (\Guzzle\Http\Exception\BadResponseException $e) {
-            $response = $e->getResponse();
-        }
-
-        // Retry authentication if request was unauthorized
-        if ($response->getStatusCode() == 401) {
-            $accessToken = $this->getAccessToken(true);
-            try {
-                $response = $request->get($uri)
-                    ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                    ->send();
-            } catch (\Guzzle\Http\Exception\BadResponseException $e) {
-                $response = $e->getResponse();
-            }
-        }
-
-        // Response code must be 200 and data must be found in response in order to continue
-        if ($response->getStatusCode() != 200 || empty($response->getBody())) {
-            $err = "Got unexpected non-HTTP-200 response and/or empty document while retrieving \"$uri\" with access Token: \"$accessToken\"";
-            $exception = new Exception($err, $response->getStatusCode());
-            $exception->setDetails($response->getInfo());
-            throw $exception;
-            return null;
-        }
-
-        $document = json_decode($response->getBody(true));
-        return $document;
-    }
-
-    /**
-     * Does a DELETE operation on the given URI and returns true on success
-     * @param $uri
-     *    the URI to use in the request
-     * @return true on success
-     * @throws Exception
-     */
-    private function deleteDocument($uri) {
-        $request = new Client();
-
-        // DELETE request needs an authorization header with given access token
-        $accessToken = $this->getAccessToken();
-        try {
-            $response = $request->delete($uri)
-                ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                ->send();
-        } catch (\Guzzle\Http\Exception\BadResponseException $e) {
-            $response = $e->getResponse();
-        }
-
-        // Retry authentication if request was unauthorized
-        if ($response->getStatusCode() == 401) {
-            $accessToken = $this->getAccessToken(true);
-            try {
-                $response = $request->delete($uri)
-                    ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                    ->send();
-            } catch (\Guzzle\Http\Exception\BadResponseException $e) {
-                $response = $e->getResponse();
-            }
-        }
-
-        // Response code must be 204 (no content)
-        if ($response->getStatusCode() != 204) {
-            $err = sprintf("Got HTTP response %s, expected 204, for DELETE '%s' with access Token: '%s'",
-                   $response->getStatusCode(), $uri, $accessToken);
-            $exception = new Exception($err);
-            $exception->setDetails($response->getInfo());
-            throw $exception;
-            return null;
-        }
-
-        return true;
-    }
-
-    /**
-     * Does a PUT operation on the given URI using the internal JSON objects
-     * @param $uri
-     *    the URI to use in the request
-     * @return string
-     * @throws Exception
-     */
-    private function putDocument($uri) {
-
-        // Construct the document from the allowable properties in this object
-        $document = json_encode($this->buildDocument());
-
-        $request = new Client();
-
-        // PUT request needs an authorization header with given access token and
-        // the JSON-encoded body based on the document content
-        $accessToken = $this->getAccessToken();
-        try {
-            $response = $request->put($uri)
-                ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                ->setBody($document)
-                ->setHeader('Content-Type', 'application/vnd.collection.doc+json')
-                ->send();
-        } catch (\Guzzle\Http\Exception\BadResponseException $e) {
-            $response = $e->getResponse();
-        }
-
-        // Retry authentication if request was unauthorized
-        if ($response->getStatusCode() == 401) {
-            $accessToken = $this->getAccessToken(true);
-            try {
-                $response = $request->put($uri)
-                    ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                    ->setBody($document)
-                    ->setHeader('Content-Type', 'application/vnd.collection.doc+json')
-                    ->send();
-            } catch (\Guzzle\Http\Exception\BadResponseException $e) {
-                $response = $e->getResponse();
-            }
-        }
-
-        // Response code must be 200 or 202 in order to be successful
-        if ($response->getStatusCode() != 200 && $response->getStatusCode() != 202) {
-            $err = "Got unexpected non-HTTP-200 and non-HTTP-202 response while sending \"$uri\" with access Token: \"$accessToken\"";
-            $exception = new Exception($err);
-            $exception->setDetails($response->getInfo());
-            throw $exception;
-            return '';
-        }
-
-        // Return saved document URI if available
-        if (!empty($response->getBody())) {
-            $data = json_decode($response->getBody(true));
-            return $data->url;
-        } else {
-            return '';
-        }
-    }
-
-    /**
-     * Does a POST operation on the given URI using the given file path. Returns the URL of the upload file.
-     * @param $uri
-     *    the URI to use in the request
-     * @param $file
-     *    the file path to use for uploading
-     * @return string
-     * @throws Exception
-     */
-    private function postFile($uri, $file) {
-
-        // Using Guzzle instead of Restagent because of file stream upload support
-        $request = new Client();
-
-        // POST request needs an authorization header with given access token and
-        // the multipart form-data body
-        $accessToken = $this->getAccessToken();
-        try {
-            $response = $request->post($uri)
-                ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                ->addPostFile('submission', $file)
-                ->send();
-        } catch (\Guzzle\Http\Exception\BadResponseException $e) {
-            $response = $e->getResponse();
-        }
-
-        // Retry authentication if request was unauthorized
-        if ($response->getStatusCode() == 401) {
-            $accessToken = $this->getAccessToken(true);
-            try {
-                $response = $request->post($uri)
-                    ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                    ->addPostFile('submission', $file)
-                    ->send();
-            } catch (\Guzzle\Http\Exception\BadResponseException $e) {
-                $response = $e->getResponse();
-            }
-        }
-
-        // Response code must be 202 in order to be successful
-        if ($response->getStatusCode() != 202) {
-            $err = "Got unexpected non-HTTP-202 response while sending \"$uri\" with access Token: \"$accessToken\"";
-            $exception = new Exception($err);
-            $exception->setDetails($response->getInfo());
-            throw $exception;
-            return '';
-        }
-
-        if (!empty($response->getBody())) {
-            $body = json_decode($response->getBody(true));
-            if (!empty($body->url)) {
-                return $body->url;
-            }
-        }
-        return '';
-    }
-
-    /**
-     * Gets an access token from the authentication client
-     * @param bool $refresh
-     *   whether to refresh the token
-     * @return string
-     */
-    public function getAccessToken($refresh=false) {
-        return $this->_auth->getToken($refresh)->access_token;
-    }
-
-    /**
-     * Creates a new guid by generating a compatible UUID V4
+     * Get an iterator for all the document items
      *
-     * @return string
+     * @param $pageLimit the maximum number of pages to fetch
+     * @return PageIterator the iterator
      */
-    public function createGuid() {
-        return $this->generateUuid();
+    public function itemsIterator($pageLimit = null) {
+        return new PageIterator($this, $pageLimit);
     }
 
     /**
-     * Generates a guid using UUID v4 based on RFC 4122
+     * Make a remote request
      *
-     * @see http://tools.ietf.org/html/rfc4122#section-4.4
-     * @see http://www.php.net/manual/en/function.uniqid.php#94959
-     *
-     * @return string
+     * @param string $method the http method to use
+     * @param string $url the location of the resource
+     * @param array $data optional data to send with request
+     * @param bool $is_retry whether this request is a 401-retry
+     * @return stdClass the json-decoded response
      */
-    private function generateUuid() {
-        return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+    private function _request($method, $url, $data = null) {
+        $token = $this->getAccessToken();
+        list($code, $json) = Http::bearerRequest($method, $url, $token, $data);
 
-            // 32 bits for "time-low"
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-
-            // 16 bits for "time-mid"
-            mt_rand(0, 0xffff),
-
-            // 16 bits for "time-hi-and-version", four most significant bits are 0100 (so first hex digit is 4, for UUID version 4)
-            mt_rand(0, 0x0fff) | 0x4000,
-
-            // 16 bits, 8 bits for "clock-seq-hi-and-reserved", 8 bits for "clock_seq_low", two most significant bits are 10 (so first hex digit is 8, 9, A, or B)
-            mt_rand(0, 0x3fff) | 0x8000,
-
-            // 48 bits for "node"
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-        );
-    }
-
-    /**
-     * Does a POST operation on the given URI to get a new random guid
-     * @param $uri
-     *    the URI to use in the request
-     * @return string
-     * @throws Exception
-     */
-    private function getGuid($uri) {
-        $request = new Client();
-
-        // POST request needs an authorization header with given access token
-        $accessToken = $this->getAccessToken();
-        try {
-            $response = $request->post($uri)
-                ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                ->setBody('{"count":1}')
-                ->setHeader('Content-Type', 'application/json')
-                ->send();
-        } catch (\Guzzle\Http\Exception\BadResponseException $e) {
-            $response = $e->getResponse();
+        // retry 401's with refreshed token
+        if ($code == 401) {
+            $token = $this->getAccessToken(true);
+            list($code, $json) = Http::bearerRequest($method, $url, $token, $data);
         }
 
-        // Retry authentication if request was unauthorized
-        if ($response->getStatusCode() == 401) {
-            $accessToken = $this->getAccessToken(true);
-            try {
-                $response = $request->post($uri)
-                    ->setHeader('Authorization', 'Bearer ' . $accessToken)
-                    ->setBody('{"count":1}')
-                    ->setHeader('Content-Type', 'application/json')
-                    ->send();
-            } catch (\Guzzle\Http\Exception\BadResponseException $e) {
-                $response = $e->getResponse();
-            }
+        // barf on non-200
+        if ($code < 200 || $code > 299) {
+            $e = new Exception("Got unexpected HTTP-$code while retrieving $url", $code);
+            $e->setDetails($json);
+            throw $e;
         }
 
-        // Response code must be 200 in order to be successful
-        if ($response->getStatusCode() != 200) {
-            $err = "Got unexpected non-HTTP-200 response while POSTing to \"$uri\" with access Token: \"$accessToken\"";
-            $exception = new Exception($err);
-            $exception->setDetails($response->getInfo());
-            throw $exception;
-            return '';
-        }
-
-        $data = json_decode($response->getBody(true));
-        return $data->guids[0];
+        return $json;
     }
 
-    /**
-     * Extracts important read-only links from the document
-     * @param \stdClass $document
-     * @return CollectionDocJson
-     */
-    private function extractReadOnlyLinks(\stdClass $document) {
-        if (is_object($document)) {
-            if (!isset($this->_readOnlyLinks)) {
-                $this->_readOnlyLinks = new \stdClass;
-            }
-            if (!empty($document->links->query)) {
-                $this->_readOnlyLinks->query = $document->links->query;
-            }
-            if (!empty($document->links->edit)) {
-                $this->_readOnlyLinks->edit = $document->links->edit;
-            }
-        }
-        return $this;
-    }
-
-    /**
-     * Clears the current document from the object
-     * @return CollectionDocJson
-     */
-    public function clearDocument() {
-        unset($this->version);
-        unset($this->href);
-        unset($this->attributes);
-        unset($this->links);
-        unset($this->items);
-        unset($this->error);
-
-        return $this;
-    }
-
-    /**
-     * Builds the current document from the writeable document properties of the object
-     * @return \stdClass
-     */
-    public function buildDocument() {
-        $document = new \stdClass();
-        $document->version = (!empty($this->version)) ? $this->version : null;
-        $document->attributes = (!empty($this->attributes)) ? $this->attributes : null;
-        $document->links = (!empty($this->links)) ? $this->links : null;
-
-        if (!empty($this->href)) {
-            $document->href = $this->href;
-        }
-
-        return $document;
-    }
-
-    /**
-     * Sets the given document on the object
-     * @param array|\stdClass $document
-     * @return CollectionDocJson
-     */
-    public function setDocument($document) {
-        $this->clearDocument();
-
-        if (is_object($document)) {
-            $properties = get_object_vars($document);
-        } else if (is_array($document)) {
-            $properties = get_object_vars(json_decode(json_encode($document), false));
-        } else {
-            $properties = array();
-        }
-
-        foreach($properties as $name => $value) {
-            $this->$name = $value;
-        }
-
-        $this->_uri = (!empty($this->href)) ? $this->href : null;
-
-        return $this;
-    }
-
-    /**
-     * Build the URI for saving the document
-     * @return string
-     */
-    public function getSaveUri() {
-        // Make sure there is a guid to save to
-        if (empty($this->attributes->guid)) {
-            $this->attributes->guid = $this->createGuid();
-        }
-
-        // Make sure there is an edit-form link to save to
-        $editLink = $this->edit("urn:collectiondoc:form:documentsave");
-        if (!empty($editLink->{'href-template'})) {
-            if (!empty($this->attributes->guid)) {
-                $parser = new UriTemplate();
-                $url = $parser->expand($editLink->{'href-template'}, array('guid' => $this->attributes->guid));
-                return $url;
-            }
-        }
-
-        return '';
-    }
-
-    /**
-     * Get the URI for uploading files
-     * @return string
-     */
-    public function getFilesUri() {
-        $filesLink = $this->edit("urn:collectiondoc:form:mediaupload");
-        if (!empty($filesLink->href)) {
-            return $filesLink->href;
-        } else {
-            return '';
-        }
-    }
-
-    /**
-     * Get the URI of the current document
-     * @return string
-     */
-    public function getUri() {
-        return $this->_uri;
-    }
-
-    /**
-     * Convenience static method for searching the docs URN.
-     * @param string $host
-     * @param AuthClient $auth
-     * @param array $options
-     * @return CollectionDocJson $results
-     * @throws Exception
-     */
-    public static function search($host, $auth, array $options) {
-        $searcher = new CollectionDocJson($host, $auth);
-        $results  = null;
-        try {
-            $results = $searcher->query('urn:collectiondoc:query:docs')->submit($options);
-        } catch (Exception $ex) {
-
-            // 404 throws an exception, but no results on a search is normal.
-            if ($ex->getCode() != 404) {
-                // re-throw if response was not 200 or 404
-                throw $ex;
-            }
-        }
-        return $results;
-    }
-
-}
-
-
-
-function pmp_backtrace() {
-    $trace = debug_backtrace();
-    foreach ($trace as &$t) {
-        unset($t['args']);
-        unset($t['object']);
-    }
-    return $trace;
 }

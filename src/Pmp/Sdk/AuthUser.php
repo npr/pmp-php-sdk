@@ -2,65 +2,67 @@
 namespace Pmp\Sdk;
 
 /**
- * PMP client authentication
+ * PMP user authentication
  *
- * Oauth on behalf of a user with client-id/secret, to create and revoke
- * tokens for the client
+ * Authenticate as a username/password, and manage the oauth clients
+ * for that user.
  *
  */
-class AuthClient
+class AuthUser
 {
-    const URN_ISSUE  = 'urn:collectiondoc:form:issuetoken';
-    const URN_REVOKE = 'urn:collectiondoc:form:revoketoken';
+    const URN_LIST     = 'urn:collectiondoc:form:listcredentials';
+    const URN_CREATE   = 'urn:collectiondoc:form:createcredentials';
+    const URN_REMOVE   = 'urn:collectiondoc:form:removecredentials';
 
     private $_host;
-    private $_clientAuth;
     private $_home;
-    private $_token;
+    private $_userAuth;
 
     /**
      * Constructor
      *
      * @param string $host url of the PMP api
-     * @param string $id the client id to connect with
-     * @param string $secret the secret for this client
-     * @param CollectionDocJson $home an optional pre-loaded home doc
+     * @param string $username the user to connect as
+     * @param string $password the user's password
      */
-    public function __construct($host, $id, $secret, CollectionDocJson $home = null) {
+    public function __construct($host, $username, $password) {
         $this->_host = $host;
-        $this->_clientAuth = 'Basic ' . base64_encode($id . ':' . $secret);
-        $this->_home = $home;
-        $this->getToken();
+        $this->_userAuth = 'Basic ' . base64_encode($username . ':' . $password);
     }
 
     /**
-     * Get an auth token for these client credentials
+     * List credentials
      *
-     * @param bool refresh whether to force fetching a new token
-     * @return object the auth token object
+     * @return array the current client credentials for the user
      */
-    public function getToken($refresh = false) {
-        if ($refresh || empty($this->_token)) {
-            $data = array('grant_type' => 'client_credentials');
-            $this->_token = $this->_request(self::URN_ISSUE, $data);
-
-            // check for valid response
-            if (empty($this->_token->access_token)) {
-                throw new Exception('Got unexpected empty token from the authentication server');
-            }
-        }
-        return $this->_token;
+    public function listCredentials() {
+        return $this->_request(self::URN_LIST);
     }
 
     /**
-     * Revoke the auth token for these client credentials
+     * Create a credential
      *
-     * @return bool whether the token was deleted or not
+     * @param array $options scope/expires/label options
+     * @return array the newly created credential
      */
-    public function revokeToken() {
-        $this->_request(self::URN_REVOKE);
-        $this->_token = null;
-        return true;
+    public function createCredential($scope, $expires, $label) {
+        $data = array(
+            'scope' => $scope,
+            'label' => $label,
+            'token_expires_in' => $expires,
+        );
+        return $this->_request(self::URN_CREATE, $data);
+    }
+
+    /**
+     * Remove a credential
+     *
+     * @param string $id the id of the credential to remove
+     * @return boolean whether a credential was deleted or not
+     */
+    public function removeCredential($id) {
+        $this->_request(self::URN_REMOVE, array('client_id' => $id));
+        return true; // just assume it worked
     }
 
     /**
@@ -74,7 +76,7 @@ class AuthClient
         list($method, $url) = $this->_authLink($urn, $data);
 
         // run request
-        list($code, $json) = Http::basicRequest($method, $url, $this->_clientAuth, $data);
+        list($code, $json) = Http::basicRequest($method, $url, $this->_userAuth, $data);
         if ($code < 200 || $code > 299) {
             $e = new Exception("Got unexpected HTTP-$code while retrieving $url", $code);
             $e->setDetails($json);

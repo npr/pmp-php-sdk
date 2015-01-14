@@ -3,123 +3,127 @@ namespace Pmp\Sdk;
 
 use Guzzle\Parser\UriTemplate\UriTemplate;
 
+/**
+ * PMP CollectionDoc link
+ *
+ * A single, follow-able CollectionDoc link
+ *
+ */
 class CollectionDocJsonLink
 {
+    const PMP_AND = ',';
+    const PMP_OR  = ';';
+
     private $_link;
     private $_auth;
 
     /**
-     * @param \stdClass $link
-     *    the raw link data
-     * @param AuthClient $auth
-     *    authentication client for the API
+     * Constructor
      *
-     * @throws Exception
+     * @param stdClass $link the raw link data
+     * @param AuthClient $auth authentication client for the API
      */
-    public function __construct(\stdClass $link, AuthClient $auth) {
+    public function __construct(\stdClass $link, AuthClient $auth = null) {
         $this->_link = $link;
         $this->_auth = $auth;
 
-        // Map the link properties to this object's properties
-        if (is_object($link)) {
-            $properties = get_object_vars($link);
-        } else {
-            $properties = array();
-        }
-
-        foreach($properties as $name => $value) {
+        // set properties
+        $props = get_object_vars($link);
+        foreach ($props as $name => $value) {
             $this->$name = $value;
         }
     }
 
     /**
-     * Follows the link href to retrieve a document
-     * @return CollectionDocJson
-     * @throws Exception
+     * Expand this link into a complete url
+     *
+     * @param array $options optional array of href-template params
+     * @return string the complete url
      */
-    public function follow() {
+    public function expand(array $options = null) {
         if (!empty($this->href)) {
-            // Retrieve the document at the other end of this URL
-            $document = new CollectionDocJson($this->href, $this->_auth);
-            return $document;
-        } else {
-            $err = "Can't follow link because no href defined";
-            $exception = new Exception($err);
-            $exception->setDetails(array($this->_link));
-            throw $exception;
+            return $this->href;
+        }
+        else if (!empty($this->{'href-template'})) {
+            $parser = new UriTemplate();
+            return $parser->expand($this->{'href-template'}, $this->_convertOptions($options));
+        }
+        else {
+            $e = new Exception('Cannot expand link because no href or href-template defined');
+            $e->setDetails($this->_link);
+            throw $e;
         }
     }
 
     /**
-     * Follows the link href-template to retrieve a document
-     * @param array $options
-     *    the mapping of template parameter values
-     * @return CollectionDocJson
-     * @throws Exception
+     * Follow the link href to retrieve a document
+     *
+     * @param array $options optional array of href-template params
+     * @return CollectionDocJson a loaded document
+     */
+    public function follow(array $options = null) {
+        $url = $this->expand($options);
+        return new CollectionDocJson($url, $this->_auth);
+    }
+
+    /**
+     * Follow the link href to retrieve a document
+     *
+     * @param array $options array of href-template params
+     * @return CollectionDocJson a loaded document
      */
     public function submit(array $options) {
-        if (!empty($this->{'href-template'})) {
-            // Generate the URL from the template
-            $parser = new UriTemplate();
-            $url = $parser->expand($this->{'href-template'}, $this->convertOptions($options));
-
-            // Retrieve the document at the other end of this constructed URL
-            $document = new CollectionDocJson($url, $this->_auth);
-            return $document;
-        } else {
-            $err = "Can't submit against link because no href-template defined";
-            $exception = new Exception($err);
-            $exception->setDetails(array($this->_link));
-            throw $exception;
-        }
+        return $this->follow($options);
     }
 
     /**
-     * Return available options for a query type.
-     * @return Object
-     * @throws Exception
+     * Get the available options for an href-template
+     *
+     * @return Object options object
      */
     public function options() {
-        if (!empty($this->{'href-template'}) && !empty($this->{'href-vars'})) {
+        if (empty($this->{'href-template'}) || empty($this->{'href-vars'})) {
+            $e = new Exception('Cannot give link options because link is not a properly defined href template');
+            $e->setDetails($this->_link);
+            throw $e;
+        }
+        else {
             return $this->{'href-vars'};
-        } else {
-            $err = "Can't give link options because link is not a properly defined href template";
-            $exception = new Exception($err);
-            $exception->setDetails(array($this->_link));
-            throw $exception;
         }
     }
 
     /**
-     * Converts the given option set into API-compatible query string form
-     * @param array $option
-     *    the mapping of a template parameter to values
-     * @return string
-     */
-    private function convertOption(array $option) {
-        if (!empty($option['AND'])) {
-            return implode(',', $option['AND']);
-        } else if (!empty($option['OR'])) {
-            return implode(';', $option['OR']);
-        } else {
-            return '';
-        }
-    }
-
-    /**
-     * Converts the set of options into API-compatible query string forms
+     * Converts the set of options into API-compatible query string forms.
+     *
+     * Mainly to convert:
+     *     array('profile' => array('AND' => array('foo', 'bar')))
+     * into:
+     *     array('profile' => 'foo,bar')
+     *
      * @param array $options
      * @return array
      */
-    private function convertOptions(array $options) {
+    private function _convertOptions(array $options = null) {
         $converted = array();
-        foreach ($options as $name => $value) {
-            if (is_array($value)) {
-                $converted[$name] = $this->convertOption($value);
-            } else {
-                $converted[$name] = $value;
+        if (!empty($options)) {
+            foreach ($options as $name => $value) {
+                if (is_array($value)) {
+                    if (!empty($option['AND'])) {
+                        $converted[$name] = implode(self::PMP_AND, $options['AND']);
+                    }
+                    else if (!empty($option['OR'])) {
+                        $converted[$name] = implode(self::PMP_OR, $options['OR']);
+                    }
+                    else {
+                        $converted[$name] = ''; // bad params
+                    }
+                }
+                else {
+                    $converted[$name] = $value;
+                }
             }
         }
         return $converted;
     }
+
 }
