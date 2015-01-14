@@ -1,8 +1,6 @@
 #!/usr/bin/env php
 <?php
 require_once 'Common.php';
-require_once 'lib/Pmp/Sdk/AuthClient.php';
-require_once 'lib/Pmp/Sdk/CollectionDocJson.php';
 
 use \Pmp\Sdk\AuthClient as AuthClient;
 use \Pmp\Sdk\CollectionDocJson as CollectionDocJson;
@@ -41,7 +39,7 @@ catch (Exception $ex) {
 ok( $doc = CollectionDocJson::search($host, $auth, array('guid' => $ARTS_TOPIC)), 'fetch by shortcut' );
 is( $doc->attributes->guid, $ARTS_TOPIC, 'fetch by shortcut - guid' );
 is( $doc->attributes->title, 'Arts', 'fetch by shortcut - title' );
-like( $doc->links->profile[0]->href, '/profiles\/topic$/', 'fetch by shortcut - profile link' );
+like( $doc->getProfile()->href, '/profiles\/topic$/', 'fetch by shortcut - profile link' );
 
 // fetch 404 via the query shortcut
 try {

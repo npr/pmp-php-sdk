@@ -1,7 +1,6 @@
 #!/usr/bin/env php
 <?php
 require_once 'Common.php';
-require_once 'lib/Pmp/Sdk/AuthClient.php';
 
 use \Pmp\Sdk\AuthClient as AuthClient;
 
@@ -23,7 +22,7 @@ ok( $token2 = $auth->getToken(), 're-get token' );
 is( $token2->access_token, $token->access_token, 're-get token - access_token same' );
 is( $token2->token_type, 'Bearer', 're-get token - token_type same' );
 is( $token2->token_issue_date, $token->token_issue_date, 're-get token - token_issue_date same' );
-is( $token2->token_expires_in, $token->token_expires_in - 1, 're-get token - token_expires_in updated' );
+is( $token2->token_expires_in, $token->token_expires_in, 're-get token - token_expires_in same' );
 $token2 = clone($token2);
 
 // force-refresh the token

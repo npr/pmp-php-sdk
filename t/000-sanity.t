@@ -1,8 +1,6 @@
 #!/usr/bin/env php
 <?php
-require_once 'Test.php';
-require_once 'lib/Pmp/Sdk/AuthClient.php';
-require_once 'lib/Pmp/Sdk/AuthUser.php';
+require_once 'Common.php';
 
 use \Pmp\Sdk\AuthClient as AuthClient;
 use \Pmp\Sdk\AuthUser   as AuthUser;
@@ -25,7 +23,7 @@ if (!$host || !$user || !$pass || !$id || !$secret) {
   plan('skip_all', 'missing required PMP env variables: ' . $missing);
 }
 else {
-  plan(4);
+  plan(6);
 }
 
 // check user connection
@@ -35,3 +33,7 @@ ok( $list = $user->listCredentials(), 'list user credentials' );
 // check client connection
 ok( $auth = new AuthClient($host, $id, $secret), 'instantiate new AuthClient' );
 ok( $token = $auth->getToken(), 'get access token' );
+
+// check sdk connection
+ok( $sdk = new \Pmp\Sdk($host, $id, $secret), 'instantiate new Sdk' );
+ok( $sdk->home, 'sdk home doc' );
