@@ -24,9 +24,11 @@ class AuthUser
      * @param string $host url of the PMP api
      * @param string $username the user to connect as
      * @param string $password the user's password
+     * @param CollectionDocJson $home an optional pre-loaded home doc
      */
-    public function __construct($host, $username, $password) {
+    public function __construct($host, $username, $password, CollectionDocJson $home = null) {
         $this->_host = $host;
+        $this->_home = $home;
         $this->_userAuth = 'Basic ' . base64_encode($username . ':' . $password);
     }
 

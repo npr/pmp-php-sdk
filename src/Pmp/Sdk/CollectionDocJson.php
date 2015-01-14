@@ -9,9 +9,12 @@ namespace Pmp\Sdk;
  */
 class CollectionDocJson
 {
-    const URN_SAVE  = 'urn:collectiondoc:form:documentsave';
-    const URN_FETCH = 'urn:collectiondoc:hreftpl:docs';
-    const URN_QUERY = 'urn:collectiondoc:query:docs';
+    const URN_SAVE   = 'urn:collectiondoc:form:documentsave';
+    const URN_DELETE = 'urn:collectiondoc:form:documentdelete';
+
+    // global static links (cached after first request)
+    private static $_staticLinkNames = array('query', 'edit', 'auth');
+    private static $_staticLinks;
 
     // auth client
     private $_auth;
@@ -36,33 +39,14 @@ class CollectionDocJson
         // init
         $this->href  = is_string($uri) ? trim($uri, '/') : null;
         $this->_auth = $auth;
+        if (empty(self::$_staticLinks)) {
+            self::$_staticLinks = new \stdClass;
+        }
 
         // fetch the document, if a uri was passed
         if (!empty($this->href)) {
             $this->load();
         }
-    }
-
-    /**
-     * Convenience static method for searching the docs URN.
-     *
-     * @param string $host the api host
-     * @param AuthClient $auth the authentication client
-     * @param array $options search options
-     * @return CollectionDocJson $results the search results
-     */
-    public static function search($host, $auth, array $options) {
-        $home = new CollectionDocJson($host, $auth);
-        $results = null;
-        try {
-            $results = $home->query(self::URN_QUERY)->submit($options);
-        }
-        catch (Exception $ex) {
-            if ($ex->getCode() != 403 && $ex->getCode() != 404) {
-                throw $ex;
-            }
-        }
-        return $results;
     }
 
     /**
@@ -91,6 +75,9 @@ class CollectionDocJson
         if (!empty($doc->version)) {
             $this->version = $doc->version;
         }
+        if (!empty($doc->href)) {
+            $this->href = $doc->href;
+        }
         if (!empty($doc->attributes)) {
             $this->attributes = $doc->attributes;
         }
@@ -103,9 +90,18 @@ class CollectionDocJson
         if (!empty($doc->errors)) {
             $this->errors = $doc->errors;
         }
+
+        // get/set static links (preserving them between sets)
+        foreach (self::$_staticLinkNames as $name) {
+            if (empty($this->links->$name)) {
+                $this->links->$name = self::$_staticLinks->$name;
+            }
+            else {
+                self::$_staticLinks->$name = $this->links->$name;
+            }
+        }
         return $this;
     }
-
 
     /**
      * Load this document from the remote server

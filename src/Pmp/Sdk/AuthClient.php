@@ -14,8 +14,8 @@ class AuthClient
     const URN_REVOKE = 'urn:collectiondoc:form:revoketoken';
 
     private $_host;
-    private $_clientAuth;
     private $_home;
+    private $_clientAuth;
     private $_token;
 
     /**
@@ -28,8 +28,8 @@ class AuthClient
      */
     public function __construct($host, $id, $secret, CollectionDocJson $home = null) {
         $this->_host = $host;
-        $this->_clientAuth = 'Basic ' . base64_encode($id . ':' . $secret);
         $this->_home = $home;
+        $this->_clientAuth = 'Basic ' . base64_encode($id . ':' . $secret);
         $this->getToken();
     }
 
