@@ -1,7 +1,8 @@
-RestAgent is an HTTP client library for PHP. Project's primary goals are: 
+RestAgent is an HTTP/HTTPS client library for PHP. Project's primary goals are, to: 
 
-* Elegant and intuitive API. 
-* Minimize boilerplate to make working with HTTP from PHP enjoyable.
+* Provide elegant and intuitive API. 
+* Properly support HTTPS
+* Minimize boilerplate and make working with HTTP(S) from PHP enjoyable.
 * Provide rich set of functionality for RESTful interactions.
 
 RestAgent's API is inspired by the simplicity of the API in [SuperAgent](https://github.com/visionmedia/superagent) library for Node.js by TJ Holowaychuk.
@@ -114,12 +115,22 @@ The head(), get(), post(), put(), delete() and send() calls return an associativ
 * data: response content for any http method except HTTP HEAD. The latter, by definition, does not return any content
 so 'data' contains parsed http response headers, instead.
 
+### CURL Debugging
+
+By setting `REST_AGENT_DEBUG` (to any value actually):
+
+```
+export REST_AGENT_DEBUG=true
+```
+
+You can enable CURL debugging.
+
 
 ## License
 
 (The MIT License)
 
-Copyright (c) 2012 Irakli Nadareishvili
+Copyright (c) 2012-2014 Irakli Nadareishvili
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

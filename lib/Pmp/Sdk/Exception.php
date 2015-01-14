@@ -13,4 +13,4 @@ class Exception extends \Exception
     public function setDetails(array $details) {
         $this->details = $details;
     }
-} 
+}

@@ -8,7 +8,6 @@ require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
 require_once(dirname(__FILE__) . '/../../guzzle.phar');
 
 use restagent\Request as Request;
-use Guzzle\Http\Client as Client;
 use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
 
 
@@ -19,25 +18,33 @@ class CollectionDocJson
     private $_readOnlyLinks;
 
     /**
-     * @param string $uri
-     *    URI for a Collection.doc+json document
+     * @param string|stdClass $uri_or_obj
+     *    URI for a Collection.doc+json document, or the doc object itself
      * @param AuthClient $auth
      *    authentication client
      * @throws Exception
      */
-    public function __construct($uri, AuthClient $auth) {
-        $this->_uri = trim($uri, '/'); // no trailing slash
+    public function __construct($uri_or_obj, AuthClient $auth = null) {
         $this->_auth = $auth;
 
-        // Retrieve the document from the given URL. Document is never empty. It will throw exception if it is empty.
-        $document = $this->getDocument($uri);
-
-        // Extract read-only links needed by the client
-        $this->extractReadOnlyLinks($document);
-
-        // Map the document properties to this object's properties
-        $this->setDocument($document);
+        // set doc or load from uri
+        if (is_string($uri_or_obj)) {
+            $this->_uri = trim($uri_or_obj, '/');
+            $document = $this->getDocument($uri_or_obj);
+            $this->extractReadOnlyLinks($document);
+            $this->setDocument($document);
+        }
+        else {
+            $this->_uri = $uri_or_obj->href;
+            $this->extractReadOnlyLinks($uri_or_obj);
+            $this->setDocument($uri_or_obj);
+        }
     }
+
+    /**
+     *
+     *
+     */
 
     /**
      * Gets the set of links from the document that are associated with the given link relation
@@ -110,7 +117,7 @@ class CollectionDocJson
         if (!empty($this->items)) {
             $items = $this->items;
         }
-        return new CollectionDocJsonItems($items, $this);
+        return new CollectionDocJsonItems($items, $this, $this->_auth);
     }
 
     /**
@@ -157,14 +164,48 @@ class CollectionDocJson
         return ($urnEditLink) ? $urnEditLink : new CollectionDocJsonLink(new \stdClass, $this->_auth);
     }
 
+    /**
+     * Gets a default "auth" relation link that has the given URN
+     * @param string $urn
+     *    the URN associated with the desired "auth" link
+     * @return CollectionDocJsonLink
+     */
+    public function auth($urn) {
+        $urnAuthLink = null;
+        $authLinks = $this->links('auth');
+
+        // Lookup rels by given URN if auth links found in document
+        if (!empty($authLinks)) {
+            $urnAuthLinks = $authLinks->rels(array($urn));
+
+            // Use the first link found for the given URN if found
+            if (!empty($urnAuthLinks[0])) {
+                $urnAuthLink = $urnAuthLinks[0];
+            }
+        }
+        return ($urnAuthLink) ? $urnAuthLink : new CollectionDocJsonLink(new \stdClass, $this->_auth);
+    }
 
     /**
-     * Uploads the given media file and returns its new URL
-     * @param $filepath
-     * @return string
+     * Gets the "navigation" relation link that has the given URN
+     * @param string $urn
+     *    the URN associated with the desired "navigation" link
+     * @return CollectionDocJsonLink
      */
-    public function upload($filepath) {
-        return $this->postFile($this->getFilesUri(), $filepath);
+    public function navigation($urn) {
+        $urnNavLink = null;
+        $navLinks = $this->links('navigation');
+
+        // Lookup rels by given URN if query links found in document
+        if (!empty($navLinks)) {
+            $urnNavLinks = $navLinks->rels(array($urn));
+
+            // Use the first link found for the given URN if found
+            if (!empty($urnNavLinks[0])) {
+                $urnNavLink = $urnNavLinks[0];
+            }
+        }
+        return ($urnNavLink) ? $urnNavLink : new CollectionDocJsonLink(new \stdClass, $this->_auth);
     }
 
     /**
@@ -177,13 +218,15 @@ class CollectionDocJson
     private function getDocument($uri) {
         $request = new Request();
 
-        // GET request needs an authorization header with given access token
-        $accessToken = $this->getAccessToken();
-        $response = $request->header('Authorization', 'Bearer ' . $accessToken)
-                            ->get($uri);
+        // include bearer token, if using auth
+        if ($this->_auth) {
+            $bearer = 'Bearer ' . $this->getAccessToken();
+            $request->header('Authorization', $bearer);
+        }
+        $response = $request->get($uri);
 
         // Retry authentication if request was unauthorized
-        if ($response['code'] == 401) {
+        if ($response['code'] == 401 && $this->_auth) {
             $accessToken = $this->getAccessToken(true);
             $response = $request->header('Authorization', 'Bearer ' . $accessToken)
                                 ->get($uri);
@@ -191,7 +234,7 @@ class CollectionDocJson
 
         // Response code must be 200 and data must be found in response in order to continue
         if ($response['code'] != 200 || empty($response['data'])) {
-            $err = "Got unexpected non-HTTP-200 response and/or empty document while retrieving \"$uri\" with access Token: \"$accessToken\"";
+            $err = "Got unexpected non-HTTP-200 response and/or empty document while retrieving \"$uri\"";
             $exception = new Exception($err, $response['code']);
             $exception->setDetails($response);
             throw $exception;
@@ -228,9 +271,8 @@ class CollectionDocJson
 
         // Response code must be 204 (no content)
         if ($response['code'] != 204) {
-            $err = sprintf("Got HTTP response %s, expected 204, for DELETE '%s' with access Token: '%s'",
-                   $response['code'], $uri, $accessToken);
-            $exception = new Exception($err);
+            $err = "Got unexpected non-HTTP-204 response while deleting \"$uri\"";
+            $exception = new Exception($err, $response['code']);
             $exception->setDetails($response);
             throw $exception;
             return null;
@@ -272,8 +314,8 @@ class CollectionDocJson
 
         // Response code must be 200 or 202 in order to be successful
         if ($response['code'] != 200 && $response['code'] != 202) {
-            $err = "Got unexpected non-HTTP-200 and non-HTTP-202 response while sending \"$uri\" with access Token: \"$accessToken\"";
-            $exception = new Exception($err);
+            $err = "Got unexpected non-HTTP-200/202 response while sending \"$uri\"";
+            $exception = new Exception($err, $response['code']);
             $exception->setDetails($response);
             throw $exception;
             return '';
@@ -289,61 +331,18 @@ class CollectionDocJson
     }
 
     /**
-     * Does a POST operation on the given URI using the given file path. Returns the URL of the upload file.
-     * @param $uri
-     *    the URI to use in the request
-     * @param $file
-     *    the file path to use for uploading
-     * @return string
-     * @throws Exception
-     */
-    private function postFile($uri, $file) {
-
-        // Using Guzzle instead of Restagent because of file stream upload support
-        $request = new Client();
-
-        // POST request needs an authorization header with given access token and
-        // the multipart form-data body
-        $accessToken = $this->getAccessToken();
-        $response = $request->post($uri, array(
-            'Authorization' => 'Bearer ' . $accessToken
-        ))->addPostFile('submission', $file)->send();
-
-        // Retry authentication if request was unauthorized
-        if ($response->getStatusCode() == 401) {
-            $accessToken = $this->getAccessToken(true);
-            $response = $request->post($uri, array(
-                'Authorization' => 'Bearer ' . $accessToken
-            ))->addPostFile('submission', $file)->send();
-        }
-
-        // Response code must be 202 in order to be successful
-        if ($response->getStatusCode() != 202) {
-            $err = "Got unexpected non-HTTP-202 response while sending \"$uri\" with access Token: \"$accessToken\"";
-            $exception = new Exception($err);
-            $exception->setDetails($response);
-            throw $exception;
-            return '';
-        }
-
-        $body = $response->getBody();
-        if (!empty($body)) {
-            $body = json_decode($body);
-            if (!empty($body->url)) {
-                return $body->url;
-            }
-        }
-        return '';
-    }
-
-    /**
      * Gets an access token from the authentication client
      * @param bool $refresh
      *   whether to refresh the token
      * @return string
      */
     public function getAccessToken($refresh=false) {
-        return $this->_auth->getToken($refresh)->access_token;
+        if ($this->_auth) {
+            return $this->_auth->getToken($refresh)->access_token;
+        }
+        else {
+            return null;
+        }
     }
 
     /**
@@ -381,45 +380,6 @@ class CollectionDocJson
             // 48 bits for "node"
             mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
         );
-    }
-
-    /**
-     * Does a POST operation on the given URI to get a new random guid
-     * @param $uri
-     *    the URI to use in the request
-     * @return string
-     * @throws Exception
-     */
-    private function getGuid($uri) {
-        $request = new Request();
-
-        // POST request needs an authorization header with given access token
-        $accessToken = $this->getAccessToken();
-        $response = $request->header('Content-Type', 'application/json')
-                            ->header('Authorization', 'Bearer ' . $accessToken)
-                            ->body('{"count":1}')
-                            ->post($uri);
-
-        // Retry authentication if request was unauthorized
-        if ($response['code'] == 401) {
-            $accessToken = $this->getAccessToken(true);
-            $response = $request->header('Content-Type', 'application/json')
-                                ->header('Authorization', 'Bearer ' . $accessToken)
-                                ->body('{"count":1}')
-                                ->post($uri);
-        }
-
-        // Response code must be 200 in order to be successful
-        if ($response['code'] != 200) {
-            $err = "Got unexpected non-HTTP-200 response while POSTing to \"$uri\" with access Token: \"$accessToken\"";
-            $exception = new Exception($err);
-            $exception->setDetails($response);
-            throw $exception;
-            return '';
-        }
-
-        $data = json_decode($response['data']);
-        return $data->guids[0];
     }
 
     /**
@@ -474,7 +434,14 @@ class CollectionDocJson
      * @param \stdClass $document
      * @return CollectionDocJson
      */
-    public function setDocument(\stdClass $document) {
+    public function setDocument($document) {
+        if (is_array($document)) {
+            $document = json_decode(json_encode($document)); // auto-convert
+        }
+        if (!is_a($document, 'stdClass')) {
+            throw new Exception('Invalid non-object document');
+        }
+
         $this->clearDocument();
 
         if (is_object($document)) {
@@ -514,19 +481,6 @@ class CollectionDocJson
     }
 
     /**
-     * Get the URI for uploading files
-     * @return string
-     */
-    public function getFilesUri() {
-        $filesLink = $this->edit("urn:collectiondoc:form:mediaupload");
-        if (!empty($filesLink->href)) {
-            return $filesLink->href;
-        } else {
-            return '';
-        }
-    }
-
-    /**
      * Get the URI of the current document
      * @return string
      */
@@ -559,15 +513,4 @@ class CollectionDocJson
         return $results;
     }
 
-}
-
-
-
-function pmp_backtrace() {
-    $trace = debug_backtrace();
-    foreach ($trace as &$t) {
-        unset($t['args']);
-        unset($t['object']);
-    }
-    return $trace;
 }

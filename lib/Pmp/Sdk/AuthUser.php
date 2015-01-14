@@ -10,75 +10,71 @@ use restagent\Request as Request;
 use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
 
 /**
- * PMP client authentication
+ * PMP user authentication
  *
- * Oauth on behalf of a user with client-id/secret, to create and revoke
- * tokens for the client
+ * Authenticate as a username/password, and manage the oauth clients
+ * for that user.
  *
  */
-class AuthClient
+class AuthUser
 {
-    const URN_ISSUE  = 'urn:collectiondoc:form:issuetoken';
-    const URN_REVOKE = 'urn:collectiondoc:form:revoketoken';
+    const URN_LIST   = 'urn:collectiondoc:form:listcredentials';
+    const URN_CREATE = 'urn:collectiondoc:form:createcredentials';
+    const URN_REMOVE = 'urn:collectiondoc:form:removecredentials';
     const TIMEOUT_MS = 5000;
 
     private $_home;
-    private $_client_auth;
-    private $_token;
-    private $_token_last_retrieved;
+    private $_user_auth;
 
     /**
      * Constructor
      *
-     * @param string $host   URL of the PMP api
-     * @param string $id     The client id to connect with
-     * @param string $secret The secret for this client
+     * @param string $host     URL of the PMP api
+     * @param string $username The user to connect as
+     * @param string $password The user's password
      */
-    public function __construct($host, $id, $secret) {
+    public function __construct($host, $username, $password) {
         $this->_home = new \Pmp\Sdk\CollectionDocJson($host, null);
-        $this->_client_auth = 'Basic ' . base64_encode($id . ':' . $secret);
-        $this->getToken();
+        $this->_user_auth = 'Basic ' . base64_encode($username . ':' . $password);
     }
 
     /**
-     * Get an auth token for these client credentials
+     * List credentials
      *
-     * @param bool refresh whether to force fetching a new token
-     * @return object the auth token object
+     * @return array the current client credentials for the user
      */
-    public function getToken($refresh = false) {
-        if ($refresh || empty($this->_token)) {
-            $data = array('grant_type' => 'client_credentials');
-            $this->_token = $this->makeRequest(self::URN_ISSUE, $data);
-
-            // check for valid response
-            if (empty($this->_token->access_token)) {
-                throw new Exception('Got unexpected empty token from the authentication server');
-            }
-            $this->_token_last_retrieved = time();
-        }
-        else {
-            // update the token-expires-in-seconds
-            $countdown = $this->_token->token_expires_in - (time() - $this->_token_last_retrieved);
-            $this->_token->token_expires_in = $countdown;
-        }
-        return $this->_token;
+    public function listCredentials() {
+        return $this->makeRequest(self::URN_LIST);
     }
 
     /**
-     * Revoke the auth token for these client credentials
+     * Create a credential
      *
-     * @return bool whether the token was deleted or not
+     * @param array $options scope/expires/label options
+     * @return array the newly created credential
      */
-    public function revokeToken() {
-        $this->makeRequest(self::URN_REVOKE);
-        $this->_token = null;
-        $this->_token_last_retrieved = null;
-        return true;
+    public function createCredential($scope, $expires, $label) {
+        $data = array(
+            'scope' => $scope,
+            'label' => $label,
+            'token_expires_in' => $expires,
+        );
+        return $this->makeRequest(self::URN_CREATE, $data);
     }
 
     /**
-     * Make a request as this client
+     * Remove a credential
+     *
+     * @param string $id the id of the credential to remove
+     * @return boolean whether a credential was deleted or not
+     */
+    public function removeCredential($id) {
+        $this->makeRequest(self::URN_REMOVE, array('client_id' => $id));
+        return true; // just assume it worked
+    }
+
+    /**
+     * Make a request as this user
      *
      * @param string $urn the URN of the link to get
      * @param array $data optional data to send with request
@@ -106,7 +102,7 @@ class AuthClient
         $request = new Request();
         $request->method($method);
         $request->timeout(self::TIMEOUT_MS);
-        $request->header('Authorization', $this->_client_auth);
+        $request->header('Authorization', $this->_user_auth);
         $request->header('Accept', 'application/json');
 
         // optional POST data

@@ -14,9 +14,30 @@ class CollectionDocJsonItems implements \ArrayAccess
      * @param CollectionDocJson $document
      *    the document object that contains this items object
      */
-    public function __construct(array $items, CollectionDocJson $document) {
+    public function __construct(array $items, CollectionDocJson $document, AuthClient $auth = null) {
         $this->_document = $document;
-        $this->_items = $items;
+        $this->_items = array();
+        foreach ($items as $item) {
+            $item_doc = new CollectionDocJson($item, $auth);
+            array_push($this->_items, $item_doc);
+        }
+    }
+
+    /**
+     * Number of items in this page
+     * @return int
+     */
+    public function count() {
+        return count($this->_items);
+    }
+
+    /**
+     * Total number of items
+     * @return int
+     */
+    public function total() {
+        $link = $this->_document->navigation('self');
+        return ($link && isset($link->totalitems)) ? $link->totalitems : null;
     }
 
     /**
@@ -24,8 +45,17 @@ class CollectionDocJsonItems implements \ArrayAccess
      * @return int
      */
     public function numPages() {
-        $links = $this->_document->links('self');
-        return $links[0]->totalpages;
+        $link = $this->_document->navigation('self');
+        return ($link && isset($link->totalpages)) ? $link->totalpages : null;
+    }
+
+    /**
+     * Current page number
+     * @return int
+     */
+    public function pageNum() {
+        $link = $this->_document->navigation('self');
+        return ($link && isset($link->pagenum)) ? $link->pagenum : null;
     }
 
     /**
