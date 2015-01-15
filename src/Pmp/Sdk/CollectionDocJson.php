@@ -12,6 +12,9 @@ class CollectionDocJson
     const URN_SAVE   = 'urn:collectiondoc:form:documentsave';
     const URN_DELETE = 'urn:collectiondoc:form:documentdelete';
 
+    // TODO: get rid of this someday
+    const AUTH_RETRY_WAIT_S = 1;
+
     // global static links (cached after first request)
     private static $_staticLinkNames = array('query', 'edit', 'auth');
     private static $_staticLinks;
@@ -50,6 +53,15 @@ class CollectionDocJson
     }
 
     /**
+     * Set the auth client associated with this document
+     *
+     * @param AuthClient $auth the authentication client
+     */
+    public function setAuth(AuthClient $auth = null) {
+        $this->_auth = $auth;
+    }
+
+    /**
      * Set this document back to the default state
      */
     public function clearDocument() {
@@ -69,7 +81,7 @@ class CollectionDocJson
      */
     public function setDocument($doc) {
         $this->clearDocument();
-        $doc = json_decode(json_encode($doc)); // convert arrays
+        $doc = json_decode(json_encode($doc)); // clone and convert arrays
 
         // set known properties
         if (!empty($doc->version)) {
@@ -140,7 +152,12 @@ class CollectionDocJson
         $json = new \stdClass();
         $json->version    = $this->version;
         $json->attributes = $this->attributes;
-        $json->links      = $this->links;
+        $json->links = new \stdClass();
+        foreach ($this->links as $relType => $links) {
+            if (!in_array($relType, self::$_staticLinkNames)) {
+                $json->links->$relType = $links;
+            }
+        }
 
         // remote save
         $resp = $this->_request('put', $url, $json);
@@ -263,6 +280,16 @@ class CollectionDocJson
     }
 
     /**
+     * Shortcut for the creator link
+     *
+     * @return CollectionDocJsonLink the creator link object
+     */
+    public function getCreator() {
+        $links = $this->links('creator');
+        return $links[0];
+    }
+
+    /**
      * Link shortcuts (could also just use the "link" method)
      */
     public function query($urn) {
@@ -317,12 +344,13 @@ class CollectionDocJson
         // retry 401's with refreshed token
         if ($code == 401) {
             $token = $this->getAccessToken(true);
+            sleep(self::AUTH_RETRY_WAIT_S); // TODO: i hate this
             list($code, $json) = Http::bearerRequest($method, $url, $token, $data);
         }
 
         // barf on non-200
         if ($code < 200 || $code > 299) {
-            $e = new Exception("Got unexpected HTTP-$code while retrieving $url", $code);
+            $e = new Exception("Got unexpected HTTP-$code while $method-ing $url", $code);
             $e->setDetails($json);
             throw $e;
         }

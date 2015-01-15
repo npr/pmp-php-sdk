@@ -5,26 +5,12 @@ require_once 'Common.php';
 use \Pmp\Sdk\AuthClient as AuthClient;
 use \Pmp\Sdk\AuthUser   as AuthUser;
 
-// init manually (check both user and client auth here)
-$host   = getenv('PMP_HOST');
-$user   = getenv('PMP_USERNAME');
-$pass   = getenv('PMP_PASSWORD');
-$id     = getenv('PMP_CLIENT_ID');
-$secret = getenv('PMP_CLIENT_SECRET');
-if (!$host || !$user || !$pass || !$id || !$secret) {
-  $missing = Array(
-    $host   ? null : 'PMP_HOST',
-    $user   ? null : 'PMP_USERNAME',
-    $pass   ? null : 'PMP_PASSWORD',
-    $id     ? null : 'PMP_CLIENT_ID',
-    $secret ? null : 'PMP_CLIENT_SECRET'
-  );
-  $missing = join(', ', array_filter($missing));
-  plan('skip_all', 'missing required PMP env variables: ' . $missing);
-}
-else {
-  plan(6);
-}
+//
+// Just make sure that things initialize correctly, and that we have all the
+// env variables necessary to run the tests
+//
+
+list($host, $user, $pass, $id, $secret) = pmp_both_plan(6);
 
 // check user connection
 ok( $user = new AuthUser($host, $user, $pass), 'instantiate new AuthUser' );

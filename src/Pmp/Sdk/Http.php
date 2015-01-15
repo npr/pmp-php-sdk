@@ -99,6 +99,7 @@ class Http
         $code = $resp->getStatusCode();
         $body = $resp->getBody();
         $json = json_decode($body);
+        $bad_json = (is_null($json) && json_last_error() != JSON_ERROR_NONE);
 
         // debug logger
         if (getenv('DEBUG') == '1') {
@@ -106,17 +107,20 @@ class Http
         }
 
         // handle unexpected response data
-        if ($code != 204 && empty($resp)) {
-            $e = new Exception("Got unexpected empty document while retrieving $url", $code);
+        if ($code != 204 && empty($body)) {
+            $e = new Exception("Got unexpected empty document while retrieving {$req->getUrl()}", $code);
             throw $e;
         }
-        else if (is_null($json) && json_last_error() != JSON_ERROR_NONE) {
-            $e = new Exception("JSON decode error for document $url");
+        else if ($code > 299 && $bad_json) {
+            $json = array('error' => "$body"); // stringify non-json errors
+        }
+        else if ($bad_json) {
+            $e = new Exception("JSON decode error for document {$req->getUrl()}");
             $e->setDetails($body);
             throw $e;
         }
 
-        // well heck, it actually worked!
+        // return json or the raw stringified response body
         return array($code, $json);
     }
 

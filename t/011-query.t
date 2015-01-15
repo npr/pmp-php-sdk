@@ -2,22 +2,19 @@
 <?php
 require_once 'Common.php';
 
-use \Pmp\Sdk\AuthClient as AuthClient;
-use \Pmp\Sdk\CollectionDocJson as CollectionDocJson;
+//
+// search via the sdk
+//
 
 $ARTS_TOPIC = '89944632-fe7c-47df-bc2c-b2036d823f98';
 $PMP_USER = 'af676335-21df-4486-ab43-e88c1b48f026';
 
 // plan and connect
-list($host, $client_id, $client_secret) = pmp_client_plan(38);
-ok( $auth = new AuthClient($host, $client_id, $client_secret), 'instantiate new AuthClient' );
-
-// fetch the home doc
-ok( $home = new CollectionDocJson($host, $auth), 'fetch home doc' );
+list($host, $client_id, $client_secret) = pmp_client_plan(37);
+ok( $sdk = new \Pmp\Sdk($host, $client_id, $client_secret), 'instantiate new Sdk' );
 
 // query docs
-$opts = array('limit' => 4, 'profile' => 'user');
-ok( $doc = $home->query('urn:collectiondoc:query:docs')->submit($opts), 'query docs' );
+ok( $doc = $sdk->queryDocs(array('limit' => 4, 'profile' => 'user')), 'query docs' );
 is( count($doc->items), 4, 'query docs - count items' );
 is( count($doc->links->item), 4, 'query docs - count item links' );
 
@@ -60,11 +57,5 @@ foreach ($pages[3] as $idx => $item) {
 }
 
 // query 404
-$opts = array('limit' => 4, 'text' => 'thisprofiledoesnotexist');
-try {
-    $doc = $home->query('urn:collectiondoc:query:profiles')->submit($opts);
-    fail( 'query 404 - exception thrown' );
-}
-catch (Exception $ex) {
-    is( $ex->getCode(), 404, 'query 404 - exception thrown' );
-}
+$doc = $sdk->queryProfiles(array('limit' => 4, 'text' => 'thisprofiledoesnotexist'));
+is( $doc, null, 'query 404 - returns null' );

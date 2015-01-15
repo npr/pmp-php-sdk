@@ -31,7 +31,7 @@ class Exception extends \Exception
             $this->_details = $details;
         }
         else if (is_object($details)) {
-            $this->_details = get_object_vars($details);
+            $this->_details = json_decode(json_encode($details), true);
         }
         else if (is_string($details)) {
             $this->_details = array($details);

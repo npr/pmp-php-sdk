@@ -4,8 +4,12 @@ require_once 'Common.php';
 
 use \Pmp\Sdk\AuthClient as AuthClient;
 
+//
+// Test out the AuthClient class (oauth workflow)
+//
+
 // plan and connect
-list($host, $client_id, $client_secret) = pmp_client_plan(22);
+list($host, $client_id, $client_secret) = pmp_client_plan(24);
 ok( $auth = new AuthClient($host, $client_id, $client_secret), 'instantiate new AuthClient' );
 
 // get a token
@@ -42,3 +46,23 @@ is( $token4->token_type, 'Bearer', 'revoke get token - token_type same' );
 cmp_ok( $token4->token_issue_date, '>', $token->token_issue_date, 'revoke get token - token_issue_date bigger' );
 cmp_ok( $token4->token_expires_in, '>', 0, 'revoke get token - token_expires_in bigger' );
 $token4 = clone($token4);
+
+// invalid host
+try {
+    $bad_host = new AuthClient('https://api-foobar.pmp.io', $client_id, $client_secret);
+    $bad_host->getToken();
+    fail( 'invalid host - no exception' );
+}
+catch (\Guzzle\Http\Exception\CurlException $e) {
+    pass( 'invalid host - throws exception' );
+}
+
+// invalid client
+try {
+    $bad_client = new AuthClient($host, $client_id, 'foobar');
+    $bad_client->getToken();
+    fail( 'invalid client - no exception' );
+}
+catch (\Pmp\Sdk\Exception $e) {
+    pass( 'invalid client - throws exception' );
+}

@@ -4,11 +4,15 @@ require_once 'Common.php';
 
 use \Pmp\Sdk\AuthUser as AuthUser;
 
+//
+// Test out the AuthUser class (generating clients)
+//
+
 $TEST_LABEL = 'pmp-php-sdk-test';
 
 // plan and connect
-list($host, $user, $pass) = pmp_user_plan(18);
-ok( $user = new AuthUser($host, $user, $pass), 'instantiate new AuthUser' );
+list($host, $username, $password) = pmp_user_plan(20);
+ok( $user = new AuthUser($host, $username, $password), 'instantiate new AuthUser' );
 
 // create a credential
 ok( $cred = $user->createCredential('read', 999, $TEST_LABEL), 'create cred' );
@@ -17,6 +21,7 @@ ok( $cred->client_secret, 'create cred - secret' );
 is( $cred->token_expires_in, 999, 'create cred - expires' );
 is( $cred->scope, 'read', 'create cred - scope' );
 is( $cred->label, $TEST_LABEL, 'create cred - label' );
+sleep(2); // wait for server to catch up, just in case
 
 // list credentials
 ok( $list = $user->listCredentials(), 'list creds' );
@@ -25,9 +30,9 @@ ok( count($list->clients) > 0, 'list creds - count' );
 // search for cred
 $my_cred = false;
 foreach ($list->clients as $list_client) {
-  if ($list_client->client_id == $cred->client_id) {
-    $my_cred = $list_client;
-  }
+    if ($list_client->client_id == $cred->client_id) {
+        $my_cred = $list_client;
+    }
 }
 ok( $my_cred, 'list creds - found new' );
 is( $my_cred->client_id, $cred->client_id, 'list creds - id' );
@@ -43,11 +48,31 @@ ok( $relist = $user->listCredentials(), 'remove cred - relist' );
 // search for removed cred
 $found_cred = false;
 foreach ($relist->clients as $list_client) {
-  if ($list_client->client_id == $cred->client_id) {
-    $found_cred = $list_client;
-  }
+    if ($list_client->client_id == $cred->client_id) {
+        $found_cred = $list_client;
+    }
 }
 ok( !$found_cred, 'remove cred - no longer in list' );
+
+// invalid host
+try {
+    $bad_host = new AuthUser('https://api-foobar.pmp.io', $username, $password);
+    $bad_host->listCredentials();
+    fail( 'invalid host - no exception' );
+}
+catch (\Guzzle\Http\Exception\CurlException $e) {
+    pass( 'invalid host - throws exception' );
+}
+
+// invalid password
+try {
+    $bad_user = new AuthUser($host, $username, 'foobar');
+    $bad_user->listCredentials();
+    fail( 'invalid password - no exception' );
+}
+catch (\Pmp\Sdk\Exception $e) {
+    pass( 'invalid password - throws exception' );
+}
 
 // cleanup
 foreach ($relist->clients as $list_client) {

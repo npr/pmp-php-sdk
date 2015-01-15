@@ -43,8 +43,11 @@ class Sdk
      * @param string $secret the secret for this client
      */
     public function __construct($host, $id, $secret) {
-        $this->home = new \Pmp\Sdk\CollectionDocJson($host, null);
+        $this->home = new \Pmp\Sdk\CollectionDocJson($host);
         $this->_auth = new \Pmp\Sdk\AuthClient($host, $id, $secret, $this->home);
+
+        // add the auth back into the home document
+        $this->home->setAuth($this->_auth);
     }
 
     /**
@@ -104,8 +107,8 @@ class Sdk
      * @param array $initDoc optional initial document payload
      * @return CollectionDocJson a new (unsaved) collectiondoc
      */
-    public function createDoc($profile, $initDoc) {
-        $doc = new CollectionDocJson(null, $this->_auth);
+    public function newDoc($profile, $initDoc) {
+        $doc = new \Pmp\Sdk\CollectionDocJson(null, $this->_auth);
         if ($initDoc) {
             $doc->setDocument($initDoc);
         }
@@ -140,7 +143,7 @@ class Sdk
             return $link->submit($options);
         }
         catch (\Pmp\Sdk\Exception $e) {
-            if ($ex->getCode() == 403 || $ex->getCode() == 404) {
+            if ($e->getCode() == 403 || $e->getCode() == 404) {
                 return null;
             }
             else {
