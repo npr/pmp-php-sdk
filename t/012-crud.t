@@ -60,9 +60,10 @@ try {
 }
 catch (\Pmp\Sdk\Exception $e) {
     is( $e->getCode(), 400, 'bad update - got 400' );
-    ok( is_array($e->getDetails()), 'bad update - details is array' );
-    ok( !empty($e->getDetails()['errors']), 'bad update - detail errors' );
-    ok( !empty($e->getDetails()['errors']['message']), 'bad update - detail message' );
+    $details = $e->getDetails();
+    ok( is_array($details), 'bad update - details is array' );
+    ok( !empty($details['errors']), 'bad update - detail errors' );
+    ok( !empty($details['errors']['message']), 'bad update - detail message' );
 }
 
 // 3.5) re-read after update
