@@ -16,7 +16,7 @@ $TEST_DOC = array(
 );
 
 // plan and connect
-list($host, $client_id, $client_secret) = pmp_client_plan(23);
+list($host, $client_id, $client_secret) = pmp_client_plan(21);
 ok( $sdk = new \Pmp\Sdk($host, $client_id, $client_secret), 'instantiate new Sdk' );
 
 // 1) create
@@ -54,16 +54,11 @@ try {
     $doc->links->profile[0]->href = "$host/profiles/foobar";
     $doc->save();
     fail( 'bad update - did not throw exception' );
-    fail( 'bad update - details is array' );
-    fail( 'bad update - detail errors' );
-    fail( 'bad update - detail message' );
+    fail( 'bad update - no validation message' );
 }
-catch (\Pmp\Sdk\Exception $e) {
+catch (\Pmp\Sdk\Exception\ValidationException $e) {
     is( $e->getCode(), 400, 'bad update - got 400' );
-    $details = $e->getDetails();
-    ok( is_array($details), 'bad update - details is array' );
-    ok( !empty($details['errors']), 'bad update - detail errors' );
-    ok( !empty($details['errors']['message']), 'bad update - detail message' );
+    like( $e->getValidationMessage(), '/invalid #\/links\/profile provided/i', 'bad update - validation message');
 }
 
 // 3.5) re-read after update

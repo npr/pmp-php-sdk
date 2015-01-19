@@ -120,7 +120,7 @@ class CollectionDocJson
      */
     public function load() {
         if (empty($this->href)) {
-            throw new Exception('No href set for document!');
+            throw new Exception\PmpException('No href set for document!');
         }
         else {
             $doc = $this->_request('get', $this->href);
@@ -143,8 +143,7 @@ class CollectionDocJson
         $link = $this->edit(self::URN_SAVE);
         if (!$link) {
             $urn = self::URN_SAVE;
-            var_dump($this->links->edit);
-            throw new Exception("Unable to find link $urn - have you loaded the document yet?");
+            throw new Exception\LinkException("Unable to find link $urn - have you loaded the document yet?");
         }
         $url = $link->expand(array('guid' => $this->attributes->guid));
 
@@ -162,9 +161,8 @@ class CollectionDocJson
         // remote save
         $resp = $this->_request('put', $url, $json);
         if (empty($resp->url)) {
-            $e = new Exception("Invalid PUT response missing url!");
-            $e->setDetails($resp);
-            throw $e;
+            $data = array('url' => $url, 'body' => json_encode($json));
+            throw new Exception\RemoteException('Invalid PUT response missing url!', $data);
         }
 
         // re-load new docs
@@ -180,14 +178,14 @@ class CollectionDocJson
      */
     public function delete() {
         if (empty($this->attributes->guid)) {
-            throw new Exception('Document has no guid!');
+            throw new Exception\PmpException('Document has no guid!');
         }
 
         // expand link template
         $link = $this->edit(self::URN_DELETE);
         if (!$link) {
             $urn = self::URN_DELETE;
-            throw new Exception("Unable to find link $urn - have you loaded the document yet?");
+            throw new Exception\LinkException("Unable to find link $urn - have you loaded the document yet?");
         }
         $url = $link->expand(array('guid' => $this->attributes->guid));
 
@@ -337,22 +335,24 @@ class CollectionDocJson
      * @param bool $is_retry whether this request is a 401-retry
      * @return stdClass the json-decoded response
      */
-    private function _request($method, $url, $data = null) {
-        $token = $this->getAccessToken();
-        list($code, $json) = Http::bearerRequest($method, $url, $token, $data);
+    private function _request($method, $url, $data = null, $is_retry = false) {
+        $token = $this->getAccessToken($is_retry);
 
-        // retry 401's with refreshed token
-        if ($code == 401) {
-            $token = $this->getAccessToken(true);
-            sleep(self::AUTH_RETRY_WAIT_S); // TODO: i hate this
+        // make request, retrying auth failures ONCE with a new token
+        try {
             list($code, $json) = Http::bearerRequest($method, $url, $token, $data);
         }
-
-        // barf on non-200
-        if ($code < 200 || $code > 299) {
-            $e = new Exception("Got unexpected HTTP-$code while $method-ing $url", $code);
-            $e->setDetails($json);
-            throw $e;
+        catch (Exception\AuthException $e) {
+            sleep(self::AUTH_RETRY_WAIT_S); // TODO: i hate this
+            return $this->_request($method, $url, $data, true);
+        }
+        catch (Exception\RemoteException $e) {
+            if (Exception\ValidationException::looksValidationy($e)) {
+                throw new Exception\ValidationException('Validation error', $e->getCode(), $e);
+            }
+            else {
+                throw $e; // re-throw
+            }
         }
 
         return $json;

@@ -4,6 +4,8 @@ require_once 'Common.php';
 
 use \Pmp\Sdk as Sdk;
 use \Pmp\Sdk\AuthClient as AuthClient;
+use \Pmp\Sdk\Exception\AuthException as AuthException;
+use \Pmp\Sdk\Exception\HostException as HostException;
 
 //
 // Make sure token-auth is working as it should
@@ -34,7 +36,7 @@ try {
     $bad_host = new Sdk('https://api-foobar.pmp.io', $id, $secret);
     fail( 'invalid host - no exception' );
 }
-catch (\Guzzle\Http\Exception\CurlException $e) {
+catch (HostException $e) {
     pass( 'invalid host - throws exception' );
 }
 
@@ -43,8 +45,8 @@ try {
     $bad_path = new Sdk($host . '/1234', $id, $secret);
     fail( 'invalid host path - no exception' );
 }
-catch (\Pmp\Sdk\Exception $e) {
-    is( $e->getCode(), 404, 'invalid host path - throws exception' );
+catch (HostException $e) {
+    is( $e->getCode(), 404, 'invalid host path - throws host exception' );
 }
 
 // invalid client
@@ -52,6 +54,6 @@ try {
     $bad_client = new Sdk($host, $id, 'foobar');
     fail( 'invalid client - no exception' );
 }
-catch (\Pmp\Sdk\Exception $e) {
+catch (AuthException $e) {
     is( $e->getCode(), 401, 'invalid client - throws exception' );
 }

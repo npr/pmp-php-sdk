@@ -43,10 +43,17 @@ class Sdk
      * @param string $secret the secret for this client
      */
     public function __construct($host, $id, $secret) {
-        $this->home = new \Pmp\Sdk\CollectionDocJson($host);
-        $this->_auth = new \Pmp\Sdk\AuthClient($host, $id, $secret, $this->home);
 
-        // add the auth back into the home document
+        // re-throw 404's as host-not-found (same thing, to the sdk)
+        try {
+            $this->home = new \Pmp\Sdk\CollectionDocJson($host);
+        }
+        catch (\Pmp\Sdk\Exception\NotFoundException $e) {
+            throw new \Pmp\Sdk\Exception\HostException('Host not found', $e->getCode(), $e);
+        }
+
+        // authenticate, then add the auth back into the home document
+        $this->_auth = new \Pmp\Sdk\AuthClient($host, $id, $secret, $this->home);
         $this->home->setAuth($this->_auth);
     }
 
@@ -117,7 +124,7 @@ class Sdk
         $link = $this->home->link(self::FETCH_PROFILE);
         if (empty($link)) {
             $urn = self::FETCH_PROFILE;
-            throw new Exception("Unable to find link $urn in home doc");
+            throw new \Pmp\Sdk\Exception\LinkException("Unable to find link $urn in home doc");
         }
         $href = $link->expand(array('guid' => $profile));
 
@@ -137,18 +144,13 @@ class Sdk
     private function _request($urn, $options = array()) {
         $link = $this->home->link($urn);
         if (empty($link)) {
-            throw new Exception("Unable to find link $urn in home doc");
+            throw new \Pmp\Sdk\Exception\LinkException("Unable to find link $urn in home doc");
         }
         try {
             return $link->submit($options);
         }
-        catch (\Pmp\Sdk\Exception $e) {
-            if ($e->getCode() == 403 || $e->getCode() == 404) {
-                return null;
-            }
-            else {
-                throw $e;
-            }
+        catch (\Pmp\Sdk\Exception\NotFoundException $e) {
+            return null;
         }
     }
 

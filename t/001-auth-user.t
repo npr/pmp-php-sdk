@@ -3,6 +3,8 @@
 require_once 'Common.php';
 
 use \Pmp\Sdk\AuthUser as AuthUser;
+use \Pmp\Sdk\Exception\AuthException as AuthException;
+use \Pmp\Sdk\Exception\HostException as HostException;
 
 //
 // Test out the AuthUser class (generating clients)
@@ -11,7 +13,7 @@ use \Pmp\Sdk\AuthUser as AuthUser;
 $TEST_LABEL = 'pmp-php-sdk-test';
 
 // plan and connect
-list($host, $username, $password) = pmp_user_plan(20);
+list($host, $username, $password) = pmp_user_plan(21);
 ok( $user = new AuthUser($host, $username, $password), 'instantiate new AuthUser' );
 
 // create a credential
@@ -43,6 +45,7 @@ is( $my_cred->label, $TEST_LABEL, 'list creds - label' );
 
 // remove credential
 is( $user->removeCredential($cred->client_id), true, 'remove cred' );
+is( $user->removeCredential('foobar'), true, 'remove non-existent cred' );
 ok( $relist = $user->listCredentials(), 'remove cred - relist' );
 
 // search for removed cred
@@ -60,7 +63,7 @@ try {
     $bad_host->listCredentials();
     fail( 'invalid host - no exception' );
 }
-catch (\Guzzle\Http\Exception\CurlException $e) {
+catch (HostException $e) {
     pass( 'invalid host - throws exception' );
 }
 
@@ -70,7 +73,7 @@ try {
     $bad_user->listCredentials();
     fail( 'invalid password - no exception' );
 }
-catch (\Pmp\Sdk\Exception $e) {
+catch (AuthException $e) {
     pass( 'invalid password - throws exception' );
 }
 

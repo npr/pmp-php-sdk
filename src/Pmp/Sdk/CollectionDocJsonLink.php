@@ -1,7 +1,7 @@
 <?php
 namespace Pmp\Sdk;
 
-use Guzzle\Parser\UriTemplate\UriTemplate;
+use \Guzzle\Parser\UriTemplate\UriTemplate;
 
 /**
  * PMP CollectionDoc link
@@ -49,9 +49,7 @@ class CollectionDocJsonLink
             return $parser->expand($this->{'href-template'}, $this->_convertOptions($options));
         }
         else {
-            $e = new Exception('Cannot expand link because no href or href-template defined');
-            $e->setDetails($this->_link);
-            throw $e;
+            throw new Exception\LinkException('Cannot expand link because no href or href-template defined');
         }
     }
 
@@ -83,9 +81,7 @@ class CollectionDocJsonLink
      */
     public function options() {
         if (empty($this->{'href-template'}) || empty($this->{'href-vars'})) {
-            $e = new Exception('Cannot give link options because link is not a properly defined href template');
-            $e->setDetails($this->_link);
-            throw $e;
+            throw new Exception\LinkException('Cannot give link options because link is not a properly defined href template');
         }
         else {
             return $this->{'href-vars'};

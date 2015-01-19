@@ -76,14 +76,7 @@ class AuthUser
      */
     private function _request($urn, $data = null) {
         list($method, $url) = $this->_authLink($urn, $data);
-
-        // run request
         list($code, $json) = Http::basicRequest($method, $url, $this->_userAuth, $data);
-        if ($code < 200 || $code > 299) {
-            $e = new Exception("Got unexpected HTTP-$code while retrieving $url", $code);
-            $e->setDetails($json);
-            throw $e;
-        }
         return $json;
     }
 
@@ -102,8 +95,7 @@ class AuthUser
         // fetch the link
         $link = $this->_home->auth($urn);
         if (!$link) {
-            $err = new Exception("Unable to retrieve $urn from the home document");
-            throw $err;
+            throw new Exception\LinkException("Unable to retrieve $urn from the home document");
         }
 
         // expand the link (data will be ignored unless it's an href-template)

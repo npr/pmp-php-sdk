@@ -3,6 +3,8 @@
 require_once 'Common.php';
 
 use \Pmp\Sdk\AuthClient as AuthClient;
+use \Pmp\Sdk\Exception\AuthException as AuthException;
+use \Pmp\Sdk\Exception\HostException as HostException;
 
 //
 // Test out the AuthClient class (oauth workflow)
@@ -53,7 +55,7 @@ try {
     $bad_host->getToken();
     fail( 'invalid host - no exception' );
 }
-catch (\Guzzle\Http\Exception\CurlException $e) {
+catch (HostException $e) {
     pass( 'invalid host - throws exception' );
 }
 
@@ -63,6 +65,6 @@ try {
     $bad_client->getToken();
     fail( 'invalid client - no exception' );
 }
-catch (\Pmp\Sdk\Exception $e) {
+catch (AuthException $e) {
     pass( 'invalid client - throws exception' );
 }

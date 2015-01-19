@@ -46,7 +46,7 @@ class AuthClient
 
             // check for valid response
             if (empty($this->_token->access_token)) {
-                throw new Exception('Got unexpected empty token from the authentication server');
+                throw new Exception\AuthException('Unexpected empty token from the authentication server');
             }
         }
         return $this->_token;
@@ -72,14 +72,7 @@ class AuthClient
      */
     private function _request($urn, $data = null) {
         list($method, $url) = $this->_authLink($urn, $data);
-
-        // run request
         list($code, $json) = Http::basicRequest($method, $url, $this->_clientAuth, $data);
-        if ($code < 200 || $code > 299) {
-            $e = new Exception("Got unexpected HTTP-$code while retrieving $url", $code);
-            $e->setDetails($json);
-            throw $e;
-        }
         return $json;
     }
 
@@ -98,8 +91,7 @@ class AuthClient
         // fetch the link
         $link = $this->_home->auth($urn);
         if (!$link) {
-            $err = new Exception("Unable to retrieve $urn from the home document");
-            throw $err;
+            throw new Exception\LinkException("Unable to retrieve $urn from the home document");
         }
 
         // expand the link (data will be ignored unless it's an href-template)
