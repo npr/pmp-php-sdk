@@ -1,7 +1,8 @@
 <?php
 namespace Pmp\Sdk;
 
-use \Guzzle\Http\Client;
+use \GuzzleHttp\Client;
+use \GuzzleHttp\Stream\Stream;
 
 /**
  * PMP common HTTP utils
@@ -14,7 +15,6 @@ class Http
     const CONTENT_TYPE = 'application/vnd.collection.doc+json';
     const USER_AGENT   = 'pmp-php-sdk';
     const TIMEOUT_S    = 5;
-    const CURL_COULDNT_RESOLVE_HOST = 6;
 
     /**
      * Make a normal bearer-auth request
@@ -29,12 +29,13 @@ class Http
         list($client, $req) = self::_buildRequest($method, $url);
 
         // additional headers and data
+        $req->setHeader('Accept', self::CONTENT_TYPE);
         $req->setHeader('Content-Type', self::CONTENT_TYPE);
         if ($token) {
             $req->setHeader('Authorization', "Bearer $token");
         }
-        if (!empty($data)) {
-            $req->setBody(json_encode($data));
+        if ((strtolower($method) == 'post' || strtolower($method) == 'put') && !empty($data)) {
+            $req->setBody(Stream::factory(json_encode($data)));
         }
 
         return self::_sendRequest($client, $req);
@@ -55,11 +56,12 @@ class Http
         // additional headers and data
         $req->setHeader('Accept', 'application/json');
         $req->setHeader('Authorization', $basicAuth);
-        if (!empty($postData)) {
+        if (strtolower($method) == 'post' && !empty($postData)) {
             $req->setHeader('Content-Type', 'application/x-www-form-urlencoded');
+            $postBody = $req->getBody();
             foreach ($postData as $key => $value) {
                 if ($value) {
-                    $req->setPostField($key, $value);
+                    $postBody->setField($key, $value);
                 }
             }
         }
@@ -96,16 +98,11 @@ class Http
         try {
             $resp = $client->send($req);
         }
-        catch (\Guzzle\Http\Exception\BadResponseException $e) {
+        catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $resp = $e->getResponse();
         }
-        catch (\Guzzle\Http\Exception\CurlException $e) {
-            if ($e->getErrorNo() == self::CURL_COULDNT_RESOLVE_HOST) {
-                throw new Exception\HostException('Unable to resolve host', $err_data);
-            }
-            else {
-                throw $e;
-            }
+        catch (\GuzzleHttp\Exception\ConnectException $e) {
+            throw new Exception\HostException('Unable to resolve host', $err_data);
         }
         $code = $resp->getStatusCode();
         $body = $resp->getBody();
