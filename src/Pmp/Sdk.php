@@ -114,7 +114,7 @@ class Sdk
      * @param array $initDoc optional initial document payload
      * @return CollectionDocJson a new (unsaved) collectiondoc
      */
-    public function newDoc($profile, $initDoc) {
+    public function newDoc($profile, $initDoc = null) {
         $doc = new \Pmp\Sdk\CollectionDocJson(null, $this->_auth);
         if ($initDoc) {
             $doc->setDocument($initDoc);

@@ -2,66 +2,243 @@
 
 [![Build Status](https://travis-ci.org/publicmediaplatform/phpsdk.svg?branch=master)](https://travis-ci.org/publicmediaplatform/phpsdk)
 
-A set of PHP classes, providing an API client for the [Public Media Platform](http://publicmediaplatform.org).
+A PHP API client for the [Public Media Platform](http://publicmediaplatform.org).
+
+## Requirements
+
+PHP version >= 5.3.  And a [PMP client-id/secret](https://support.pmp.io/login) for your PMP user.
 
 ## Installation
 
-Copy this repo into your project directory, and require the classes you need at
-the top of your files.  TODO: composer/packagist.
+Download the [Latest Release](https://github.com/publicmediaplatform/phpsdk/releases/latest) into your project directory and extract it.  Or clone this repo at the release version you wish to use.  Then just require the `\Pmp\Sdk` entry point.
 
-The only requirement is a PHP version >= 5.3.
+```php
+require_once('path/to/src/Pmp/Sdk.php');
+```
+
+COMING SOON: composer/packagist support.
 
 ## Usage
 
-You can find some more in-depth examples in the [PMP API Docs](http://support.pmp.io/docs).  But if you've generated an oauth client using the [Support app](http://support.pmp.io/login), you can use the SDK as follows...
+### Connecting
+
+Simply instantiate a new SDK object using your credentials.  Errors will be immediately thrown if there's a problem fetching the API home doc or authenticating.
 
 ```php
-require_once('path/to/lib/Pmp/Sdk/AuthClient.php');
-require_once('path/to/lib/Pmp/Sdk/CollectionDocJson.php');
-
-use \Pmp\Sdk\AuthClient as AuthClient;
-use \Pmp\Sdk\CollectionDocJson as CollectionDocJson;
-
-// let's authenticate with the sandbox api
-$host = 'https://api-sandbox.pmp.io';
-$auth = new AuthClient($host, 'my_client_id', 'my_client_secret');
-
-// now, try searching using the query:docs link
-$home = new CollectionDocJson($host, $auth);
-$opts = array('profile' => 'story', 'text' => 'Penmanship');
 try {
-    $search = $home->query('urn:collectiondoc:query:docs')->submit($opts);
+    $host = 'https://api-sandbox.pmp.io';
+    $sdk = new \Pmp\Sdk($host, 'client-id', 'client-secret');
 }
-catch (Exception $ex) {
-    if ($ex->getCode() == 404) {
-        echo "Woh - empty search results";
+catch (\Pmp\Sdk\Exception\HostException $e) {
+    echo "Invalid API host specified: $e";
+    exit(1);
+}
+catch (\Pmp\Sdk\Exception\AuthException $e) {
+    echo "Bad client credentials: $e";
+    exit(1);
+}
+```
+
+### Home Document
+
+After successfully connecting, you can immediately interrogate the API home document - an instance of `\Pmp\Sdk\CollectionDocJson`.
+
+```php
+echo "HOME doc guid  = {$sdk->home->attributes->guid}\n";
+echo "HOME doc title = {$sdk->home->attributes->title}\n";
+```
+
+### Fetching
+
+To directly fetch a document (by guid or alias), the SDK provides shortcuts for locating links such as `urn:collectiondoc:hreftpl:docs` in the home document.  These shortcuts will always return `null` for HTTP 403 or 404 errors.
+
+```php
+$ARTS_TOPIC = '89944632-fe7c-47df-bc2c-b2036d823f98';
+$doc = $sdk->fetchDoc($ARTS_TOPIC);
+if (!$doc) {
+    echo "failed to fetch the ARTS topic - must have been a 403 or 404.\n";
+    exit(1);
+}
+echo "ARTS topic href    = {$doc->href}\n";
+echo "ARTS topic guid    = {$doc->attributes->guid}\n";
+echo "ARTS topic title   = {$doc->attributes->title}\n";
+echo "ARTS topic profile = {$doc->getProfile()}\n";
+```
+
+Current `\Pmp\Sdk` fetch methods include:
+
+* `$sdk->fetchDoc($guid)`
+* `$sdk->fetchProfile($guid)`
+* `$sdk->fetchSchema($guid)`
+* `$sdk->fetchTopic($guid)`
+* `$sdk->fetchUser($guid)`
+
+### Querying
+
+To query documents (by any [PMP search params](https://github.com/publicmediaplatform/pmpdocs/wiki/Querying-the-API)), the SDK provides shortcuts for locating links such as `urn:collectiondoc:query:docs`.  These shortcuts will always return `null` for HTTP 404 errors, indicating that your search yielded 0 total results.
+
+```php
+$doc = $sdk->queryDocs(array('limit' => 3, 'text' => 'penmanship'));
+if (!$doc) {
+    echo "got 0 results for my search - doh!\n";
+    exit(1);
+}
+
+// use the "items" directly
+$count1 = count($doc->items);
+$title1 = $doc->items[0]->attributes->title;
+echo "SEARCH - $count1 - $title1\n";
+
+// or get a fancy items object with some helpers
+$items = $doc->items();
+$count2 = count($items);
+$count3 = $items->count();
+$title2 = $items[0]->attributes->title;
+foreach ($items as $idx => $item) {
+    echo "SEARCH item($idx) = {$item->attributes->title}\n";
+}
+```
+
+Current `\Pmp\Sdk` query methods include:
+
+* `$sdk->queryCollection($collectionGuid, $params)`
+* `$sdk->queryDocs($params)`
+* `$sdk->queryGroups($params)`
+* `$sdk->queryProfiles($params)`
+* `$sdk->querySchemas($params)`
+* `$sdk->queryTopics($params)`
+* `$sdk->queryUsers($params)`
+
+### Document Items
+
+As seen above, you can use a Document's `items` (the expanded `links.item` array) directly as an array of `stdClass` objects.  And you can also expand them into a `\Pmp\Sdk\CollectionDocJsonItems` object for further shortcuts.
+
+```php
+$items = $doc->items();
+
+// access the paging links via helpers
+echo "SEARCH total   = {$doc->items()->totalItems()}\n";
+echo "SEARCH items   = {$doc->items()->count()} items\n";
+echo "SEARCH pagenum = {$doc->items()->pageNum()}\n";
+echo "SEARCH pagenum = {$doc->items()->totalPages()}\n";
+```
+
+Sometimes you'll want to iterate over several pages of search results without directly following the `links.navigation` previous/next/first/last links.  You can easily get a `\Pmp\Sdk\PageIterator` for this purpose.  It accepts a `$pageLimit` paramater to limit the number of returned pages - or exclude the param to iterate over all pages.
+
+```php
+$pageLimit = 3;
+foreach($doc->itemsIterator($pageLimit) as $pageNum => $items) {
+    if ($pageNum < 1 || $pageNum > 3) {
+        echo 'i did not see that one coming!';
+        exit(1);
     }
-    else {
-        throw $ex; // re-throw
+    echo "SEARCH page $pageNum\n";
+    foreach ($items as $idx => $item) {
+        echo "  item($idx) = {$item->attributes->title}\n";
     }
 }
+```
 
-// or, if you'd rather not catch 404's for empty search results
-$search = CollectionDocJson::search($host, $auth, $opts);
-if ($search == null) {
-    echo "Sorry - no search results";
-    return;
+### Document Links
+
+To navigate links, we can interrogate them directly on the `\Pmp\Sdk\CollectionDocJson` object, or browse them via the `\Pmp\Sdk\CollectionDocJsonLinks` object, containing a collection of `\Pmp\Sdk\CollectionDocJsonLink` objects.
+
+Note that links have either an `href` or an `href-template` attribute.  To get a full URL from the link either way (and optionally passing an array of parameters), use the `expand()` method.
+
+```php
+$queryLinks = $doc->links('query');
+if (empty($queryLinks)) {
+    echo "document didn't have any links of reltype = query!\n";
+    exit(1);
+}
+foreach ($queryLinks as $link) {
+    $fakeParams = array('guid' => 'foobar');
+    $url = $link->expand($fakeParams);
+    echo "link = $url\n";
+}
+```
+
+In some cases, we may know an `URN` (uniform resource name) of the link we're looking for.  In this case, we can directly fetch the link from the document.
+
+```php
+$link = $doc->link('urn:collectiondoc:query:profiles');
+if (!$link) {
+    echo "failed to find link in the document\n";
+    exit(1);
 }
 
-// let's look at the results
-$items = $search->items();
-echo "Looking at " . $items->count() . " items of " . $items->total();
-echo "Page " . $items->pageNum() . " of " . $items->numPages();
-foreach ($items->toArray() as $item) {
-    echo "Guid = " . $item->attributes->guid;
-    echo "Title = " . $item->attributes->title;
+// or only look in a specific link relType (links.query[])
+$link = $doc->link('query', 'urn:collectiondoc:query:profiles');
+```
+
+To fetch the `\Pmp\Sdk\CollectionDocJson` at the other end of a link, simply `follow()` it.  This method optionally accepts the same array of `href-template` params as `expand()`.  If the url can't be loaded (404) or is inaccessible (403), `null` will be returned.
+
+```php
+$creatorLinks = $doc->links('creator');
+if (empty($creatorLinks)) {
+    echo "document didn't have a creator!\n";
+    exit(1);
 }
 
-// now follow a link
-$first_item = $items[0];
-if (!empty($first_item->links('creator'))) {
-    $creator = $first_item->links('creator')[0]->follow();
-    echo "Got creator = " . $item->attributes->title;
+$creatorLink = $creatorLinks[0];
+$creatorDoc = $creatorLink->follow();
+if (!$creatorDoc) {
+    echo "creator link must have been a 403 or 404!\n";
+    exit(1);
+}
+echo "creator = {$creatorDoc->attributes->title}\n";
+```
+
+### Modifying documents
+
+To create a document, you should first know which [Profile Type](https://support.pmp.io/docs#profiles-and-schemas-hierarchy) you'd like to create.  Then use the SDK to instantiate a new `\Pmp\Sdk\CollectionDocJson` of that type.
+
+```php
+$data = array('attributes' => array('title' => 'foobar'));
+$doc = $sdk->newDoc('story', $data);
+
+// or alter the document data manually
+$doc->attributes->title = 'foobar2';
+$doc->attributes->valid = new \stdClass();
+$doc->attributes->valid->to = '3013-07-04T04:00:44+00:00';
+
+// save, but catch any pmp errors
+try {
+    $doc->save();
+}
+catch (\Pmp\Sdk\Exception\RemoteException $e) {
+    echo "unable to create document: $e\n";
+    exit(1);
+}
+```
+
+To update documents, all you need is an instance of `\Pmp\Sdk\CollectionDocJson` that you can modify.  You can also catch any `\Pmp\Sdk\Exception\ValidationException` separately, to handle PMP schema violations separately.
+
+```php
+$doc->attributes->title = 'foobar3';
+try {
+    $doc->save();
+}
+catch (\Pmp\Sdk\Exception\ValidationException $e) {
+    echo "invalid document: {$e->getValidationMessage()}\n";
+    exit(1);
+}
+catch (\Pmp\Sdk\Exception\RemoteException $e) {
+    echo "unable to save document: $e\n";
+    exit(1);
+}
+```
+
+To delete a document, just get an instance of `\Pmp\Sdk\CollectionDocJson` that you can modify.
+
+```php
+$doc->attributes->title = 'foobar3';
+try {
+    $doc->delete();
+}
+catch (\Pmp\Sdk\Exception\RemoteException $e) {
+    echo "unable to delete document: $e\n";
+    exit(1);
 }
 ```
 
@@ -81,7 +258,7 @@ $
 $ make test
 ```
 
-To debug the tests, set the *REST_AGENT_DEBUG* environment variable to a true value (*REST_AGENT_DEBUG=1*).
+To debug the HTTP calls occuring during the tests, set the *DEBUG* environment variable to 1 (`DEBUG=1 make test`).
 
 ## Issues and Contributing
 

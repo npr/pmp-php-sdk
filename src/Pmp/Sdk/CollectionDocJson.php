@@ -274,7 +274,7 @@ class CollectionDocJson
      */
     public function getProfile() {
         $links = $this->links('profile');
-        return $links[0];
+        return isset($links[0]) ? $links[0] : null;
     }
 
     /**
@@ -284,7 +284,7 @@ class CollectionDocJson
      */
     public function getCreator() {
         $links = $this->links('creator');
-        return $links[0];
+        return isset($links[0]) ? $links[0] : null;
     }
 
     /**

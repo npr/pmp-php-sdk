@@ -35,6 +35,21 @@ class CollectionDocJsonLink
     }
 
     /**
+     * Custom string representation
+     */
+    public function __toString() {
+        if (!empty($this->href)) {
+            return $this->href;
+        }
+        else if (!empty($this->{'href-template'})) {
+            return $this->{'href-template'};
+        }
+        else {
+            return '';
+        }
+    }
+
+    /**
      * Expand this link into a complete url
      *
      * @param array $options optional array of href-template params
@@ -57,11 +72,16 @@ class CollectionDocJsonLink
      * Follow the link href to retrieve a document
      *
      * @param array $options optional array of href-template params
-     * @return CollectionDocJson a loaded document
+     * @return CollectionDocJson a loaded document or null
      */
     public function follow(array $options = null) {
         $url = $this->expand($options);
-        return new CollectionDocJson($url, $this->_auth);
+        try {
+            return new CollectionDocJson($url, $this->_auth);
+        }
+        catch (Exception\NotFoundException $e) {
+            return null;
+        }
     }
 
     /**
