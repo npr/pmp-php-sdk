@@ -1,8 +1,7 @@
 <?php
 namespace Pmp\Sdk;
 
-use \GuzzleHttp\Client;
-use \GuzzleHttp\Stream\Stream;
+use \Guzzle\Http\Client;
 
 /**
  * PMP common HTTP utils
@@ -15,6 +14,7 @@ class Http
     const CONTENT_TYPE = 'application/vnd.collection.doc+json';
     const USER_AGENT   = 'pmp-php-sdk';
     const TIMEOUT_S    = 5;
+    const CURL_COULDNT_RESOLVE_HOST = 6;
 
     /**
      * Make a normal bearer-auth request
@@ -35,7 +35,7 @@ class Http
             $req->setHeader('Authorization', "Bearer $token");
         }
         if ((strtolower($method) == 'post' || strtolower($method) == 'put') && !empty($data)) {
-            $req->setBody(Stream::factory(json_encode($data)));
+            $req->setBody(json_encode($data));
         }
 
         return self::_sendRequest($client, $req);
@@ -58,10 +58,9 @@ class Http
         $req->setHeader('Authorization', $basicAuth);
         if (strtolower($method) == 'post' && !empty($postData)) {
             $req->setHeader('Content-Type', 'application/x-www-form-urlencoded');
-            $postBody = $req->getBody();
             foreach ($postData as $key => $value) {
                 if ($value) {
-                    $postBody->setField($key, $value);
+                    $req->setPostField($key, $value);
                 }
             }
         }
@@ -98,11 +97,17 @@ class Http
         try {
             $resp = $client->send($req);
         }
-        catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        catch (\Guzzle\Http\Exception\BadResponseException $e) {
             $resp = $e->getResponse();
         }
-        catch (\GuzzleHttp\Exception\ConnectException $e) {
-            throw new Exception\HostException('Unable to resolve host', $err_data);
+        catch (\Guzzle\Http\Exception\CurlException $e) {
+            // ConnectException doesn't exist yet - catch curl one manually
+            if ($e->getErrorNo() == self::CURL_COULDNT_RESOLVE_HOST) {
+                throw new Exception\HostException('Unable to resolve host', $err_data);
+            }
+            else {
+                throw $e;
+            }
         }
         $code = $resp->getStatusCode();
         $body = $resp->getBody();

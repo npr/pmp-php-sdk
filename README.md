@@ -6,7 +6,7 @@ A PHP API client for the [Public Media Platform](http://publicmediaplatform.org)
 
 ## Requirements
 
-PHP version >= 5.3.  And a [PMP client-id/secret](https://support.pmp.io/login) for your PMP user.
+PHP version >= 5.3.3.  And a [PMP client-id/secret](https://support.pmp.io/login) for your PMP user.
 
 ## Installation
 

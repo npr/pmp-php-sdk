@@ -1,7 +1,7 @@
 <?php
 namespace Pmp\Sdk;
 
-use \GuzzleHttp\UriTemplate;
+use \Guzzle\Parser\UriTemplate\UriTemplate;
 
 /**
  * PMP CollectionDoc link
