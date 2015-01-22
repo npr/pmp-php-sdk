@@ -13,11 +13,14 @@ PHP version >= 5.3.3.  And a [PMP client-id/secret](https://support.pmp.io/login
 #### Via Composer
 
  1. Download [Composer](https://getcomposer.org/) (if you don't have it already), and install the `publicmediaplatform/pmpsdk` package:
+
  ```shell
  curl -sS https://getcomposer.org/installer | php
  php composer.phar require publicmediaplatform/pmpsdk
  ```
+
  2. Require the Composer-generated `autoload.php`
+
  ```php
  require 'vendor/autoload.php';
  ```
@@ -27,6 +30,7 @@ PHP version >= 5.3.3.  And a [PMP client-id/secret](https://support.pmp.io/login
  1. Go to the [Latest Release](https://github.com/publicmediaplatform/phpsdk/releases/latest) of the `pmpsdk`
  2. Click the green button and download `pmpsdk.phar`
  3. Require the file in your project:
+
  ```php
  require 'path/to/pmpsdk.phar`;
  ```
