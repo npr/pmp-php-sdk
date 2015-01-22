@@ -1,22 +1,18 @@
 #!/usr/bin/env php
 <?php
 require_once 'Common.php';
-require_once 'lib/Pmp/Sdk/AuthClient.php';
-require_once 'lib/Pmp/Sdk/CollectionDocJson.php';
 
-use \Pmp\Sdk\AuthClient as AuthClient;
-use \Pmp\Sdk\CollectionDocJson as CollectionDocJson;
+//
+// follow some links to related docs
+//
 
 // plan and connect
-list($host, $client_id, $client_secret) = pmp_client_plan(9);
-ok( $auth = new AuthClient($host, $client_id, $client_secret), 'instantiate new AuthClient' );
-
-// fetch the home doc
-ok( $home = new CollectionDocJson($host, $auth), 'fetch home doc' );
+list($host, $client_id, $client_secret) = pmp_client_plan(8);
+ok( $sdk = new \Pmp\Sdk($host, $client_id, $client_secret), 'instantiate new Sdk' );
 
 // query docs
 $opts = array('limit' => 1, 'profile' => 'story', 'has' => 'image');
-ok( $doc = $home->query('urn:collectiondoc:query:docs')->submit($opts), 'query docs' );
+ok( $doc = $sdk->queryDocs($opts), 'query docs' );
 is( count($doc->items), 1, 'query docs - count items' );
 
 // load the creator link
