@@ -10,13 +10,26 @@ PHP version >= 5.3.3.  And a [PMP client-id/secret](https://support.pmp.io/login
 
 ## Installation
 
-Download the [Latest Release](https://github.com/publicmediaplatform/phpsdk/releases/latest) into your project directory and extract it.  Or clone this repo at the release version you wish to use.  Then just require the `\Pmp\Sdk` entry point.
+#### Via Composer
 
-```php
-require_once('path/to/src/Pmp/Sdk.php');
-```
+ 1. Download [Composer](https://getcomposer.org/) (if you don't have it already), and install the `publicmediaplatform/pmpsdk` package:
+ ```shell
+ curl -sS https://getcomposer.org/installer | php
+ php composer.phar require publicmediaplatform/pmpsdk
+ ```
+ 2. Require the Composer-generated `autoload.php`
+ ```php
+ require 'vendor/autoload.php';
+ ```
 
-COMING SOON: composer/packagist support.
+#### Via PHAR file
+
+ 1. Go to the [Latest Release](https://github.com/publicmediaplatform/phpsdk/releases/latest) of the `pmpsdk`
+ 2. Click the green button and download `pmpsdk.phar`
+ 3. Require the file in your project:
+ ```php
+ require 'path/to/pmpsdk.phar`;
+ ```
 
 ## Usage
 
@@ -244,6 +257,8 @@ catch (\Pmp\Sdk\Exception\RemoteException $e) {
 
 ## Developing
 
+To get started on development, check out the this repo, and run a `make install`.  (This requires Composer be present on your system).
+
 This module is tested using the [TAP protocol](http://testanything.org) and requires the *prove* command, part of the standard Perl distribution on most Linux and UNIX systems.  You'll also need to provide some valid PMP credentials.
 
 The test suite can be invoked as follows...
@@ -258,7 +273,9 @@ $
 $ make test
 ```
 
-To debug the HTTP calls occuring during the tests, set the *DEBUG* environment variable to 1 (`DEBUG=1 make test`).
+To debug the HTTP calls occuring during the tests, set the *DEBUG* environment variable to 1 with `DEBUG=1 make test`.
+
+To build a [PHAR](http://php.net/manual/en/intro.phar.php) version of this SDK, run `make build`.
 
 ## Issues and Contributing
 
