@@ -11,9 +11,9 @@ use \Guzzle\Http\Client;
  */
 class Http
 {
-    const CONTENT_TYPE = 'application/vnd.collection.doc+json';
-    const USER_AGENT   = 'pmp-php-sdk';
-    const TIMEOUT_S    = 5;
+    const CONTENT_TYPE              = 'application/vnd.collection.doc+json';
+    const USER_AGENT_PREFIX         = 'phpsdk/v';
+    const TIMEOUT_S                 = 5;
     const CURL_COULDNT_RESOLVE_HOST = 6;
 
     /**
@@ -79,7 +79,7 @@ class Http
         $client = new Client();
         $opts = array('timeout' => self::TIMEOUT_S);
         $req = $client->createRequest($method, $url, $opts);
-        $req->setHeader('User-Agent', self::USER_AGENT);
+        $req->setHeader('User-Agent', self::USER_AGENT_PREFIX . \Pmp\Sdk::VERSION);
         return array($client, $req);
     }
 

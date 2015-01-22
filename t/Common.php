@@ -2,7 +2,12 @@
 error_reporting(E_ALL);
 
 require_once 'Test.php';
-require_once 'src/Pmp/Sdk.php';
+if (getenv('USE_PHAR') == '1') {
+    require_once 'build/pmpsdk.phar';
+}
+else {
+    require_once 'vendor/autoload.php';
+}
 
 //
 // Common utilities for PMP tests

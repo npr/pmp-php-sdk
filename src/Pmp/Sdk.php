@@ -1,8 +1,6 @@
 <?php
 namespace Pmp;
 
-require_once 'Sdk/autoload.inc';
-
 /**
  * PMP SDK wrapper
  *
@@ -11,6 +9,8 @@ require_once 'Sdk/autoload.inc';
  */
 class Sdk
 {
+    const VERSION = '1.0.0'; // UPDATE ME!!!
+
     const FETCH_DOC     = 'urn:collectiondoc:hreftpl:docs';
     const FETCH_PROFILE = 'urn:collectiondoc:hreftpl:profiles';
     const FETCH_SCHEMA  = 'urn:collectiondoc:hreftpl:schemas';

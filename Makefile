@@ -1,3 +1,17 @@
-test:  check
-check: t/Test.php
+all: install test
+
+test:
 	prove -r t/
+
+install:
+	composer install
+
+clean:
+	rm -rf build
+
+build:
+	mkdir -p build/staging
+	curl -s https://raw.githubusercontent.com/mtdowling/Burgomaster/0.0.1/src/Burgomaster.php > build/Burgomaster.php
+	php packager.php
+
+.PHONY: test build
