@@ -1,9 +1,16 @@
 {
-    "name": "publicmediaplatform/phpsdk",
-    "description": "This is a core SDK for Public Media Platform for PHP.",
-    "license": "MIT",
-    "autoload": {
-        "psr-4": {"Pmp\\": "lib/Pmp/"},
-        "classmap": ["lib/restagent"]
-    }
+  "name": "publicmediaplatform/pmpsdk",
+  "type": "library",
+  "description": "PHP client interface for the Public Media Platform",
+  "keywords": ["pmp","pubmedia", "publicmediaplatform"],
+  "homepage": "https://github.com/publicmediaplatform/phpsdk",
+  "license": "MIT",
+  "require": {
+    "php": ">=5.3.3",
+    "guzzle/guzzle": "3.9.2"
+  },
+  "autoload": {
+    "psr-4": {"Pmp\\": "lib/Pmp/"},
+    "classmap": ["lib/restagent/restagent.lib.php"]
+  }
 }
