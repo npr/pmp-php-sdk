@@ -1,5 +1,4 @@
 <?php
-
 namespace Pmp\Sdk;
 
 class Exception extends \Exception

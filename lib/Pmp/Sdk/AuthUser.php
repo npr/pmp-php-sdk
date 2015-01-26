@@ -1,13 +1,10 @@
 <?php
 namespace Pmp\Sdk;
 
-require_once('Exception.php');
-require_once('CollectionDocJson.php');
-require_once(dirname(__FILE__) . '/../../restagent/restagent.lib.php');
-require_once(dirname(__FILE__) . '/../../guzzle.phar');
+require_once 'autoload.inc';
 
-use restagent\Request as Request;
-use Guzzle\Parser\UriTemplate\UriTemplate as UriTemplate;
+use restagent\Request;
+use Guzzle\Parser\UriTemplate\UriTemplate;
 
 /**
  * PMP user authentication
