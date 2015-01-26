@@ -45,7 +45,7 @@ class Request {
     if (getenv('REST_AGENT_DEBUG')) {
       curl_setopt($this->curl, CURLOPT_VERBOSE, true);
     }
-    $pemPath = __DIR__ . '/cacert.pem';
+    $pemPath = $this->getAccessibleCacert();
     curl_setopt($this->curl, CURLOPT_CAINFO, $pemPath);
   }
   /**
@@ -484,6 +484,26 @@ class Request {
     }
 
     return $ftype;
+  }
+
+  /**
+   * Copy the cert to an accessible path, in case we're using this
+   * from a phar file.
+   *
+   * @return string the path to the cacert.pem file
+   */
+  private function getAccessibleCacert() {
+    $cert = __DIR__ . '/cacert.pem';
+    if (substr($cert, 0, 7) == 'phar://') {
+      $newCert = sys_get_temp_dir() . '/cacert.pem';
+      if (file_exists($cert)) {
+        if (!file_exists($newCert) || filesize($cert) != filesize($newCert)) {
+          copy($cert, $newCert);
+        }
+        return $newCert;
+      }
+    }
+    return $cert; // fallback to original path
   }
 
 }
