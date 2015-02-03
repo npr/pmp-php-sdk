@@ -156,6 +156,21 @@ foreach($doc->itemsIterator($pageLimit) as $pageNum => $items) {
 }
 ```
 
+Often, when fetching container docs such as "stories", you'll want to interrogate child items based on their profile types.  This SDK handles this for you, allowing the retrieval of just items-of-profile.
+
+```php
+echo "looking at a cdoc of profile = {$story->getProfileAlias()}\n";
+$items = $story->items();
+$audios = $story->items('audio');
+$images = $story->items('image');
+$videos = $story->items('video');
+
+echo "  contains {$items->count()} items\n";
+echo "           {$audios->count()} audios\n";
+echo "           {$images->count()} images\n";
+echo "           {$videos->count()} videos\n";
+```
+
 ### Document Links
 
 To navigate links, we can interrogate them directly on the `\Pmp\Sdk\CollectionDocJson` object, or browse them via the `\Pmp\Sdk\CollectionDocJsonLinks` object, containing a collection of `\Pmp\Sdk\CollectionDocJsonLink` objects.
@@ -204,6 +219,28 @@ if (!$creatorDoc) {
     exit(1);
 }
 echo "creator = {$creatorDoc->attributes->title}\n";
+```
+
+A document's `links.collection` will often contain PMP topics, series, properties, and contributors.  These links are normally distinguished by rels such as `urn:collectiondoc:collection:property`.  As a shortcut for finding these links, you can just refer to the last `property` segment of that urn.
+
+```php
+// these statements are equivalent
+$links = $doc->links('collection');
+$links = $doc->getCollections();
+
+// these statements are also equivalent
+$topicLinks = $doc->links('collection', 'urn:collectiondoc:collection:topic');
+$topicLinks = $doc->getCollections('urn:collectiondoc:collection:topic');
+$topicLinks = $doc->getCollections('topic');
+
+// more examples...
+$contribCount = $doc->getCollections('contributor')->count();
+$firstSeriesLink = $doc->getCollections('series')->first();
+$firstPropertyLink = $doc->getCollections('property')->first();
+if ($firstPropertyLink) {
+    $propertyDoc = $firstPropertyLink->follow();
+    echo "Got a property - {$propertyDoc->attributes->title}\n";
+}
 ```
 
 ### Modifying documents
