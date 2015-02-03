@@ -9,7 +9,7 @@ namespace Pmp;
  */
 class Sdk
 {
-    const VERSION = '1.0.0'; // UPDATE ME!!!
+    const VERSION = '1.0.1'; // UPDATE ME!!!
 
     const FETCH_DOC     = 'urn:collectiondoc:hreftpl:docs';
     const FETCH_PROFILE = 'urn:collectiondoc:hreftpl:profiles';
