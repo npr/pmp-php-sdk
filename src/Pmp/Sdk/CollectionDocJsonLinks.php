@@ -9,6 +9,8 @@ namespace Pmp\Sdk;
  */
 class CollectionDocJsonLinks extends \ArrayObject
 {
+    private $_links;
+    private $_auth;
 
     /**
      * Constructor
@@ -17,9 +19,11 @@ class CollectionDocJsonLinks extends \ArrayObject
      * @param AuthClient $auth authentication client for the API
      */
     public function __construct(array $links, AuthClient $auth = null) {
-        $linkObjects = array();
+        $this->_links = $links;
+        $this->_auth = $auth;
 
         // init links
+        $linkObjects = array();
         foreach($links as $link) {
             $linkObjects[] = new CollectionDocJsonLink($link, $auth);
         }
@@ -32,19 +36,19 @@ class CollectionDocJsonLinks extends \ArrayObject
      * Get the set of links matching an array of urns
      *
      * @param array $urn the names to match on
-     * @return array the matched links
+     * @return CollectionDocJsonLinks the matched links
      */
     public function rels(array $urns) {
-        $links = array();
-        foreach ($this as $link) {
+        $rawLinks = array();
+        foreach ($this as $idx => $link) {
             if (!empty($link->rels)) {
                 $match = array_diff($urns, $link->rels);
                 if (count($match) != count($urns)) {
-                    $links[] = $link;
+                    $rawLinks[] = $this->_links[$idx];
                 }
             }
         }
-        return $links;
+        return new CollectionDocJsonLinks($rawLinks, $this->_auth);
     }
 
     /**
@@ -55,7 +59,16 @@ class CollectionDocJsonLinks extends \ArrayObject
      */
     public function rel($urn) {
         $match = $this->rels(array($urn));
-        return empty($match) ? null : $match[0];
+        return count($match) > 0 ? $match[0] : null;
+    }
+
+    /**
+     * Get the first link in this collection
+     *
+     * @return CollectionDocJsonLink the first link or null
+     */
+    public function first() {
+        return count($this) > 0 ? $this[0] : null;
     }
 
 }
