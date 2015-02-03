@@ -12,6 +12,28 @@ class CollectionDocJson
     const URN_SAVE   = 'urn:collectiondoc:form:documentsave';
     const URN_DELETE = 'urn:collectiondoc:form:documentdelete';
 
+    const URN_AUDIO_ITEM = 'urn:collectiondoc:audio';
+    const URN_IMAGE_ITEM = 'urn:collectiondoc:image';
+    const URN_VIDEO_ITEM = 'urn:collectiondoc:video';
+
+    const URN_CONTRIBUTOR = 'urn:collectiondoc:collection:contributor';
+    const URN_PROPERTY    = 'urn:collectiondoc:collection:property';
+    const URN_SERIES      = 'urn:collectiondoc:collection:series';
+    const URN_TOPIC       = 'urn:collectiondoc:collection:topic';
+
+    // TODO: un-hardcode these and pull directly from aliases doc
+    private static $_profileAliases = array(
+        'ef7f170b-4900-4a20-8b77-3142d4ac07ce' => 'audio',
+        '8bf6f5ae-84b1-4e52-a744-8e1ac63f283e' => 'contributor',
+        '42448532-7a6f-47fb-a547-f124d5d9053e' => 'episode',
+        '5f4fe868-5065-4aa2-86e6-2387d2c7f1b6' => 'image',
+        '88506918-b124-43a8-9f00-064e732cbe00' => 'property',
+        'c07bd70c-8644-4c5d-933a-40d5d7032036' => 'series',
+        'b9ce545e-01a2-44d0-9a15-a73da4ed304b' => 'story',
+        '3ffa207f-cfbe-4bcd-987c-0bd8e29fdcb6' => 'topic',
+        '85115aa1-df35-4324-9acd-2bb261f8a541' => 'video',
+    );
+
     // TODO: get rid of this someday
     const AUTH_RETRY_WAIT_S = 1;
 
@@ -257,14 +279,23 @@ class CollectionDocJson
      * Get array of links by relation type
      *
      * @param string $relType type of relation
+     * @param string $urn the uniform resource name to look for
      * @return CollectionDocJsonLinks the links object
      */
-    public function links($relType) {
-        $links = array();
+    public function links($relType, $urn = null) {
+        $rawLinks = array();
         if (!empty($this->links->$relType)) {
-            $links = $this->links->$relType;
+            $rawLinks = $this->links->$relType;
         }
-        return new CollectionDocJsonLinks($links, $this->_auth);
+        $links = new CollectionDocJsonLinks($rawLinks, $this->_auth);
+
+        // optionally filter by urn
+        if ($urn) {
+            return $links->rels(array($urn));
+        }
+        else {
+            return $links;
+        }
     }
 
     /**
@@ -278,6 +309,23 @@ class CollectionDocJson
     }
 
     /**
+     * Get the alias of this doc's profile (if it's an aliased profile)
+     *
+     * @return string the profile alias, or guid if alias cannot be inferred
+     */
+    public function getProfileAlias() {
+        $link = $this->getProfile();
+        if ($link && $link->href) {
+            $guidOrAlias = explode('/', $link->href);
+            $guidOrAlias = end($guidOrAlias);
+            return isset(self::$_profileAliases[$guidOrAlias]) ? self::$_profileAliases[$guidOrAlias] : $guidOrAlias;
+        }
+        else {
+            return null;
+        }
+    }
+
+    /**
      * Shortcut for the creator link
      *
      * @return CollectionDocJsonLink the creator link object
@@ -285,6 +333,23 @@ class CollectionDocJson
     public function getCreator() {
         $links = $this->links('creator');
         return isset($links[0]) ? $links[0] : null;
+    }
+
+    /**
+     * Shortcut for collection links
+     *
+     * @param $collectionType optional urn (or urn suffix) to filter by
+     * @return CollectionDocJsonLink the collection links array
+     */
+    public function getCollections($urnOrSuffix = null) {
+        $knownUrns = array(
+            'contributor' => self::URN_CONTRIBUTOR,
+            'property'    => self::URN_PROPERTY,
+            'series'      => self::URN_SERIES,
+            'topic'       => self::URN_TOPIC,
+        );
+        $urnOrSuffix = isset($knownUrns[$urnOrSuffix]) ? $knownUrns[$urnOrSuffix] : $urnOrSuffix;
+        return $this->links('collection', $urnOrSuffix);
     }
 
     /**
@@ -306,14 +371,24 @@ class CollectionDocJson
     /**
      * Return the set of document items
      *
+     * @param $profileAlias optional profile to limit returned items to
      * @return CollectionDocJsonItems
      */
-    public function items() {
-        $items = array();
-        if (!empty($this->items)) {
-            $items = $this->items;
+    public function items($profileAlias = null) {
+        $rawItems = empty($this->items) ? array() : $this->items;
+        $items = new CollectionDocJsonItems($rawItems, $this);
+
+        // optionally filter based on profile alias
+        if ($profileAlias) {
+            $filteredRawItems = array();
+            foreach ($items as $idx => $item) {
+                if ($item->getProfileAlias() == $profileAlias) {
+                    $filteredRawItems[] = $rawItems[$idx];
+                }
+            }
+            $items = new CollectionDocJsonItems($filteredRawItems, $this);
         }
-        return new CollectionDocJsonItems($items, $this);
+        return $items;
     }
 
     /**
@@ -325,6 +400,11 @@ class CollectionDocJson
     public function itemsIterator($pageLimit = null) {
         return new PageIterator($this, $pageLimit);
     }
+
+    /**
+     *
+     *
+     */
 
     /**
      * Make a remote request
