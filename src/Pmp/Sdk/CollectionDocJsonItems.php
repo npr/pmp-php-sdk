@@ -62,4 +62,13 @@ class CollectionDocJsonItems extends \ArrayObject
         return ($link && isset($link->pagenum)) ? $link->pagenum : 1;
     }
 
+    /**
+     * Get the first item
+     *
+     * @return CollectionDocJson the first item or null
+     */
+    public function first() {
+        return count($this) > 0 ? $this[0] : null;
+    }
+
 }
