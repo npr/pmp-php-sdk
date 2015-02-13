@@ -11,7 +11,7 @@ clean:
 
 build:
 	mkdir -p build/staging
-	curl -s https://raw.githubusercontent.com/mtdowling/Burgomaster/0.0.1/src/Burgomaster.php > build/Burgomaster.php
+	curl -s https://raw.githubusercontent.com/mtdowling/Burgomaster/0.0.2/src/Burgomaster.php > build/Burgomaster.php
 	php packager.php
 
 .PHONY: test build
