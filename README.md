@@ -35,6 +35,8 @@ PHP version >= 5.3.3.  And a [PMP client-id/secret](https://support.pmp.io/login
  require 'path/to/pmpsdk.phar`;
  ```
 
+ **NOTE**: *if you see a strange error message full of question marks like `?r??PHP Fatal error:  Class 'Pmp\Sdk' not found`, make sure you turn off [detect unicode](http://stackoverflow.com/questions/11302593/how-to-disable-detect-unicode-setting-from-php-ini-trying-to-install-compose).*
+
 ## Usage
 
 ### Connecting
