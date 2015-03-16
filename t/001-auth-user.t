@@ -45,7 +45,7 @@ is( $my_cred->label, $TEST_LABEL, 'list creds - label' );
 
 // remove credential
 is( $user->removeCredential($cred->client_id), true, 'remove cred' );
-is( $user->removeCredential('foobar'), true, 'remove non-existent cred' );
+is( $user->removeCredential('foobar'), false, 'remove non-existent cred' );
 ok( $relist = $user->listCredentials(), 'remove cred - relist' );
 
 // search for removed cred
