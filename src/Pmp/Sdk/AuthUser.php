@@ -63,8 +63,13 @@ class AuthUser
      * @return boolean whether a credential was deleted or not
      */
     public function removeCredential($id) {
-        $this->_request(self::URN_REMOVE, array('client_id' => $id));
-        return true; // just assume it worked
+        try {
+            $this->_request(self::URN_REMOVE, array('client_id' => $id));
+            return true;
+        }
+        catch (Exception\NotFoundException $e) {
+            return false;
+        }
     }
 
     /**
