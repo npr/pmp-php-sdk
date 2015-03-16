@@ -27,7 +27,7 @@ PHP version >= 5.3.3.  And a [PMP client-id/secret](https://support.pmp.io/login
 
 #### Via PHAR file
 
- 1. Go to the [Latest Release](https://github.com/publicmediaplatform/phpsdk/releases/latest) of the `pmpsdk`
+ 1. Go to the [Latest Release](https://github.com/publicmediaplatform/phpsdk/releases/tag/v1.0.2) of the `pmpsdk`
  2. Click the green button and download `pmpsdk.phar`
  3. Require the file in your project:
 
