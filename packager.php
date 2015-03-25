@@ -23,9 +23,8 @@ $packager->recursiveCopy('lib/Pmp', 'Pmp', array('php', 'inc'));
 // copy restagent lib
 $packager->recursiveCopy('lib/restagent', 'restagent', array('php', 'pem'));
 
-// copy vendor'd libs
-$packager->recursiveCopy('vendor/guzzle/guzzle/src/Guzzle', 'Guzzle', array('php', 'pem'));
-$packager->recursiveCopy('vendor/symfony/event-dispatcher/Symfony', 'Symfony', array('php'));
+// copy guzzle files
+$packager->recursiveCopy('lib/guzzle', 'guzzle', array('php'));
 
 // autoloader
 $packager->createAutoloader();
