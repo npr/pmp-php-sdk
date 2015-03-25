@@ -1,7 +1,11 @@
 language: php
 php:
-  - 5.3
-  - 5.4
-  - 5.5
-  - 5.6
-script: "make test"
+- 5.3
+- 5.4
+- 5.5
+- 5.6
+script: make test
+sudo: false
+notifications:
+  slack:
+    secure: MJlLPu8SxbJ8BfKotwwdh47GH74yBCQUFwCnwmvmFuoTVVEV01azGXTzvPI9/DkrDt/UjSAGRsEor1AeGd8h+p4XMt9RES1rukAn9SUzllz4H7vSPtfQiOpajoAyCEWk5n9gLImG2kbPbZYzwqabqyiZybEheZ9RQigHGNQa0ow=
