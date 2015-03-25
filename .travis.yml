@@ -1,8 +1,12 @@
 language: php
 php:
-  - 5.3
-  - 5.4
-  - 5.5
-  - 5.6
-install: "make install"
-script: "make test"
+- 5.3
+- 5.4
+- 5.5
+- 5.6
+install: make install
+script: make test
+sudo: false
+notifications:
+  slack:
+    secure: IgYqOtdjaX8dW5ozfyaGMpdpXrbFr8AYJ2dSO+4z2WT4IQn0loFN2o4qT8mVn7TJH029Gvz29khlpm9/sP21rw9fTyqdxDQT64NnezsWPCx1S9cpoUZb/wQZxJmqubLYRJSMIFFOvV78h3IQamHEynhneW5N5prkuShj7y4SK2k=
