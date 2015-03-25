@@ -18,10 +18,11 @@ function PMP_SDK_default_autoload($classname) {
     return true;
   }
 
-  // guzzle (from phar file)
+  // guzzle (uri template only)
   if (preg_match('/^Guzzle/', $classname)) {
-    $fname = dirname(__FILE__) . '/../../guzzle.phar';
-    require_once($fname);
+    $fpath = dirname(__FILE__) . '/../../guzzle';
+    require_once($fpath . '/UriTemplateInterface.php');
+    require_once($fpath . '/UriTemplate.php');
     return true;
   }
 

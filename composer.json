@@ -6,11 +6,14 @@
   "homepage": "https://github.com/publicmediaplatform/phpsdk",
   "license": "MIT",
   "require": {
-    "php": ">=5.3.3",
-    "guzzle/guzzle": "3.9.2"
+    "php": ">=5.3.3"
   },
   "autoload": {
     "psr-4": {"Pmp\\": "lib/Pmp/"},
-    "classmap": ["lib/restagent/restagent.lib.php"]
+    "classmap": [
+      "lib/guzzle/UriTemplateInterface.php",
+      "lib/guzzle/UriTemplate.php",
+      "lib/restagent/restagent.lib.php"
+    ]
   }
 }
