@@ -8,6 +8,7 @@ install:
 
 clean:
 	rm -rf build
+	rm -rf vendor
 
 build:
 	mkdir -p build/staging
