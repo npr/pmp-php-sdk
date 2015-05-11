@@ -52,6 +52,9 @@ class CollectionDocJson
     public $items;
     public $errors;
 
+    // the raw response data (for debug/test purposes)
+    public $_raw;
+
     /**
      * Constructor
      *
@@ -420,7 +423,7 @@ class CollectionDocJson
 
         // make request, retrying auth failures ONCE with a new token
         try {
-            list($code, $json) = Http::bearerRequest($method, $url, $token, $data);
+            list($code, $json, $rawData) = Http::bearerRequest($method, $url, $token, $data);
         }
         catch (Exception\AuthException $e) {
             sleep(self::AUTH_RETRY_WAIT_S); // TODO: i hate this
@@ -434,6 +437,9 @@ class CollectionDocJson
                 throw $e; // re-throw
             }
         }
+
+        // record the raw response data, in case we want to check it later on
+        $this->_raw = $rawData;
 
         return $json;
     }

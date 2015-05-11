@@ -9,7 +9,7 @@ namespace Pmp;
  */
 class Sdk
 {
-    const VERSION = '1.0.1'; // UPDATE ME!!!
+    const VERSION = '1.0.4'; // UPDATE ME!!!
 
     const FETCH_DOC     = 'urn:collectiondoc:hreftpl:docs';
     const FETCH_PROFILE = 'urn:collectiondoc:hreftpl:profiles';
@@ -41,8 +41,10 @@ class Sdk
      * @param string $host url of the PMP api
      * @param string $id the client id to connect with
      * @param string $secret the secret for this client
+     * @param array  $opts optional advanced options for the sdk
      */
-    public function __construct($host, $id, $secret) {
+    public function __construct($host, $id, $secret, $opts = array()) {
+        \Pmp\Sdk\Http::setOptions($opts);
 
         // re-throw 404's as host-not-found (same thing, to the sdk)
         try {
