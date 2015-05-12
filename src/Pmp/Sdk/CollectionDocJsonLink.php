@@ -124,15 +124,18 @@ class CollectionDocJsonLink
         if (!empty($options)) {
             foreach ($options as $name => $value) {
                 if (is_array($value)) {
-                    if (!empty($option['AND'])) {
-                        $converted[$name] = implode(self::PMP_AND, $options['AND']);
+                    if (!empty($value['AND'])) {
+                        $converted[$name] = implode(self::PMP_AND, $value['AND']);
                     }
-                    else if (!empty($option['OR'])) {
-                        $converted[$name] = implode(self::PMP_OR, $options['OR']);
+                    else if (!empty($value['OR'])) {
+                        $converted[$name] = implode(self::PMP_OR, $value['OR']);
                     }
                     else {
                         $converted[$name] = ''; // bad params
                     }
+                }
+                elseif (is_bool($value)) {
+                    $converted[$name] = $value ? 'true' : 'false';
                 }
                 else {
                     $converted[$name] = $value;
