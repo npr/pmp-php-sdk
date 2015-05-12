@@ -60,6 +60,15 @@ class Sdk
     }
 
     /**
+     * Get the full url to a resource by guid or alias
+     */
+    public function hrefDoc($guid)     { return $this->_expandGuid(self::FETCH_DOC,     $guid); }
+    public function hrefProfile($guid) { return $this->_expandGuid(self::FETCH_PROFILE, $guid); }
+    public function hrefSchema($guid)  { return $this->_expandGuid(self::FETCH_SCHEMA,  $guid); }
+    public function hrefTopic($guid)   { return $this->_expandGuid(self::FETCH_TOPIC,   $guid); }
+    public function hrefUser($guid)    { return $this->_expandGuid(self::FETCH_USER,    $guid); }
+
+    /**
      * Fetch aliases - all will return CollectionDocJson or null (if not found)
      */
     public function fetchDoc($guid, $options = array()) {
@@ -154,6 +163,21 @@ class Sdk
         catch (\Pmp\Sdk\Exception\NotFoundException $e) {
             return null;
         }
+    }
+
+    /**
+     * Get the fetch path for a guid/alias
+     *
+     * @param string $urn the link name
+     * @param string $guid the guid or alias
+     * @return string the full url to the resource
+     */
+    private function _expandGuid($urn, $guid) {
+        $link = $this->home->link($urn);
+        if (empty($link)) {
+            throw new \Pmp\Sdk\Exception\LinkException("Unable to find link $urn in home doc");
+        }
+        return $link->expand(array('guid' => $guid));
     }
 
 }
