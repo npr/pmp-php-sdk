@@ -60,7 +60,8 @@ class Http
         }
 
         // preferences - only agree to minimal responses for non-home-docs
-        if (self::$optMinimal && !empty(parse_url($url, PHP_URL_PATH))) {
+        $path = parse_url($url, PHP_URL_PATH);
+        if (self::$optMinimal && !empty($path)) {
             $req->addHeader('Prefer', 'return=minimal');
         }
 
