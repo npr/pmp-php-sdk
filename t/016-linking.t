@@ -68,6 +68,10 @@ catch (\Pmp\Sdk\Exception\RemoteException $e) {
 }
 like( $img->href, "#docs/$TEST_GUID2#", 'create image - href set' );
 
+// TODO: need a pause in here, so the image gets search-indexed, and appears
+// in the items of the story when it's re-fetched
+sleep(1);
+
 // attach and save story
 try {
     $doc->links->item = array(new \stdClass());
