@@ -339,6 +339,16 @@ class CollectionDocJson
     }
 
     /**
+     * Shortcut for the owner link
+     *
+     * @return CollectionDocJsonLink the owner link object
+     */
+    public function getCreator() {
+        $links = $this->links('owner');
+        return isset($links[0]) ? $links[0] : null;
+    }
+
+    /**
      * Shortcut for collection links
      *
      * @param $collectionType optional urn (or urn suffix) to filter by
