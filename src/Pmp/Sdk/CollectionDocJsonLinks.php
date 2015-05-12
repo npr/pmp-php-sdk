@@ -33,6 +33,15 @@ class CollectionDocJsonLinks extends \ArrayObject
     }
 
     /**
+     * Print as a string
+     *
+     * @return string the string form of these links
+     */
+    public function __toString() {
+        return 'CollectionDocJsonLinks[' . implode(',', iterator_to_array($this)) .']';
+    }
+
+    /**
      * Get the set of links matching an array of urns
      *
      * @param array $urn the names to match on
