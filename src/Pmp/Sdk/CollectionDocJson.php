@@ -158,10 +158,8 @@ class CollectionDocJson
      * Persist this document to the remote server
      */
     public function save() {
-        $isNew = false;
         if (empty($this->attributes->guid)) {
             $this->attributes->guid = $this->createGuid();
-            $isNew = true;
         }
 
         // expand link template
@@ -190,11 +188,9 @@ class CollectionDocJson
             throw new Exception\RemoteException('Invalid PUT response missing url!', $data);
         }
 
-        // re-load new docs
-        if ($isNew) {
-            $this->href = $resp->url;
-            $this->load();
-        }
+        // re-load doc
+        $this->href = $resp->url;
+        $this->load();
         return $this;
     }
 
@@ -343,7 +339,7 @@ class CollectionDocJson
      *
      * @return CollectionDocJsonLink the owner link object
      */
-    public function getCreator() {
+    public function getOwner() {
         $links = $this->links('owner');
         return isset($links[0]) ? $links[0] : null;
     }

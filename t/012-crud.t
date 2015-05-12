@@ -16,7 +16,7 @@ $TEST_DOC = array(
 );
 
 // plan and connect
-list($host, $client_id, $client_secret) = pmp_client_plan(21);
+list($host, $client_id, $client_secret) = pmp_client_plan(22);
 ok( $sdk = new \Pmp\Sdk($host, $client_id, $client_secret), 'instantiate new Sdk' );
 
 // 1) create
@@ -31,6 +31,7 @@ try {
 catch (Exception $e) {
     fail( "unable to create document: $e" );
 }
+isnt( $doc->href, null, 'create doc - href gets set' );
 
 // 2) read
 ok( $fetched = $sdk->fetchDoc($TEST_GUID), 'read by guid' );
