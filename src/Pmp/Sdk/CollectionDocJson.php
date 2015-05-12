@@ -52,6 +52,9 @@ class CollectionDocJson
     public $items;
     public $errors;
 
+    // the raw response data (for debug/test purposes)
+    public $_raw;
+
     /**
      * Constructor
      *
@@ -155,10 +158,8 @@ class CollectionDocJson
      * Persist this document to the remote server
      */
     public function save() {
-        $isNew = false;
         if (empty($this->attributes->guid)) {
             $this->attributes->guid = $this->createGuid();
-            $isNew = true;
         }
 
         // expand link template
@@ -187,11 +188,9 @@ class CollectionDocJson
             throw new Exception\RemoteException('Invalid PUT response missing url!', $data);
         }
 
-        // re-load new docs
-        if ($isNew) {
-            $this->href = $resp->url;
-            $this->load();
-        }
+        // re-load doc
+        $this->href = $resp->url;
+        $this->load();
         return $this;
     }
 
@@ -336,6 +335,16 @@ class CollectionDocJson
     }
 
     /**
+     * Shortcut for the owner link
+     *
+     * @return CollectionDocJsonLink the owner link object
+     */
+    public function getOwner() {
+        $links = $this->links('owner');
+        return isset($links[0]) ? $links[0] : null;
+    }
+
+    /**
      * Shortcut for collection links
      *
      * @param $collectionType optional urn (or urn suffix) to filter by
@@ -420,7 +429,7 @@ class CollectionDocJson
 
         // make request, retrying auth failures ONCE with a new token
         try {
-            list($code, $json) = Http::bearerRequest($method, $url, $token, $data);
+            list($code, $json, $rawData) = Http::bearerRequest($method, $url, $token, $data);
         }
         catch (Exception\AuthException $e) {
             sleep(self::AUTH_RETRY_WAIT_S); // TODO: i hate this
@@ -434,6 +443,9 @@ class CollectionDocJson
                 throw $e; // re-throw
             }
         }
+
+        // record the raw response data, in case we want to check it later on
+        $this->_raw = $rawData;
 
         return $json;
     }

@@ -9,7 +9,7 @@ namespace Pmp;
  */
 class Sdk
 {
-    const VERSION = '1.0.1'; // UPDATE ME!!!
+    const VERSION = '1.0.4'; // UPDATE ME!!!
 
     const FETCH_DOC     = 'urn:collectiondoc:hreftpl:docs';
     const FETCH_PROFILE = 'urn:collectiondoc:hreftpl:profiles';
@@ -41,8 +41,10 @@ class Sdk
      * @param string $host url of the PMP api
      * @param string $id the client id to connect with
      * @param string $secret the secret for this client
+     * @param array  $opts optional advanced options for the sdk
      */
-    public function __construct($host, $id, $secret) {
+    public function __construct($host, $id, $secret, $opts = array()) {
+        \Pmp\Sdk\Http::setOptions($opts);
 
         // re-throw 404's as host-not-found (same thing, to the sdk)
         try {
@@ -56,6 +58,15 @@ class Sdk
         $this->_auth = new \Pmp\Sdk\AuthClient($host, $id, $secret, $this->home);
         $this->home->setAuth($this->_auth);
     }
+
+    /**
+     * Get the full url to a resource by guid or alias
+     */
+    public function hrefDoc($guid)     { return $this->_expandGuid(self::FETCH_DOC,     $guid); }
+    public function hrefProfile($guid) { return $this->_expandGuid(self::FETCH_PROFILE, $guid); }
+    public function hrefSchema($guid)  { return $this->_expandGuid(self::FETCH_SCHEMA,  $guid); }
+    public function hrefTopic($guid)   { return $this->_expandGuid(self::FETCH_TOPIC,   $guid); }
+    public function hrefUser($guid)    { return $this->_expandGuid(self::FETCH_USER,    $guid); }
 
     /**
      * Fetch aliases - all will return CollectionDocJson or null (if not found)
@@ -152,6 +163,21 @@ class Sdk
         catch (\Pmp\Sdk\Exception\NotFoundException $e) {
             return null;
         }
+    }
+
+    /**
+     * Get the fetch path for a guid/alias
+     *
+     * @param string $urn the link name
+     * @param string $guid the guid or alias
+     * @return string the full url to the resource
+     */
+    private function _expandGuid($urn, $guid) {
+        $link = $this->home->link($urn);
+        if (empty($link)) {
+            throw new \Pmp\Sdk\Exception\LinkException("Unable to find link $urn in home doc");
+        }
+        return $link->expand(array('guid' => $guid));
     }
 
 }

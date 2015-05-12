@@ -16,6 +16,24 @@ class Http
     const TIMEOUT_S                 = 5;
     const CURL_COULDNT_RESOLVE_HOST = 6;
 
+    // global http-request options
+    static protected $optGzip    = true;
+    static protected $optMinimal = true;
+
+    /**
+     * Set advanced options for http requests
+     *
+     * @param array $opts the options to set
+     */
+    static public function setOptions($opts = array()) {
+        if (isset($opts['gzip'])) {
+            self::$optGzip = $opts['gzip'] ? true : false;
+        }
+        if (isset($opts['minimal'])) {
+            self::$optMinimal = $opts['minimal'] ? true : false;
+        }
+    }
+
     /**
      * Make a normal bearer-auth request
      *
@@ -23,7 +41,7 @@ class Http
      * @param string $url the absolute location
      * @param string $token the auth token
      * @param array $data optional body data
-     * @return array($status, $jsonObj) the response status and body
+     * @return array($status, $jsonObj, $rawData) the response status and body
      */
     static public function bearerRequest($method, $url, $token = null, $data = null) {
         list($client, $req) = self::_buildRequest($method, $url);
@@ -31,11 +49,20 @@ class Http
         // additional headers and data
         $req->setHeader('Accept', self::CONTENT_TYPE);
         $req->setHeader('Content-Type', self::CONTENT_TYPE);
+        if (self::$optGzip) {
+            $req->addHeader('Accept-Encoding', 'gzip,deflate');
+        }
         if ($token) {
             $req->setHeader('Authorization', "Bearer $token");
         }
         if ((strtolower($method) == 'post' || strtolower($method) == 'put') && !empty($data)) {
             $req->setBody(json_encode($data));
+        }
+
+        // preferences - only agree to minimal responses for non-home-docs
+        $path = parse_url($url, PHP_URL_PATH);
+        if (self::$optMinimal && !empty($path)) {
+            $req->addHeader('Prefer', 'return=minimal');
         }
 
         return self::_sendRequest($client, $req);
@@ -48,7 +75,7 @@ class Http
      * @param string $url the absolute location
      * @param string $basicAuth the basic auth string
      * @param array $postData optional POST data
-     * @return array($status, $jsonObj) the response status and body
+     * @return array($status, $jsonObj, $rawData) the response status and body
      */
     static public function basicRequest($method, $url, $basicAuth, $postData = null) {
         list($client, $req) = self::_buildRequest($method, $url);
@@ -88,7 +115,7 @@ class Http
      *
      * @param Client $client the client object
      * @param Request $req the request object
-     * @return array($status, $jsonObj) the response status and body
+     * @return array($status, $jsonObj, $rawData) the response status and body
      */
     static private function _sendRequest($client, $req) {
         $err_data = array('method' => $req->getMethod(), 'url' => $req->getUrl());
@@ -150,7 +177,7 @@ class Http
         }
 
         // return json or the raw stringified response body
-        return array($code, $json);
+        return array($code, $json, $err_data);
     }
 
 }
