@@ -143,8 +143,11 @@ class Http
         $err_data['body'] = "$body";
 
         // debug logger
-        if (getenv('DEBUG') == '1') {
-            echo "# $code $method $url\n";
+        if (getenv('DEBUG') == '1' || getenv('DEBUG') == '2') {
+            echo "# $code {$req->getMethod()} {$req->getUrl()}\n";
+        }
+        if (getenv('DEBUG') == '2') {
+            echo "  $body\n";
         }
 
         // handle bad response data
