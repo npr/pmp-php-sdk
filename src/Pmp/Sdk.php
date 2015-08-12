@@ -68,11 +68,13 @@ class Sdk implements \Serializable
      */
     public function serialize() {
         $str = serialize(array($this->_opts, $this->_auth));
-        if (isset($this->_opts['serialzip']) && $this->_opts['serialzip']) {
-            $str = 'gz=' . gzencode($str); // optional zipping to reduce cache size
+
+        // encode data (optionally attempt to zip)
+        if (function_exists('gzencode') && isset($this->_opts['serialzip']) && $this->_opts['serialzip']) {
+            $str = 'gz=' . gzencode($str);
         }
         else {
-            $str = '64=' . base64_encode($str); // default to base64 (obfuscate a bit)
+            $str = '64=' . base64_encode($str);
         }
         return $str;
     }
@@ -84,7 +86,15 @@ class Sdk implements \Serializable
         $ident = substr($data, 0, 3);
         $data  = substr($data, 3);
         if ($ident == 'gz=') {
-            $data = gzdecode($data);
+            if (function_exists('gzdecode')) {
+                $data = gzdecode($data);
+            }
+            elseif (function_exists('gzinflate')) {
+                $data = gzinflate(substr($data, 10, -8)); // alternate method
+            }
+            else {
+                throw new \RuntimeException('Unable to unzip serialized data!');
+            }
         }
         else if ($ident == '64=') {
             $data = base64_decode($data);
