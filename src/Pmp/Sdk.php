@@ -78,7 +78,7 @@ class Sdk implements \Serializable
     }
 
     /**
-     *
+     * Attempt to recreate an SDK from string
      */
     public function unserialize($data) {
         $ident = substr($data, 0, 3);
