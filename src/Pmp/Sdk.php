@@ -7,7 +7,7 @@ namespace Pmp;
  * Wrapper for the PMP sdk as a whole
  *
  */
-class Sdk
+class Sdk implements \Serializable
 {
     const VERSION = '1.0.4'; // UPDATE ME!!!
 
@@ -28,6 +28,9 @@ class Sdk
     // the home document
     public $home;
 
+    // advanced config options
+    private $_opts;
+
     // auth client
     private $_auth;
 
@@ -45,6 +48,7 @@ class Sdk
      */
     public function __construct($host, $id, $secret, $opts = array()) {
         \Pmp\Sdk\Http::setOptions($opts);
+        $this->_opts = $opts;
 
         // re-throw 404's as host-not-found (same thing, to the sdk)
         try {
@@ -57,6 +61,56 @@ class Sdk
         // authenticate, then add the auth back into the home document
         $this->_auth = new \Pmp\Sdk\AuthClient($host, $id, $secret, $this->home);
         $this->home->setAuth($this->_auth);
+    }
+
+    /**
+     * Save this SDK to string, including any fetched home-doc / tokens
+     */
+    public function serialize() {
+        $str = serialize(array($this->_opts, $this->_auth));
+
+        // encode data (optionally attempt to zip)
+        if (function_exists('gzencode') && isset($this->_opts['serialzip']) && $this->_opts['serialzip']) {
+            $str = 'gz=' . gzencode($str);
+        }
+        else {
+            $str = '64=' . base64_encode($str);
+        }
+        return $str;
+    }
+
+    /**
+     * Attempt to recreate an SDK from string
+     */
+    public function unserialize($data) {
+        $ident = substr($data, 0, 3);
+        $data  = substr($data, 3);
+        if ($ident == 'gz=') {
+            if (function_exists('gzdecode')) {
+                $data = gzdecode($data);
+            }
+            elseif (function_exists('gzinflate')) {
+                $data = gzinflate(substr($data, 10, -8)); // alternate method
+            }
+            else {
+                throw new \RuntimeException('Unable to unzip serialized data!');
+            }
+        }
+        else if ($ident == '64=') {
+            $data = base64_decode($data);
+        }
+
+        // unserialize and sanity check
+        $datas = unserialize($data);
+        if ($datas && is_array($datas) && count($datas) == 2) {
+            \Pmp\Sdk\Http::setOptions($datas[0]);
+            $this->_opts = $datas[0];
+            $this->_auth = $datas[1];
+            $this->home = $datas[1]->home;
+        }
+        else {
+            throw new \UnexpectedValueException('Invalid serialized data for PmpSdk');
+        }
     }
 
     /**

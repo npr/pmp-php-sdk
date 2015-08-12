@@ -14,9 +14,10 @@ class AuthClient
     const URN_REVOKE = 'urn:collectiondoc:form:revoketoken';
 
     private $_host;
-    private $_home;
     private $_clientAuth;
     private $_token;
+
+    public $home;
 
     /**
      * Constructor
@@ -28,8 +29,8 @@ class AuthClient
      */
     public function __construct($host, $id, $secret, CollectionDocJson $home = null) {
         $this->_host = $host;
-        $this->_home = $home;
         $this->_clientAuth = 'Basic ' . base64_encode($id . ':' . $secret);
+        $this->home = $home;
         $this->getToken();
     }
 
@@ -84,12 +85,12 @@ class AuthClient
      * @return array($method, $url) the method and url for that link
      */
     private function _authLink($urn, $data = null) {
-        if (empty($this->_home)) {
-            $this->_home = new CollectionDocJson($this->_host, null);
+        if (empty($this->home)) {
+            $this->home = new CollectionDocJson($this->_host, null);
         }
 
         // fetch the link
-        $link = $this->_home->auth($urn);
+        $link = $this->home->auth($urn);
         if (!$link) {
             throw new Exception\LinkException("Unable to retrieve $urn from the home document");
         }
