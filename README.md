@@ -360,6 +360,28 @@ $doc->links->collection[0]->href = $sdk->hrefTopic('arts');
 $doc->save();
 ```
 
+## Caching
+
+Document-level caching is not yet implemented (see #21).  But you can cache the `\Pmp\Sdk` itself, to optimize requests for the PMP home-doc and Oauth tokens across your application requests.
+
+```php
+$sdk = new \Pmp\Sdk($host, 'client-id', 'client-secret');
+$cache_str = serialize($sdk);
+$my_cache_mechanism->set('pmpsdk', $cache_str, 3600);
+
+// awhile later, in a different HTTP request
+$cache_str = $my_cache_mechanism->get('pmpsdk');
+if ($cache_str) {
+    $sdk = unserialize($cache_str);
+
+    // now this only generates 1 request, since we already have both the
+    // PMP home doc and an auth token
+    $doc = $sdk->fetchDoc('SOME-GUID');
+}
+```
+
+Not that if the serialized string is somehow corrupt, the call to `unserialize()` will generate a PHP `RuntimeException`.
+
 ## Developing
 
 To get started on development, check out the this repo, and run a `make install`.  (This requires Composer be present on your system).
