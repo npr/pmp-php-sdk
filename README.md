@@ -1,6 +1,6 @@
 # PMP PHP SDK
 
-[![Build Status](https://travis-ci.org/publicmediaplatform/phpsdk.svg?branch=master)](https://travis-ci.org/publicmediaplatform/phpsdk)
+[![Build Status](https://travis-ci.org/publicmediaplatform/phpsdk.svg?branch=master)](https://travis-ci.org/publicmediaplatform/phpsdk) [![Latest Stable Version](https://poser.pugx.org/publicmediaplatform/pmpsdk/v/stable)](https://packagist.org/packages/publicmediaplatform/pmpsdk)
 
 A PHP API client for the [Public Media Platform](http://publicmediaplatform.org).
 
