@@ -16,7 +16,7 @@ $TEST_DOC = array(
 );
 
 // plan and connect
-list($host, $client_id, $client_secret) = pmp_client_plan(22);
+list($host, $client_id, $client_secret) = pmp_client_plan(24);
 ok( $sdk = new \Pmp\Sdk($host, $client_id, $client_secret), 'instantiate new Sdk' );
 
 // 1) create
@@ -32,12 +32,14 @@ catch (Exception $e) {
     fail( "unable to create document: $e" );
 }
 isnt( $doc->href, null, 'create doc - href gets set' );
+is( $doc->scope, 'write', 'create doc - scope gets set' );
 
 // 2) read
 ok( $fetched = $sdk->fetchDoc($TEST_GUID), 'read by guid' );
 like( $fetched->href, "#docs/$TEST_GUID#", 'read by guid - href' );
 is( $fetched->attributes->guid, $TEST_GUID, 'read by guid - guid' );
 is( $fetched->attributes->title, 'PMP PHP SDK Test Document', 'read by guid - title' );
+is( $fetched->scope, 'write', 'read by guid - scope' );
 like( $fetched->getProfile()->href, '#profiles/story$#', 'read by guid - profile link' );
 
 // 3) update

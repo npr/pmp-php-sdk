@@ -10,7 +10,7 @@ $ARTS_TOPIC = '89944632-fe7c-47df-bc2c-b2036d823f98';
 $PMP_USER = 'af676335-21df-4486-ab43-e88c1b48f026';
 
 // plan and connect
-list($host, $client_id, $client_secret) = pmp_client_plan(37);
+list($host, $client_id, $client_secret) = pmp_client_plan(41);
 ok( $sdk = new \Pmp\Sdk($host, $client_id, $client_secret), 'instantiate new Sdk' );
 
 // query docs
@@ -32,6 +32,7 @@ foreach ($items as $idx => $item) {
     ok( $item, "query items - $idx not null" );
     ok( $item->attributes->guid, "query items - $idx guid" );
     ok( $item->attributes->title, "query items - $idx title" );
+    is( $item->scope, 'read', "query items - $idx scope" );
     $guids_seen[$item->attributes->guid] = true;
 }
 

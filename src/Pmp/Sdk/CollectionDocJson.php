@@ -47,6 +47,7 @@ class CollectionDocJson
     // collection-doc accessors
     public $version;
     public $href;
+    public $scope;
     public $attributes;
     public $links;
     public $items;
@@ -92,6 +93,7 @@ class CollectionDocJson
     public function clearDocument() {
         $this->version    = '1.0';
         $this->href       = null;
+        $this->scope      = null;
         $this->attributes = new \stdClass();
         $this->links      = new \stdClass();
         $this->items      = array();
@@ -114,6 +116,9 @@ class CollectionDocJson
         }
         if (!empty($doc->href)) {
             $this->href = $doc->href;
+        }
+        if (!empty($doc->scope)) {
+            $this->scope = $doc->scope;
         }
         if (!empty($doc->attributes)) {
             $this->attributes = $doc->attributes;
