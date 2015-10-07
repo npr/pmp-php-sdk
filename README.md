@@ -82,6 +82,12 @@ echo "ARTS topic href    = {$doc->href}\n";
 echo "ARTS topic guid    = {$doc->attributes->guid}\n";
 echo "ARTS topic title   = {$doc->attributes->title}\n";
 echo "ARTS topic profile = {$doc->getProfile()}\n";
+if ($doc->scope == 'write') {
+    echo "And I can write to this, for some reason!\n";
+}
+else {
+    echo "At least I can read it.\n"
+}
 ```
 
 Current `\Pmp\Sdk` fetch methods include:
@@ -115,6 +121,10 @@ $count3 = $items->count();
 $title2 = $items[0]->attributes->title;
 foreach ($items as $idx => $item) {
     echo "SEARCH item($idx) = {$item->attributes->title}\n";
+    if ($item->scope == 'write') {
+        $item->title = 'Wow, I can change the titles if I wanted to';
+        $item->save();
+    }
 }
 ```
 

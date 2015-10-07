@@ -9,13 +9,14 @@ require_once 'Common.php';
 $ARTS_TOPIC = '89944632-fe7c-47df-bc2c-b2036d823f98';
 
 // plan and connect
-list($host, $client_id, $client_secret) = pmp_client_plan(24);
+list($host, $client_id, $client_secret) = pmp_client_plan(27);
 ok( $sdk = new \Pmp\Sdk($host, $client_id, $client_secret), 'instantiate new Sdk' );
 
 // check the home doc
 ok( $sdk->home, 'sdk home' );
 like( $sdk->home->href, "#$host#", 'sdk home - href' );
 is( $sdk->home->attributes->title, 'PMP Home Document', 'sdk home - title' );
+is( $sdk->home->scope, 'read', 'sdk home - scope' );
 
 // fetch by guid
 ok( $doc = $sdk->fetchDoc($ARTS_TOPIC), 'fetch by guid' );
@@ -26,6 +27,7 @@ is( $doc->attributes->title, 'Arts', 'fetch by guid - title' );
 like( $doc->links->profile[0]->href, '/profiles\/topic$/', 'fetch by guid - profile link' );
 like( $doc->getProfile()->href, '/profiles\/topic$/', 'fetch by guid - profile shortcut' );
 is( $doc->getProfileAlias(), 'topic', 'fetch by guid - profile alias' );
+is( $doc->scope, 'read', 'fetch by guid - scope' );
 
 // fetch by alias
 ok( $doc = $sdk->fetchTopic('arts'), 'fetch by alias' );
@@ -35,6 +37,7 @@ is( $doc->attributes->guid, $ARTS_TOPIC, 'fetch by alias - guid' );
 is( $doc->attributes->title, 'Arts', 'fetch by alias - title' );
 like( $doc->getProfile()->href, '/profiles\/topic$/', 'fetch by alias - profile shortcut' );
 is( $doc->getProfileAlias(), 'topic', 'fetch by alias - profile alias' );
+is( $doc->scope, 'read', 'fetch by alias - scope' );
 
 // profile alias decoding
 $doc->links->profile[0]->href = "$host/profiles/foobar";
