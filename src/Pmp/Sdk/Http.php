@@ -32,6 +32,10 @@ class Http
         if (isset($opts['minimal'])) {
             self::$optMinimal = $opts['minimal'] ? true : false;
         }
+        // global option for http proxy 
+        if (isset($opts['pmp_http_proxy'])) {
+            self::$optHttpProxy = $opts['pmp_http_proxy'] ? $opts['pmp_http_proxy'] : '';
+        }   
     }
 
     /**
@@ -103,9 +107,13 @@ class Http
      * @return array(Client, Request) the guzzle client and request
      */
     static private function _buildRequest($method, $url) {
-        $client = new Client();
+        $client = new Client('', array(
+            'request.options' => array(
+                'proxy'   => self::$optHttpProxy,
+            )
+        ));  
         $opts = array('timeout' => self::TIMEOUT_S);
-        $req = $client->createRequest($method, $url, $opts);
+        $req = $client->createRequest($method, $url, null, null, $opts);
         $req->setHeader('User-Agent', self::USER_AGENT_PREFIX . \Pmp\Sdk::VERSION);
         return array($client, $req);
     }
