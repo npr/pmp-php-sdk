@@ -1,6 +1,6 @@
 # PMP PHP SDK
 
-[![Build Status](https://travis-ci.org/publicmediaplatform/phpsdk.svg?branch=master)](https://travis-ci.org/publicmediaplatform/phpsdk) [![Latest Stable Version](https://poser.pugx.org/publicmediaplatform/pmpsdk/v/stable)](https://packagist.org/packages/publicmediaplatform/pmpsdk)
+[![Build Status](https://travis-ci.org/npr/pmp-php-sdk.svg?branch=master)](https://travis-ci.org/npr/pmp-php-sdk) [![Latest Stable Version](https://poser.pugx.org/publicmediaplatform/pmpsdk/v/stable)](https://packagist.org/packages/publicmediaplatform/pmpsdk)
 
 A PHP API client for the [Public Media Platform](http://publicmediaplatform.org).
 
@@ -27,7 +27,7 @@ PHP version >= 5.3.3.  And a [PMP client-id/secret](https://support.pmp.io/login
 
 #### Via PHAR file
 
- 1. Go to the [Latest Release](https://github.com/publicmediaplatform/phpsdk/releases/latest) of the `pmpsdk`
+ 1. Go to the [Latest Release](https://github.com/npr/pmp-php-sdk/releases/latest) of the `pmpsdk`
  2. Click the link to download `pmpsdk.phar`
  3. Require the file in your project:
 
@@ -100,7 +100,7 @@ Current `\Pmp\Sdk` fetch methods include:
 
 ### Querying
 
-To query documents (by any [PMP search params](https://github.com/publicmediaplatform/pmpdocs/wiki/Querying-the-API)), the SDK provides shortcuts for locating links such as `urn:collectiondoc:query:docs`.  These shortcuts will always return `null` for HTTP 404 errors, indicating that your search yielded 0 total results.
+To query documents (by any [PMP search params](https://github.com/npr/pmp-docs-wiki/wiki/Querying-the-API)), the SDK provides shortcuts for locating links such as `urn:collectiondoc:query:docs`.  These shortcuts will always return `null` for HTTP 404 errors, indicating that your search yielded 0 total results.
 
 ```php
 $doc = $sdk->queryDocs(array('limit' => 3, 'text' => 'penmanship'));
