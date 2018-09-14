@@ -3,7 +3,7 @@
   "type": "library",
   "description": "PHP client interface for the Public Media Platform",
   "keywords": ["pmp","pubmedia", "publicmediaplatform"],
-  "homepage": "https://github.com/publicmediaplatform/phpsdk",
+  "homepage": "https://github.com/npr/pmp-php-sdk",
   "license": "MIT",
   "require": {
     "php": ">=5.3.3",
