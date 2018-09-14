@@ -416,7 +416,7 @@ To build a [PHAR](http://php.net/manual/en/intro.phar.php) version of this SDK, 
 
 ## Issues and Contributing
 
-Report any bugs or feature-requests via the issue tracker or snapchat.
+Report any bugs or feature-requests via the issue tracker.
 
 ## License
 
