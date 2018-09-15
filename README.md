@@ -6,7 +6,7 @@ A PHP API client for the [Public Media Platform](http://publicmediaplatform.org)
 
 ## Requirements
 
-PHP version >= 5.3.3.  And a [PMP client-id/secret](https://support.pmp.io/login) for your PMP user.
+PHP version >= 5.5.  And a [PMP client-id/secret](https://support.pmp.io/login) for your PMP user.
 
 ## Installation
 
@@ -420,6 +420,6 @@ Report any bugs or feature-requests via the issue tracker.
 
 ## License
 
-The PMP `phpsdk` is free software, and may be redistributed under the MIT-LICENSE.
+The PMP PHP SDK is free software, and may be redistributed under the MIT-LICENSE.
 
 Thanks for listening!

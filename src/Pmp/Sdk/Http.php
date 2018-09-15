@@ -1,7 +1,9 @@
 <?php
 namespace Pmp\Sdk;
 
-use \Guzzle\Http\Client;
+use \GuzzleHttp\Client;
+use \GuzzleHttp\Exception\GuzzleException;
+use \GuzzleHttp\Exception\RequestException;
 
 /**
  * PMP common HTTP utils
@@ -14,7 +16,6 @@ class Http
     const CONTENT_TYPE              = 'application/vnd.collection.doc+json';
     const USER_AGENT_PREFIX         = 'phpsdk/v';
     const TIMEOUT_S                 = 5;
-    const CURL_COULDNT_RESOLVE_HOST = 6;
 
     // global http-request options
     static protected $optGzip    = true;
@@ -44,28 +45,31 @@ class Http
      * @return array($status, $jsonObj, $rawData) the response status and body
      */
     static public function bearerRequest($method, $url, $token = null, $data = null) {
-        list($client, $req) = self::_buildRequest($method, $url);
+        $opts = [
+            'headers' => [
+                'User-Agent' => self::USER_AGENT_PREFIX . \Pmp\Sdk::VERSION,
+                'Accept' => self::CONTENT_TYPE,
+                'Content-Type' => self::CONTENT_TYPE,
+            ]
+        ];
 
-        // additional headers and data
-        $req->setHeader('Accept', self::CONTENT_TYPE);
-        $req->setHeader('Content-Type', self::CONTENT_TYPE);
         if (self::$optGzip) {
-            $req->addHeader('Accept-Encoding', 'gzip,deflate');
+            $opts['headers']['Accept-Encoding'] = 'gzip,deflate';
         }
         if ($token) {
-            $req->setHeader('Authorization', "Bearer $token");
+            $opts['headers']['Authorization'] = "Bearer $token";
         }
         if ((strtolower($method) == 'post' || strtolower($method) == 'put') && !empty($data)) {
-            $req->setBody(json_encode($data));
+            $opts['body'] = json_encode($data);
         }
 
         // preferences - only agree to minimal responses for non-home-docs
         $path = parse_url($url, PHP_URL_PATH);
         if (self::$optMinimal && !empty($path)) {
-            $req->addHeader('Prefer', 'return=minimal');
+            $opts['headers']['Prefer'] =  'return=minimal';
         }
 
-        return self::_sendRequest($client, $req);
+        return self::_sendRequest($method, $url, $opts);
     }
 
     /**
@@ -78,63 +82,50 @@ class Http
      * @return array($status, $jsonObj, $rawData) the response status and body
      */
     static public function basicRequest($method, $url, $basicAuth, $postData = null) {
-        list($client, $req) = self::_buildRequest($method, $url);
-
-        // additional headers and data
-        $req->setHeader('Accept', 'application/json');
-        $req->setHeader('Authorization', $basicAuth);
+        $opts = [
+            'headers' => [
+                'User-Agent' => self::USER_AGENT_PREFIX . \Pmp\Sdk::VERSION,
+                'Accept' => 'application/json',
+                'Authorization' => $basicAuth,
+            ]
+        ];
         if (strtolower($method) == 'post' && !empty($postData)) {
-            $req->setHeader('Content-Type', 'application/x-www-form-urlencoded');
+            $opts['headers']['Content-Type'] = 'application/x-www-form-urlencoded';
+            $formParams = [];
             foreach ($postData as $key => $value) {
                 if ($value) {
-                    $req->setPostField($key, $value);
+                    $formParams[$key] = $value;
                 }
             }
+            $opts['form_params'] = $formParams;
         }
 
-        return self::_sendRequest($client, $req);
-    }
-
-    /**
-     * Build a guzzle request object
-     *
-     * @param string $method the http method
-     * @param string $url the absolute location
-     * @return array(Client, Request) the guzzle client and request
-     */
-    static private function _buildRequest($method, $url) {
-        $client = new Client();
-        $opts = array('timeout' => self::TIMEOUT_S);
-        $req = $client->createRequest($method, $url, $opts);
-        $req->setHeader('User-Agent', self::USER_AGENT_PREFIX . \Pmp\Sdk::VERSION);
-        return array($client, $req);
+        return self::_sendRequest($method, $url, $opts);
     }
 
     /**
      * Send a request and handle the response
      *
-     * @param Client $client the client object
-     * @param Request $req the request object
+     * @param string $method the http method
+     * @param string $url the absolute location
+     * @param array $opts the request options
      * @return array($status, $jsonObj, $rawData) the response status and body
      */
-    static private function _sendRequest($client, $req) {
-        $err_data = array('method' => $req->getMethod(), 'url' => $req->getUrl());
+    static private function _sendRequest($method, $url, $opts) {
+        $client = new Client();
+        $opts['timeout'] = self::TIMEOUT_S;
+        $opts['http_errors'] = false;
+        $err_data = array('method' => $method, 'url' => $url);
 
         // make the request, catching guzzle errors
         try {
-            $resp = $client->send($req);
+            $resp = $client->request($method, $url, $opts);
         }
-        catch (\Guzzle\Http\Exception\BadResponseException $e) {
+        catch (RequestException $e) {
             $resp = $e->getResponse();
         }
-        catch (\Guzzle\Http\Exception\CurlException $e) {
-            // ConnectException doesn't exist yet - catch curl one manually
-            if ($e->getErrorNo() == self::CURL_COULDNT_RESOLVE_HOST) {
-                throw new Exception\HostException('Unable to resolve host', $err_data);
-            }
-            else {
-                throw $e;
-            }
+        catch (GuzzleException $e) {
+            throw new Exception\RemoteException('Unable to complete request', $err_data);
         }
         $code = $resp->getStatusCode();
         $body = $resp->getBody();
@@ -144,7 +135,7 @@ class Http
 
         // debug logger
         if (getenv('DEBUG') == '1' || getenv('DEBUG') == '2') {
-            echo "# $code {$req->getMethod()} {$req->getUrl()}\n";
+            echo "# $code $method $url\n";
         }
         if (getenv('DEBUG') == '2') {
             echo "  $body\n";

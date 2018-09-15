@@ -6,8 +6,8 @@
   "homepage": "https://github.com/npr/pmp-php-sdk",
   "license": "MIT",
   "require": {
-    "php": ">=5.3.3",
-    "guzzle/guzzle": "3.9.2"
+    "php": ">=5.5",
+    "guzzlehttp/guzzle": "^6.3"
   },
   "autoload":{
     "psr-0": {
