@@ -17,7 +17,7 @@ ok( $doc = $new_sdk->fetchTopic('arts'), 'normal - fetch doc' );
 
 // invalid string (turn off notices)
 $str2 = substr($serial, 0, 500) . 'foobar' . substr($serial, 500);
-//$level = error_reporting(E_ALL & ~E_NOTICE);
+$level = error_reporting(E_ALL & ~E_NOTICE);
 try {
     $bad_sdk = unserialize($str2);
     fail( 'invalid - no exception' );
@@ -25,7 +25,7 @@ try {
 catch (\RuntimeException $e) {
     pass( 'invalid - throws runtime exception' );
 }
-//error_reporting($level);
+error_reporting($level);
 
 // expired token
 ok( $auth = new \Pmp\Sdk\AuthClient($host, $id, $secret), 'expired - get new AuthUser' );
