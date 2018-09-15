@@ -125,11 +125,8 @@ class Http
             $resp = $e->getResponse();
         }
         catch (ConnectException $e) {
-            $err_data['code'] = $e->getCode();
-            $err_data['message'] = $e->getMessage();
-            $err_data['handler'] = $e->getHandlerContext();
-
-            throw new Exception\RemoteException('Unable to complete request', $err_data);
+            print_r($e->getHandlerContext());
+            throw new Exception\RemoteException("Unable to complete request CODE {$e->getCode()} MESSAGE {$e->getMessage()}", $err_data);
         }
         $code = $resp->getStatusCode();
         $body = $resp->getBody();
