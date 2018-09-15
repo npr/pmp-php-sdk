@@ -3,7 +3,7 @@ namespace Pmp\Sdk;
 
 use \GuzzleHttp\Client;
 use \GuzzleHttp\Exception\GuzzleException;
-use \GuzzleHttp\Exception\RequestException;
+use \GuzzleHttp\Exception\BadResponseException;
 
 /**
  * PMP common HTTP utils
@@ -120,7 +120,7 @@ class Http
         try {
             $resp = $client->request($method, $url, $opts);
         }
-        catch (RequestException $e) {
+        catch (BadResponseException $e) {
             $resp = $e->getResponse();
         }
         catch (GuzzleException $e) {
