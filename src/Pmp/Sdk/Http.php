@@ -124,9 +124,11 @@ class Http
         catch (BadResponseException $e) {
             $resp = $e->getResponse();
         }
-        catch (ConnectException $e) {
-            print_r($e->getHandlerContext());
-            throw new Exception\RemoteException("Unable to complete request CODE {$e->getCode()} MESSAGE {$e->getMessage()}", $err_data);
+        catch (GuzzleException $e) {
+            if (strpos($e->getMessage(), 'cURL error 6: Could not resolve host') !== false) {
+                throw new Exception\HostException('Unable to resolve host', $err_data);
+            }
+            throw $e;
         }
         $code = $resp->getStatusCode();
         $body = $resp->getBody();
