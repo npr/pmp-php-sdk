@@ -175,7 +175,7 @@ class Http
         else if ($code > 499) {
             throw new Exception\RemoteException('Server Error', $err_data);
         }
-        else if (is_null($json) && json_last_error() != JSON_ERROR_NONE) {
+        else if ($code != 204 && is_null($json) && json_last_error() != JSON_ERROR_NONE) {
             throw new Exception\RemoteException('JSON decode error', $err_data);
         }
 
