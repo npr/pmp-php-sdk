@@ -3,6 +3,7 @@ namespace Pmp\Sdk;
 
 use \GuzzleHttp\Client;
 use \GuzzleHttp\Exception\GuzzleException;
+use \GuzzleHttp\Exception\ConnectException;
 use \GuzzleHttp\Exception\BadResponseException;
 
 /**
@@ -123,11 +124,13 @@ class Http
         catch (BadResponseException $e) {
             $resp = $e->getResponse();
         }
-//        catch (GuzzleException $e) {
-//            $err_data['code'] = $e->getCode();
-//            $err_data['message'] = $e->getMessage();
-//            throw new Exception\RemoteException('Unable to complete request', $err_data);
-//        }
+        catch (ConnectException $e) {
+            $err_data['code'] = $e->getCode();
+            $err_data['message'] = $e->getMessage();
+            $err_data['handler'] = $e->getHandlerContext();
+
+            throw new Exception\RemoteException('Unable to complete request', $err_data);
+        }
         $code = $resp->getStatusCode();
         $body = $resp->getBody();
         $json = json_decode($body);
