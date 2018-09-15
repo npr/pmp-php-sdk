@@ -114,7 +114,6 @@ class Http
     static private function _sendRequest($method, $url, $opts) {
         $client = new Client();
         $opts['timeout'] = self::TIMEOUT_S;
-        $opts['http_errors'] = false;
         $err_data = array('method' => $method, 'url' => $url);
 
         // make the request, catching guzzle errors
