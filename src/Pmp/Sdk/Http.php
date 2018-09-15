@@ -124,6 +124,8 @@ class Http
             $resp = $e->getResponse();
         }
         catch (GuzzleException $e) {
+            $err_data['code'] = $e->getCode();
+            $err_data['message'] = $e->getMessage();
             throw new Exception\RemoteException('Unable to complete request', $err_data);
         }
         $code = $resp->getStatusCode();
