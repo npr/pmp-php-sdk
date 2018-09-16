@@ -390,7 +390,10 @@ if ($cache_str) {
 }
 ```
 
-Note that if the serialized string is somehow corrupt, the call to `unserialize()` will return `false` and also might generate a PHP `RuntimeException`.
+Note that if the serialized string is somehow corrupt:
+* for PHP 7.2.8 and later, the call to `unserialize()` will return `false` and also might generate a PHP `RuntimeException` 
+* for PHP 7.2.7 and earlier, the call to `unserialize()` will generate a PHP `RuntimeException`
+
 
 ## Developing
 

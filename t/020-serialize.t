@@ -18,11 +18,18 @@ ok( $doc = $new_sdk->fetchTopic('arts'), 'normal - fetch doc' );
 // invalid string (turn off notices)
 $level = error_reporting(E_ALL & ~E_NOTICE);
 $bad_serial = substr($serial, 0, 500) . 'foobar' . substr($serial, 500);
-$bad_sdk = unserialize($bad_serial);
-if ($bad_sdk !== false) {
-    fail('invalid - unserialized without failure');
-} else {
-    pass('invalid - failed to unserialize');
+try {
+    $bad_sdk = unserialize($bad_serial);
+
+    // for PHP 7.2.8 and later
+    if ($bad_sdk !== false) {
+        fail('invalid - unserialized without failure');
+    } else {
+        pass('invalid - failed to unserialize');
+    }
+} catch (\RuntimeException $e) {
+    // for PHP 7.2.7 and earlier
+    pass('invalid - throws runtime exception');
 }
 error_reporting($level);
 
