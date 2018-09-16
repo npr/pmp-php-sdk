@@ -382,10 +382,17 @@ $my_cache_mechanism->set('pmpsdk', $cache_str, 3600);
 // awhile later, in a different HTTP request
 $cache_str = $my_cache_mechanism->get('pmpsdk');
 if ($cache_str) {
-    $sdk = unserialize($cache_str);
-
-    // now this only generates 1 request, since we already have both the
-    // PMP home doc and an auth token
+    try {
+        $sdk = unserialize($cache_str);
+        if ($sdk === false) {
+            throw new \RuntimeException('Failed to unserialize SDK');
+        }
+    } catch (\RuntimeException $e) {
+        // failed to unserialize SDK, so need to start fresh
+        $sdk = new \Pmp\Sdk($host, 'client-id', 'client-secret'); 
+    }
+    // if retrieved from cache successfully, this would only generate 1 request, 
+    // since we would already have both the PMP home doc and an auth token
     $doc = $sdk->fetchDoc('SOME-GUID');
 }
 ```
