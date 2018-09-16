@@ -16,14 +16,13 @@ ok( $new_sdk = unserialize($serial),     'normal - unserialize Sdk' );
 ok( $doc = $new_sdk->fetchTopic('arts'), 'normal - fetch doc' );
 
 // invalid string (turn off notices)
-$str2 = substr($serial, 0, 500) . 'foobar' . substr($serial, 500);
 $level = error_reporting(E_ALL & ~E_NOTICE);
-try {
-    $bad_sdk = unserialize($str2);
-    fail( 'invalid - no exception' );
-}
-catch (\RuntimeException $e) {
-    pass( 'invalid - throws runtime exception' );
+$bad_serial = substr($serial, 0, 500) . 'foobar' . substr($serial, 500);
+$bad_sdk = unserialize($bad_serial);
+if ($bad_sdk !== false) {
+    fail('invalid - unserialized without failure');
+} else {
+    pass('invalid - failed to unserialize');
 }
 error_reporting($level);
 
@@ -35,8 +34,6 @@ ok( $doc = $exp_sdk->fetchTopic('arts'),                  'expired - fetch doc' 
 
 // zipped serialization
 ok( $sdk = new \Pmp\Sdk($host, $id, $secret, array('serialzip' => true)), 'instantiate new serialzip Sdk' );
-
-// serialize and compare it
 ok( $serialzip = serialize($sdk),                 'zipped - serialize Sdk' );
 cmp_ok( strlen($serialzip), '<', strlen($serial), 'zipped - is pretty small' );
 ok( $zip_sdk = unserialize($serialzip),           'zipped - unserialize Sdk' );
