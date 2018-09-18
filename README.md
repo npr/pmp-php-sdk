@@ -6,7 +6,7 @@ A PHP API client for the [Public Media Platform](http://publicmediaplatform.org)
 
 ## Requirements
 
-PHP version >= 5.3.3.  And a [PMP client-id/secret](https://support.pmp.io/login) for your PMP user.
+PHP version >= 5.5.  And a [PMP client-id/secret](https://support.pmp.io/login) for your PMP user.
 
 ## Installation
 
@@ -382,15 +382,25 @@ $my_cache_mechanism->set('pmpsdk', $cache_str, 3600);
 // awhile later, in a different HTTP request
 $cache_str = $my_cache_mechanism->get('pmpsdk');
 if ($cache_str) {
-    $sdk = unserialize($cache_str);
-
-    // now this only generates 1 request, since we already have both the
-    // PMP home doc and an auth token
+    try {
+        $sdk = unserialize($cache_str);
+        if ($sdk === false) {
+            throw new \RuntimeException('Failed to unserialize SDK');
+        }
+    } catch (\RuntimeException $e) {
+        // failed to unserialize SDK, so need to start fresh
+        $sdk = new \Pmp\Sdk($host, 'client-id', 'client-secret'); 
+    }
+    // if retrieved from cache successfully, this would only generate 1 request, 
+    // since we would already have both the PMP home doc and an auth token
     $doc = $sdk->fetchDoc('SOME-GUID');
 }
 ```
 
-Not that if the serialized string is somehow corrupt, the call to `unserialize()` will generate a PHP `RuntimeException`.
+Note that if the serialized string is somehow corrupt:
+* for PHP 7.2.8 and later, the call to `unserialize()` will return `false` and also might generate a PHP `RuntimeException` 
+* for PHP 7.2.7 and earlier, the call to `unserialize()` will generate a PHP `RuntimeException`
+
 
 ## Developing
 
@@ -420,6 +430,6 @@ Report any bugs or feature-requests via the issue tracker.
 
 ## License
 
-The PMP `phpsdk` is free software, and may be redistributed under the MIT-LICENSE.
+The PMP PHP SDK is free software, and may be redistributed under the MIT-LICENSE.
 
 Thanks for listening!
