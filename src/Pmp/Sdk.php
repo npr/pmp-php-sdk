@@ -14,7 +14,7 @@ use Pmp\Sdk\Http;
  */
 class Sdk implements \Serializable
 {
-    const VERSION = '1.0.4'; // UPDATE ME!!!
+    const VERSION = '2.0.0'; // UPDATE ME!!!
 
     // Known URNs
     const FETCH_DOC = 'urn:collectiondoc:hreftpl:docs';
