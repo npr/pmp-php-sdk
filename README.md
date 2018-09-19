@@ -410,8 +410,6 @@ $ make test
 
 To debug the HTTP calls occuring during the tests, set the *DEBUG* environment variable to 1 with `DEBUG=1 make test`.
 
-To build a [PHAR](http://php.net/manual/en/intro.phar.php) version of this SDK, run `make build`.
-
 ## Issues and Contributing
 
 Report any bugs or feature-requests via the issue tracker.
