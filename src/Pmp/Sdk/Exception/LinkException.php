@@ -1,11 +1,11 @@
 <?php
+
 namespace Pmp\Sdk\Exception;
 
 /**
- * Errors related to parsing/following links
- *
- * (Not remote errors)
+ * Errors related to parsing/following links (not remote errors)
  */
-class LinkException extends PmpException {
+class LinkException extends PmpException
+{
 
 }

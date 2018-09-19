@@ -1,9 +1,11 @@
 <?php
+
 namespace Pmp\Sdk\Exception;
 
 /**
- * API 401 errors
+ * Remote exception specifically for not authorized (401 status) responses
  */
-class AuthException extends RemoteException {
+class AuthException extends RemoteException
+{
 
 }

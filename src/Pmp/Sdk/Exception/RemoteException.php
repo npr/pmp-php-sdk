@@ -1,16 +1,30 @@
 <?php
+
 namespace Pmp\Sdk\Exception;
 
 /**
- * PMP errors related to the remote API server
- *
- * Usually HTTP 400/500-ish, or an unexpected response body with a 200-ish
+ * Remote error responses (with 4xx/5xx status or with 2xx and unexpected response body)
  */
-class RemoteException extends PmpException {
-
+class RemoteException extends PmpException
+{
+    /**
+     * @var string
+     */
     public $httpMethod;
+
+    /**
+     * @var string
+     */
     public $httpUrl;
+
+    /**
+     * @var int
+     */
     public $httpStatus;
+
+    /**
+     * @var string
+     */
     public $httpResponse;
 
     /**
@@ -18,18 +32,20 @@ class RemoteException extends PmpException {
      *
      * @param string $message the message to display
      * @param int|array $code the http code or an array of data
-     * @param Exception $prev optional nested exception
+     * @param \Exception $prev nested exception
      */
-    public function __construct($message, $code = 0, \Exception $prev = null) {
-
+    public function __construct($message, $code = 0, \Exception $prev = null)
+    {
         // scrape data from nested remote exceptions
         if ($prev && is_a($prev, '\Pmp\Sdk\Exception\RemoteException')) {
-            $code = array(
+            /** @var self $prev */
+            // @todo should $code be completely overridden like this?
+            $code = [
                 'method' => $prev->httpMethod,
-                'url'    => $prev->httpUrl,
-                'code'   => $prev->httpStatus,
-                'body'   => $prev->httpResponse,
-            );
+                'url' => $prev->httpUrl,
+                'code' => $prev->httpStatus,
+                'body' => $prev->httpResponse,
+            ];
         }
 
         // save http data
@@ -53,8 +69,11 @@ class RemoteException extends PmpException {
 
     /**
      * Custom string representation of these errors
+     *
+     * @return string
      */
-    public function __toString() {
+    public function __toString()
+    {
         $str = get_class($this) . ": [{$this->code}]: {$this->message}";
         if ($this->httpMethod || $this->httpUrl) {
             $str .= ' =>';
@@ -70,18 +89,17 @@ class RemoteException extends PmpException {
     }
 
     /**
-     * Determine if the http response looks like a json object
+     * Determine if the http response looks like a JSON object
      *
-     * @return stdClass the decoded response, or null if wasn't a json object
+     * @return \StdClass the decoded response, or null if wasn't a json object
      */
-    public function getJsonResponse() {
+    public function getJsonResponse()
+    {
         $json = json_decode($this->httpResponse);
         if (is_null($json) && json_last_error() != JSON_ERROR_NONE) {
             return null; // decode error
-        }
-        else {
+        } else {
             return is_object($json) ? $json : null;
         }
     }
-
 }

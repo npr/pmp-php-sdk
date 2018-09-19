@@ -10,8 +10,6 @@ PHP version >= 5.5.  And a [PMP client-id/secret](https://support.pmp.io/login) 
 
 ## Installation
 
-#### Via Composer
-
  1. Download [Composer](https://getcomposer.org/) (if you don't have it already), and install the `publicmediaplatform/pmpsdk` package:
 
  ```shell
@@ -23,16 +21,6 @@ PHP version >= 5.5.  And a [PMP client-id/secret](https://support.pmp.io/login) 
 
  ```php
  require 'vendor/autoload.php';
- ```
-
-#### Via PHAR file
-
- 1. Go to the [Latest Release](https://github.com/npr/pmp-php-sdk/releases/latest) of the `pmpsdk`
- 2. Click the link to download `pmpsdk.phar`
- 3. Require the file in your project:
-
- ```php
- require 'path/to/pmpsdk.phar`;
  ```
 
  **NOTE**: *if you see a strange error message full of question marks like `?r??PHP Fatal error:  Class 'Pmp\Sdk' not found`, make sure you turn off [detect unicode](http://stackoverflow.com/questions/11302593/how-to-disable-detect-unicode-setting-from-php-ini-trying-to-install-compose).*

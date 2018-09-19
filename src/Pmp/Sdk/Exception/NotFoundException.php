@@ -1,9 +1,11 @@
 <?php
+
 namespace Pmp\Sdk\Exception;
 
 /**
- * API 403/404 errors
+ * Remote exception specifically for not found (403/404 status) responses
  */
-class NotFoundException extends RemoteException {
+class NotFoundException extends RemoteException
+{
 
 }

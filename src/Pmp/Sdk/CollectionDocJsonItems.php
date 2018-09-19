@@ -1,27 +1,31 @@
 <?php
+
 namespace Pmp\Sdk;
 
 /**
- * PMP CollectionDoc items
- *
- * An array-ish list of CollectionDoc items
- *
+ * Array of Collection.Doc+JSON item docs
  */
 class CollectionDocJsonItems extends \ArrayObject
 {
-    private $_document;
+    /**
+     * The parent doc
+     *
+     * @var CollectionDocJson
+     */
+    private $_doc;
 
     /**
      * Constructor
      *
-     * @param array(stdClass) $items the raw items
-     * @param CollectionDocJson $doc the container document
+     * @param \StdClass[] $items the raw items
+     * @param CollectionDocJson $doc the parent doc
      */
-    public function __construct(array $items, CollectionDocJson $doc) {
-        $this->_document = $doc;
+    public function __construct(array $items, CollectionDocJson $doc)
+    {
+        $this->_doc = $doc;
 
-        // init documents
-        $itemDocs = array();
+        // init docs
+        $itemDocs = [];
         foreach ($items as $item) {
             $itemDoc = clone $doc;
             $itemDoc->setDocument($item);
@@ -37,8 +41,9 @@ class CollectionDocJsonItems extends \ArrayObject
      *
      * @return int the total
      */
-    public function totalItems() {
-        $link = $this->_document->navigation('self');
+    public function totalItems()
+    {
+        $link = $this->_doc->navigation('self');
         return ($link && isset($link->totalitems)) ? $link->totalitems : 0;
     }
 
@@ -47,8 +52,9 @@ class CollectionDocJsonItems extends \ArrayObject
      *
      * @return int the total number of pages
      */
-    public function totalPages() {
-        $link = $this->_document->navigation('self');
+    public function totalPages()
+    {
+        $link = $this->_doc->navigation('self');
         return ($link && isset($link->totalpages)) ? $link->totalpages : 1;
     }
 
@@ -57,18 +63,19 @@ class CollectionDocJsonItems extends \ArrayObject
      *
      * @return int the page number
      */
-    public function pageNum() {
-        $link = $this->_document->navigation('self');
+    public function pageNum()
+    {
+        $link = $this->_doc->navigation('self');
         return ($link && isset($link->pagenum)) ? $link->pagenum : 1;
     }
 
     /**
-     * Get the first item
+     * Get the first item doc
      *
-     * @return CollectionDocJson the first item or null
+     * @return CollectionDocJson the first item
      */
-    public function first() {
+    public function first()
+    {
         return count($this) > 0 ? $this[0] : null;
     }
-
 }

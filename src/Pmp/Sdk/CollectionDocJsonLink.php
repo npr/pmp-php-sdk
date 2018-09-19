@@ -1,29 +1,47 @@
 <?php
+
 namespace Pmp\Sdk;
 
-use \GuzzleHttp\UriTemplate;
+use GuzzleHttp\UriTemplate;
+use Pmp\Sdk\Exception\LinkException;
+use Pmp\Sdk\Exception\NotFoundException;
 
 /**
- * PMP CollectionDoc link
- *
- * A single, follow-able CollectionDoc link
- *
+ * Collection.Doc+JSON link
  */
 class CollectionDocJsonLink
 {
+    // Query string operators
     const PMP_AND = ',';
-    const PMP_OR  = ';';
+    const PMP_OR = ';';
 
+    /**
+     * @var string
+     */
+    public $href;
+
+    /**
+     * Link object
+     *
+     * @var \StdClass
+     */
     private $_link;
+
+    /**
+     * Auth client
+     *
+     * @var AuthClient
+     */
     private $_auth;
 
     /**
      * Constructor
      *
-     * @param stdClass $link the raw link data
+     * @param \StdClass $link the raw link data
      * @param AuthClient $auth authentication client for the API
      */
-    public function __construct(\stdClass $link, AuthClient $auth = null) {
+    public function __construct(\StdClass $link, AuthClient $auth = null)
+    {
         $this->_link = $link;
         $this->_auth = $auth;
 
@@ -36,82 +54,83 @@ class CollectionDocJsonLink
 
     /**
      * Custom string representation
+     *
+     * @return string
      */
-    public function __toString() {
+    public function __toString()
+    {
         if (!empty($this->href)) {
             return $this->href;
-        }
-        else if (!empty($this->{'href-template'})) {
+        } else if (!empty($this->{'href-template'})) {
             return $this->{'href-template'};
-        }
-        else {
+        } else {
             return '';
         }
     }
 
     /**
-     * Expand this link into a complete url
+     * Resolve this link's URL from its href or href-template
      *
-     * @param array $options optional array of href-template params
-     * @return string the complete url
+     * @param array $options array of href-template params
+     * @return string the resolved URL
      */
-    public function expand(array $options = null) {
+    public function expand(array $options = [])
+    {
         if (!empty($this->href)) {
             return $this->href;
-        }
-        else if (!empty($this->{'href-template'})) {
+        } else if (!empty($this->{'href-template'})) {
             $parser = new UriTemplate();
             return $parser->expand($this->{'href-template'}, $this->_convertOptions($options));
-        }
-        else {
-            throw new Exception\LinkException('Cannot expand link because no href or href-template defined');
+        } else {
+            throw new LinkException('Cannot expand link because no href or href-template defined');
         }
     }
 
     /**
-     * Follow the link href to retrieve a document
+     * Follow the link to retrieve a doc
      *
-     * @param array $options optional array of href-template params
-     * @return CollectionDocJson a loaded document or null
+     * @param array $options array of href-template params
+     * @return CollectionDocJson a loaded doc
      */
-    public function follow(array $options = null) {
+    public function follow(array $options = [])
+    {
         $url = $this->expand($options);
         try {
             return new CollectionDocJson($url, $this->_auth);
-        }
-        catch (Exception\NotFoundException $e) {
+        } catch (NotFoundException $e) {
             return null;
         }
     }
 
     /**
-     * Follow the link href to retrieve a document
+     * Submit the link with params to retrieve a doc
      *
      * @param array $options array of href-template params
-     * @return CollectionDocJson a loaded document
+     * @return CollectionDocJson a loaded doc
      */
-    public function submit(array $options) {
+    public function submit(array $options)
+    {
         return $this->follow($options);
     }
 
     /**
-     * Get the available options for an href-template
+     * Get the available options for the href-template if exists
      *
-     * @return Object options object
+     * @return \StdClass options object
      */
-    public function options() {
+    public function options()
+    {
         if (empty($this->{'href-template'}) || empty($this->{'href-vars'})) {
-            throw new Exception\LinkException('Cannot give link options because link is not a properly defined href template');
-        }
-        else {
+            throw new LinkException('Cannot give link options because link is not a properly defined href template');
+        } else {
             return $this->{'href-vars'};
         }
     }
 
     /**
-     * Converts the set of options into API-compatible query string forms.
+     * Converts the set of options into a compatible query string structure
      *
-     * Mainly to convert:
+     * Use to convert:
      *     array('profile' => array('AND' => array('foo', 'bar')))
      * into:
      *     array('profile' => 'foo,bar')
@@ -119,30 +138,26 @@ class CollectionDocJsonLink
      * @param array $options
      * @return array
      */
-    private function _convertOptions(array $options = null) {
-        $converted = array();
+    private function _convertOptions(array $options = [])
+    {
+        $converted = [];
         if (!empty($options)) {
             foreach ($options as $name => $value) {
                 if (is_array($value)) {
                     if (!empty($value['AND'])) {
                         $converted[$name] = implode(self::PMP_AND, $value['AND']);
-                    }
-                    else if (!empty($value['OR'])) {
+                    } else if (!empty($value['OR'])) {
                         $converted[$name] = implode(self::PMP_OR, $value['OR']);
-                    }
-                    else {
+                    } else {
                         $converted[$name] = ''; // bad params
                     }
-                }
-                elseif (is_bool($value)) {
+                } elseif (is_bool($value)) {
                     $converted[$name] = $value ? 'true' : 'false';
-                }
-                else {
+                } else {
                     $converted[$name] = $value;
                 }
             }
         }
         return $converted;
     }
-
 }

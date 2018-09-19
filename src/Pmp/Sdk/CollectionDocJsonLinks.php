@@ -1,30 +1,40 @@
 <?php
+
 namespace Pmp\Sdk;
 
 /**
- * PMP CollectionDoc links
- *
- * An array-ish list of CollectionDoc links
- *
+ * Array of Collection.Doc+JSON links
  */
 class CollectionDocJsonLinks extends \ArrayObject
 {
+    /**
+     * Set of link objects
+     *
+     * @var \StdClass[]
+     */
     private $_links;
+
+    /**
+     * Auth client
+     *
+     * @var AuthClient
+     */
     private $_auth;
 
     /**
      * Constructor
      *
-     * @param array(stdClass) $links the raw links
+     * @param \StdClass[] $links the raw links
      * @param AuthClient $auth authentication client for the API
      */
-    public function __construct(array $links, AuthClient $auth = null) {
+    public function __construct(array $links, AuthClient $auth = null)
+    {
         $this->_links = $links;
         $this->_auth = $auth;
 
         // init links
-        $linkObjects = array();
-        foreach($links as $link) {
+        $linkObjects = [];
+        foreach ($links as $link) {
             $linkObjects[] = new CollectionDocJsonLink($link, $auth);
         }
 
@@ -37,23 +47,25 @@ class CollectionDocJsonLinks extends \ArrayObject
      *
      * @return string the string form of these links
      */
-    public function __toString() {
-        return 'CollectionDocJsonLinks[' . implode(',', iterator_to_array($this)) .']';
+    public function __toString()
+    {
+        return 'CollectionDocJsonLinks[' . implode(',', iterator_to_array($this)) . ']';
     }
 
     /**
-     * Get the set of links matching an array of urns
+     * Get the set of links matching an array of URNs
      *
-     * @param array $urn the names to match on
+     * @param string[] $urns the names to match on
      * @return CollectionDocJsonLinks the matched links
      */
-    public function rels(array $urns) {
-        $rawLinks = array();
-        foreach ($this as $idx => $link) {
+    public function rels(array $urns)
+    {
+        $rawLinks = [];
+        foreach ($this as $i => $link) {
             if (!empty($link->rels)) {
                 $match = array_diff($urns, $link->rels);
                 if (count($match) != count($urns)) {
-                    $rawLinks[] = $this->_links[$idx];
+                    $rawLinks[] = $this->_links[$i];
                 }
             }
         }
@@ -61,23 +73,24 @@ class CollectionDocJsonLinks extends \ArrayObject
     }
 
     /**
-     * Gets the first link matching an urn
+     * Get the first link matching a URN
      *
      * @param string $urn the name to match on
-     * @return CollectionDocJsonLink the matched link or null
+     * @return CollectionDocJsonLink the matched link
      */
-    public function rel($urn) {
-        $match = $this->rels(array($urn));
+    public function rel($urn)
+    {
+        $match = $this->rels([$urn]);
         return count($match) > 0 ? $match[0] : null;
     }
 
     /**
-     * Get the first link in this collection
+     * Get the first link in the set
      *
-     * @return CollectionDocJsonLink the first link or null
+     * @return CollectionDocJsonLink the first link
      */
-    public function first() {
+    public function first()
+    {
         return count($this) > 0 ? $this[0] : null;
     }
-
 }

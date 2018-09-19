@@ -1,30 +1,28 @@
 <?php
+
 namespace Pmp\Sdk\Exception;
 
 /**
- * PMP validation errors
- *
- * A specific kind of 400/ClientException that includes json validation errors
+ * Remote exception specifically for bad request (400 status) responses that includes JSON validation errors
  */
-class ValidationException extends RemoteException {
-
+class ValidationException extends RemoteException
+{
     /**
-     * Determine if a response looks like a PMP validation error
+     * Determine if a response looks like a validation error
      *
      * @param RemoteException $prev the original exception
      * @return bool whether or not it looks like a validation error
      */
-    public static function looksValidationy(RemoteException $prev) {
+    public static function looksValidationy(RemoteException $prev)
+    {
         $json = $prev->getJsonResponse();
         if ($prev->httpStatus == 400 && $json) {
             if (empty($json->version) || empty($json->errors) || empty($json->errors->message)) {
                 return false;
-            }
-            else {
+            } else {
                 return true;
             }
-        }
-        else {
+        } else {
             return false;
         }
     }
@@ -34,14 +32,13 @@ class ValidationException extends RemoteException {
      *
      * @return string the validation error message
      */
-    public function getValidationMessage() {
+    public function getValidationMessage()
+    {
         $json = $this->getJsonResponse();
         if ($json && $json->errors && $json->errors->message) {
             return $json->errors->message;
-        }
-        else {
+        } else {
             return 'Unknown validation error';
         }
     }
-
 }
