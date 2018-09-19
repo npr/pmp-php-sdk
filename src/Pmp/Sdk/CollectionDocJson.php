@@ -1,28 +1,86 @@
 <?php
+
 namespace Pmp\Sdk;
 
+use Pmp\Sdk\Exception\AuthException;
+use Pmp\Sdk\Exception\LinkException;
+use Pmp\Sdk\Exception\PmpException;
+use Pmp\Sdk\Exception\RemoteException;
+use Pmp\Sdk\Exception\ValidationException;
+
 /**
- * PMP CollectionDoc+JSON
- *
- * Object representation of a remote CollectionDoc.
- *
+ * Collection.Doc+JSON doc
  */
 class CollectionDocJson
 {
-    const URN_SAVE   = 'urn:collectiondoc:form:documentsave';
+    // Known URNs
+    const URN_SAVE = 'urn:collectiondoc:form:documentsave';
     const URN_DELETE = 'urn:collectiondoc:form:documentdelete';
-
     const URN_AUDIO_ITEM = 'urn:collectiondoc:audio';
     const URN_IMAGE_ITEM = 'urn:collectiondoc:image';
     const URN_VIDEO_ITEM = 'urn:collectiondoc:video';
-
     const URN_CONTRIBUTOR = 'urn:collectiondoc:collection:contributor';
-    const URN_PROPERTY    = 'urn:collectiondoc:collection:property';
-    const URN_SERIES      = 'urn:collectiondoc:collection:series';
-    const URN_TOPIC       = 'urn:collectiondoc:collection:topic';
+    const URN_PROPERTY = 'urn:collectiondoc:collection:property';
+    const URN_SERIES = 'urn:collectiondoc:collection:series';
+    const URN_TOPIC = 'urn:collectiondoc:collection:topic';
 
-    // TODO: un-hardcode these and pull directly from aliases doc
-    private static $_profileAliases = array(
+    /**
+     * Number of seconds to wait before authentication retry
+     *
+     * @var int
+     * @todo investigate why this is necessary for auth retry
+     */
+    const AUTH_RETRY_WAIT_S = 1; // seconds
+
+    /**
+     * @var string
+     */
+    public $version;
+
+    /**
+     * @var string
+     */
+    public $href;
+
+    /**
+     * @var string
+     */
+    public $scope;
+
+    /**
+     * @var \StdClass
+     */
+    public $attributes;
+
+    /**
+     * @var \StdClass
+     */
+    public $links;
+
+    /**
+     * @var \StdClass[]
+     */
+    public $items;
+
+    /**
+     * @var \StdClass
+     */
+    public $errors;
+
+    /**
+     * The raw response data (for debug/test purposes)
+     *
+     * @var array
+     */
+    public $_raw;
+
+    /**
+     * Known aliases
+     *
+     * @var string[]
+     * @todo un-hardcode these and pull directly from aliases doc
+     */
+    private static $_profileAliases = [
         'ef7f170b-4900-4a20-8b77-3142d4ac07ce' => 'audio',
         '8bf6f5ae-84b1-4e52-a744-8e1ac63f283e' => 'contributor',
         '42448532-7a6f-47fb-a547-f124d5d9053e' => 'episode',
@@ -32,29 +90,32 @@ class CollectionDocJson
         'b9ce545e-01a2-44d0-9a15-a73da4ed304b' => 'story',
         '3ffa207f-cfbe-4bcd-987c-0bd8e29fdcb6' => 'topic',
         '85115aa1-df35-4324-9acd-2bb261f8a541' => 'video',
-    );
+    ];
 
-    // TODO: get rid of this someday
-    const AUTH_RETRY_WAIT_S = 1;
+    /**
+     * Set of link names to be preserved across requests
+     *
+     * @var string[]
+     */
+    private static $_staticLinkNames = [
+        'query',
+        'edit',
+        'auth',
+    ];
 
-    // global static links (cached after first request)
-    private static $_staticLinkNames = array('query', 'edit', 'auth');
+    /**
+     * Set of preserved links
+     *
+     * @var \StdClass
+     */
     private static $_staticLinks;
 
-    // auth client
+    /**
+     * Auth client
+     *
+     * @var AuthClient
+     */
     private $_auth;
-
-    // collection-doc accessors
-    public $version;
-    public $href;
-    public $scope;
-    public $attributes;
-    public $links;
-    public $items;
-    public $errors;
-
-    // the raw response data (for debug/test purposes)
-    public $_raw;
 
     /**
      * Constructor
@@ -62,14 +123,15 @@ class CollectionDocJson
      * @param string $uri location of a Collection.doc+json object
      * @param AuthClient $auth the authentication client
      */
-    public function __construct($uri = null, AuthClient $auth = null) {
+    public function __construct($uri = null, AuthClient $auth = null)
+    {
         $this->clearDocument();
 
         // init
-        $this->href  = is_string($uri) ? trim($uri, '/') : null;
+        $this->href = is_string($uri) ? trim($uri, '/') : null;
         $this->_auth = $auth;
         if (empty(self::$_staticLinks)) {
-            self::$_staticLinks = new \stdClass;
+            self::$_staticLinks = new \StdClass();
         }
 
         // fetch the document, if a uri was passed
@@ -83,32 +145,38 @@ class CollectionDocJson
      *
      * @param AuthClient $auth the authentication client
      */
-    public function setAuth(AuthClient $auth = null) {
+    public function setAuth(AuthClient $auth = null)
+    {
         $this->_auth = $auth;
     }
 
     /**
      * Set this document back to the default state
+     *
+     * @return self
      */
-    public function clearDocument() {
-        $this->version    = '1.0';
-        $this->href       = null;
-        $this->scope      = null;
-        $this->attributes = new \stdClass();
-        $this->links      = new \stdClass();
-        $this->items      = array();
-        $this->errors     = null;
+    public function clearDocument()
+    {
+        $this->version = '1.0';
+        $this->href = null;
+        $this->scope = null;
+        $this->attributes = new \StdClass();
+        $this->links = new \StdClass();
+        $this->items = [];
+        $this->errors = null;
         return $this;
     }
 
     /**
      * Set this documents payload
      *
-     * @param stdClass|array $doc the document object
+     * @param \StdClass|array $doc the document object
+     * @return self
      */
-    public function setDocument($doc) {
+    public function setDocument($doc)
+    {
         $this->clearDocument();
-        $doc = json_decode(json_encode($doc)); // clone and convert arrays
+        $doc = json_decode(json_encode($doc)); // ensure we are working with an object
 
         // set known properties
         if (!empty($doc->version)) {
@@ -137,8 +205,7 @@ class CollectionDocJson
         foreach (self::$_staticLinkNames as $name) {
             if (empty($this->links->$name)) {
                 $this->links->$name = self::$_staticLinks->$name;
-            }
-            else {
+            } else {
                 self::$_staticLinks->$name = $this->links->$name;
             }
         }
@@ -147,12 +214,14 @@ class CollectionDocJson
 
     /**
      * Load this document from the remote server
+     *
+     * @return self
      */
-    public function load() {
+    public function load()
+    {
         if (empty($this->href)) {
-            throw new Exception\PmpException('No href set for document!');
-        }
-        else {
+            throw new PmpException('No href set for document!');
+        } else {
             $doc = $this->_request('get', $this->href);
             $this->setDocument($doc);
         }
@@ -161,25 +230,28 @@ class CollectionDocJson
 
     /**
      * Persist this document to the remote server
+     *
+     * @return self
      */
-    public function save() {
+    public function save()
+    {
         if (empty($this->attributes->guid)) {
             $this->attributes->guid = $this->createGuid();
         }
 
         // expand link template
-        $link = $this->edit(self::URN_SAVE);
+        $urn = self::URN_SAVE;
+        $link = $this->edit($urn);
         if (!$link) {
-            $urn = self::URN_SAVE;
-            throw new Exception\LinkException("Unable to find link $urn - have you loaded the document yet?");
+            throw new LinkException("Unable to find link $urn - have you loaded the document yet?");
         }
         $url = $link->expand(array('guid' => $this->attributes->guid));
 
         // create a saveable version of this doc
-        $json = new \stdClass();
-        $json->version    = $this->version;
+        $json = new \StdClass();
+        $json->version = $this->version;
         $json->attributes = $this->attributes;
-        $json->links = new \stdClass();
+        $json->links = new \StdClass();
         foreach ($this->links as $relType => $links) {
             if (!in_array($relType, self::$_staticLinkNames)) {
                 $json->links->$relType = $links;
@@ -189,8 +261,8 @@ class CollectionDocJson
         // remote save
         $resp = $this->_request('put', $url, $json);
         if (empty($resp->url)) {
-            $data = array('url' => $url, 'body' => json_encode($json));
-            throw new Exception\RemoteException('Invalid PUT response missing url!', $data);
+            $data = ['url' => $url, 'body' => json_encode($json)];
+            throw new RemoteException('Invalid PUT response missing url!', $data);
         }
 
         // re-load doc
@@ -201,19 +273,22 @@ class CollectionDocJson
 
     /**
      * Delete the current document on the remote server
+     *
+     * @return self
      */
-    public function delete() {
+    public function delete()
+    {
         if (empty($this->attributes->guid)) {
-            throw new Exception\PmpException('Document has no guid!');
+            throw new PmpException('Document has no guid!');
         }
 
         // expand link template
-        $link = $this->edit(self::URN_DELETE);
+        $urn = self::URN_DELETE;
+        $link = $this->edit($urn);
         if (!$link) {
-            $urn = self::URN_DELETE;
-            throw new Exception\LinkException("Unable to find link $urn - have you loaded the document yet?");
+            throw new LinkException("Unable to find link $urn - have you loaded the document yet?");
         }
-        $url = $link->expand(array('guid' => $this->attributes->guid));
+        $url = $link->expand(['guid' => $this->attributes->guid]);
 
         // delete and clear document
         $this->_request('delete', $url);
@@ -227,11 +302,11 @@ class CollectionDocJson
      * @param bool $refresh whether to refresh the token
      * @return string the auth token
      */
-    public function getAccessToken($refresh = false) {
+    public function getAccessToken($refresh = false)
+    {
         if ($this->_auth) {
             return $this->_auth->getToken($refresh)->access_token;
-        }
-        else {
+        } else {
             return null;
         }
     }
@@ -243,7 +318,8 @@ class CollectionDocJson
      * @see http://www.php.net/manual/en/function.uniqid.php#94959
      * @return string a uuid-v4
      */
-    public function createGuid() {
+    public function createGuid()
+    {
         return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
             mt_rand(0, 0xffff), mt_rand(0, 0xffff),
             mt_rand(0, 0xffff),
@@ -256,15 +332,16 @@ class CollectionDocJson
     /**
      * Get a single link by urn, or relType + urn
      *
-     * @param string $urn the uniform resource name to look for
+     * @param string $urnOrRelType the uniform resource name to look for
+     * @param string $urn
      * @return CollectionDocJsonLink the link object or null
      */
-    public function link($urnOrRelType, $urn = null) {
+    public function link($urnOrRelType, $urn = null)
+    {
         $relTypeKeys = array_keys(get_object_vars($this->links));
         if ($urn) {
-            $relTypeKeys = array($urnOrRelType);
-        }
-        else {
+            $relTypeKeys = [$urnOrRelType];
+        } else {
             $urn = $urnOrRelType;
         }
 
@@ -286,8 +363,9 @@ class CollectionDocJson
      * @param string $urn the uniform resource name to look for
      * @return CollectionDocJsonLinks the links object
      */
-    public function links($relType, $urn = null) {
-        $rawLinks = array();
+    public function links($relType, $urn = null)
+    {
+        $rawLinks = [];
         if (!empty($this->links->$relType)) {
             $rawLinks = $this->links->$relType;
         }
@@ -295,9 +373,8 @@ class CollectionDocJson
 
         // optionally filter by urn
         if ($urn) {
-            return $links->rels(array($urn));
-        }
-        else {
+            return $links->rels([$urn]);
+        } else {
             return $links;
         }
     }
@@ -307,7 +384,8 @@ class CollectionDocJson
      *
      * @return CollectionDocJsonLink the profile link object
      */
-    public function getProfile() {
+    public function getProfile()
+    {
         $links = $this->links('profile');
         return isset($links[0]) ? $links[0] : null;
     }
@@ -317,84 +395,116 @@ class CollectionDocJson
      *
      * @return string the profile alias, or guid if alias cannot be inferred
      */
-    public function getProfileAlias() {
+    public function getProfileAlias()
+    {
         $link = $this->getProfile();
         if ($link && $link->href) {
             $guidOrAlias = explode('/', $link->href);
             $guidOrAlias = end($guidOrAlias);
             return isset(self::$_profileAliases[$guidOrAlias]) ? self::$_profileAliases[$guidOrAlias] : $guidOrAlias;
-        }
-        else {
+        } else {
             return null;
         }
     }
 
     /**
-     * Shortcut for the creator link
+     * Get the creator link
      *
      * @return CollectionDocJsonLink the creator link object
      */
-    public function getCreator() {
+    public function getCreator()
+    {
         $links = $this->links('creator');
         return isset($links[0]) ? $links[0] : null;
     }
 
     /**
-     * Shortcut for the owner link
+     * Get the owner link
      *
      * @return CollectionDocJsonLink the owner link object
      */
-    public function getOwner() {
+    public function getOwner()
+    {
         $links = $this->links('owner');
         return isset($links[0]) ? $links[0] : null;
     }
 
     /**
-     * Shortcut for collection links
+     * Get a set of collection links
      *
-     * @param $collectionType optional urn (or urn suffix) to filter by
-     * @return CollectionDocJsonLink the collection links array
+     * @param string $urnOrSuffix urn (or urn suffix) to filter by
+     * @return CollectionDocJsonLinks the collection links array
      */
-    public function getCollections($urnOrSuffix = null) {
-        $knownUrns = array(
+    public function getCollections($urnOrSuffix = null)
+    {
+        $knownUrns = [
             'contributor' => self::URN_CONTRIBUTOR,
-            'property'    => self::URN_PROPERTY,
-            'series'      => self::URN_SERIES,
-            'topic'       => self::URN_TOPIC,
-        );
+            'property' => self::URN_PROPERTY,
+            'series' => self::URN_SERIES,
+            'topic' => self::URN_TOPIC,
+        ];
         $urnOrSuffix = isset($knownUrns[$urnOrSuffix]) ? $knownUrns[$urnOrSuffix] : $urnOrSuffix;
         return $this->links('collection', $urnOrSuffix);
     }
 
     /**
-     * Link shortcuts (could also just use the "link" method)
+     * Get a query link
+     *
+     * @param string $urn
+     * @return CollectionDocJsonLink
      */
-    public function query($urn) {
+    public function query($urn)
+    {
         return $this->link('query', $urn);
     }
-    public function edit($urn) {
+
+    /**
+     * Get an edit link
+     *
+     * @param string $urn
+     * @return CollectionDocJsonLink
+     */
+    public function edit($urn)
+    {
         return $this->link('edit', $urn);
     }
-    public function auth($urn) {
+
+    /**
+     * Get an auth link
+     *
+     * @param string $urn
+     * @return CollectionDocJsonLink
+     */
+    public function auth($urn)
+    {
         return $this->link('auth', $urn);
     }
-    public function navigation($urn) {
+
+    /**
+     * Get a navigation link
+     *
+     * @param string $urn
+     * @return CollectionDocJsonLink
+     */
+    public function navigation($urn)
+    {
         return $this->link('navigation', $urn);
     }
 
     /**
      * Return the set of document items
      *
-     * @param $profileAlias optional profile to limit returned items to
+     * @param string $profileAlias profile to limit returned items to
      * @return CollectionDocJsonItems
      */
-    public function items($profileAlias = null) {
-        $rawItems = empty($this->items) ? array() : $this->items;
+    public function items($profileAlias = null)
+    {
+        $rawItems = empty($this->items) ? [] : $this->items;
         $items = new CollectionDocJsonItems($rawItems, $this);
 
         // optionally filter based on profile alias
         if ($profileAlias) {
-            $filteredRawItems = array();
+            $filteredRawItems = [];
             foreach ($items as $idx => $item) {
                 if ($item->getProfileAlias() == $profileAlias) {
                     $filteredRawItems[] = $rawItems[$idx];
@@ -408,43 +518,37 @@ class CollectionDocJson
     /**
      * Get an iterator for all the document items
      *
-     * @param $pageLimit the maximum number of pages to fetch
+     * @param int $pageLimit the maximum number of pages to fetch
      * @return PageIterator the iterator
      */
-    public function itemsIterator($pageLimit = null) {
+    public function itemsIterator($pageLimit = null)
+    {
         return new PageIterator($this, $pageLimit);
     }
-
-    /**
-     *
-     *
-     */
 
     /**
      * Make a remote request
      *
      * @param string $method the http method to use
      * @param string $url the location of the resource
-     * @param array $data optional data to send with request
-     * @param bool $is_retry whether this request is a 401-retry
-     * @return stdClass the json-decoded response
+     * @param array $data data to send with request
+     * @param bool $isRetry whether this request is a 401-retry
+     * @return \StdClass the json-decoded response
      */
-    private function _request($method, $url, $data = null, $is_retry = false) {
-        $token = $this->getAccessToken($is_retry);
+    private function _request($method, $url, $data = null, $isRetry = false)
+    {
+        $token = $this->getAccessToken($isRetry);
 
         // make request, retrying auth failures ONCE with a new token
         try {
             list($code, $json, $rawData) = Http::bearerRequest($method, $url, $token, $data);
-        }
-        catch (Exception\AuthException $e) {
-            sleep(self::AUTH_RETRY_WAIT_S); // TODO: i hate this
+        } catch (AuthException $e) {
+            sleep(self::AUTH_RETRY_WAIT_S); // @todo investigate why this is necessary
             return $this->_request($method, $url, $data, true);
-        }
-        catch (Exception\RemoteException $e) {
-            if (Exception\ValidationException::looksValidationy($e)) {
-                throw new Exception\ValidationException('Validation error', $e->getCode(), $e);
-            }
-            else {
+        } catch (RemoteException $e) {
+            if (ValidationException::looksValidationy($e)) {
+                throw new ValidationException('Validation error', $e->getCode(), $e);
+            } else {
                 throw $e; // re-throw
             }
         }
@@ -454,5 +558,4 @@ class CollectionDocJson
 
         return $json;
     }
-
 }

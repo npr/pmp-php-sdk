@@ -1,51 +1,82 @@
 <?php
+
 namespace Pmp\Sdk;
 
-use \GuzzleHttp\Client;
-use \GuzzleHttp\Exception\GuzzleException;
-use \GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\GuzzleException;
+use Pmp\Sdk\Exception\AuthException;
+use Pmp\Sdk\Exception\HostException;
+use Pmp\Sdk\Exception\NotFoundException;
+use Pmp\Sdk\Exception\RemoteException;
 
 /**
- * PMP common HTTP utils
- *
- * Methods to help abstract out some common guzzle setup/usage
- *
+ * HTTP helper functions for common Guzzle setup and usage
  */
 class Http
 {
-    const CONTENT_TYPE              = 'application/vnd.collection.doc+json';
-    const USER_AGENT_PREFIX         = 'phpsdk/v';
-    const TIMEOUT_S                 = 5;
+    /**
+     * Content type for requests via bearer authentication
+     *
+     * @var string
+     */
+    const CONTENT_TYPE = 'application/vnd.collection.doc+json';
 
-    // global http-request options
-    static protected $optGzip    = true;
+    /**
+     * Prefix for the user agent
+     *
+     * @var string
+     */
+    const USER_AGENT_PREFIX = 'phpsdk/v';
+
+    /**
+     * Timeout for all API requests
+     *
+     * @var int
+     */
+    const TIMEOUT_S = 5; // seconds
+
+    /**
+     * Global setting for gzip compression support
+     *
+     * @var bool
+     */
+    static protected $optGzip = true;
+
+    /**
+     * Global setting for minimal responses
+     *
+     * @var bool
+     */
     static protected $optMinimal = true;
 
     /**
-     * Set advanced options for http requests
+     * Set advanced options for HTTP requests
      *
-     * @param array $opts the options to set
+     * @param array $options the options to set
      */
-    static public function setOptions($opts = array()) {
-        if (isset($opts['gzip'])) {
-            self::$optGzip = $opts['gzip'] ? true : false;
+    static public function setOptions($options = [])
+    {
+        if (isset($options['gzip'])) {
+            self::$optGzip = !empty($options['gzip']);
         }
-        if (isset($opts['minimal'])) {
-            self::$optMinimal = $opts['minimal'] ? true : false;
+        if (isset($options['minimal'])) {
+            self::$optMinimal = !empty($options['minimal']);
         }
     }
 
     /**
-     * Make a normal bearer-auth request
+     * Make a request using bearer token authentication
      *
-     * @param string $method the http method
+     * @param string $method the HTTP method
      * @param string $url the absolute location
      * @param string $token the auth token
-     * @param array $data optional body data
-     * @return array($status, $jsonObj, $rawData) the response status and body
+     * @param array $data body data
+     * @return array the response status and body as array(int $status, \StdClass $body, array $rawResponseData)
      */
-    static public function bearerRequest($method, $url, $token = null, $data = null) {
-        $opts = [
+    static public function bearerRequest($method, $url, $token = null, $data = null)
+    {
+        $options = [
             'headers' => [
                 'User-Agent' => self::USER_AGENT_PREFIX . \Pmp\Sdk::VERSION,
                 'Accept' => self::CONTENT_TYPE,
@@ -54,35 +85,36 @@ class Http
         ];
 
         if (self::$optGzip) {
-            $opts['headers']['Accept-Encoding'] = 'gzip,deflate';
+            $options['headers']['Accept-Encoding'] = 'gzip,deflate';
         }
         if ($token) {
-            $opts['headers']['Authorization'] = "Bearer $token";
+            $options['headers']['Authorization'] = "Bearer $token";
         }
         if ((strtolower($method) == 'post' || strtolower($method) == 'put') && !empty($data)) {
-            $opts['body'] = json_encode($data);
+            $options['body'] = json_encode($data);
         }
 
         // preferences - only agree to minimal responses for non-home-docs
         $path = parse_url($url, PHP_URL_PATH);
         if (self::$optMinimal && !empty($path)) {
-            $opts['headers']['Prefer'] =  'return=minimal';
+            $options['headers']['Prefer'] = 'return=minimal';
         }
 
-        return self::_sendRequest($method, $url, $opts);
+        return self::_sendRequest($method, $url, $options);
     }
 
     /**
-     * Make a basic-auth'd request to the auth API
+     * Make a request using basic authentication
      *
-     * @param string $method the http method
+     * @param string $method the HTTP method
      * @param string $url the absolute location
      * @param string $basicAuth the basic auth string
-     * @param array $postData optional POST data
-     * @return array($status, $jsonObj, $rawData) the response status and body
+     * @param array $postData POST data
+     * @return array the response status and body as array(int $status, \StdClass $body, array $rawData)
      */
-    static public function basicRequest($method, $url, $basicAuth, $postData = null) {
-        $opts = [
+    static public function basicRequest($method, $url, $basicAuth, $postData = null)
+    {
+        $options = [
             'headers' => [
                 'User-Agent' => self::USER_AGENT_PREFIX . \Pmp\Sdk::VERSION,
                 'Accept' => 'application/json',
@@ -90,50 +122,49 @@ class Http
             ]
         ];
         if (strtolower($method) == 'post' && !empty($postData)) {
-            $opts['headers']['Content-Type'] = 'application/x-www-form-urlencoded';
+            $options['headers']['Content-Type'] = 'application/x-www-form-urlencoded';
             $formParams = [];
             foreach ($postData as $key => $value) {
                 if ($value) {
                     $formParams[$key] = $value;
                 }
             }
-            $opts['form_params'] = $formParams;
+            $options['form_params'] = $formParams;
         }
 
-        return self::_sendRequest($method, $url, $opts);
+        return self::_sendRequest($method, $url, $options);
     }
 
     /**
      * Send a request and handle the response
      *
-     * @param string $method the http method
+     * @param string $method the HTTP method
      * @param string $url the absolute location
-     * @param array $opts the request options
-     * @return array($status, $jsonObj, $rawData) the response status and body
+     * @param array $options the request options
+     * @return array the response status and body as array(int $status, \StdClass $body, array $rawData)
      */
-    static private function _sendRequest($method, $url, $opts) {
+    static private function _sendRequest($method, $url, $options)
+    {
         $client = new Client();
-        $opts['timeout'] = self::TIMEOUT_S;
-        $err_data = array('method' => $method, 'url' => $url);
+        $options['timeout'] = self::TIMEOUT_S;
+        $rawData = ['method' => $method, 'url' => $url];
 
-        // make the request, catching guzzle errors
+        // make the request, catching Guzzle errors (except most GuzzleException instances)
         try {
-            $resp = $client->request($method, $url, $opts);
-        }
-        catch (BadResponseException $e) {
-            $resp = $e->getResponse();
-        }
-        catch (GuzzleException $e) {
+            $response = $client->request($method, $url, $options);
+        } catch (BadResponseException $e) {
+            $response = $e->getResponse();
+        } catch (GuzzleException $e) {
             if (strpos($e->getMessage(), 'cURL error 6: Could not resolve host') !== false) {
-                throw new Exception\HostException('Unable to resolve host', $err_data);
+                throw new HostException('Unable to resolve host', $rawData);
             }
             throw $e;
         }
-        $code = $resp->getStatusCode();
-        $body = $resp->getBody();
+        $code = $response->getStatusCode();
+        $body = $response->getBody();
         $json = json_decode($body);
-        $err_data['code'] = $code;
-        $err_data['body'] = "$body";
+        $rawData['code'] = $code;
+        $rawData['body'] = "$body";
 
         // debug logger
         if (getenv('DEBUG') == '1' || getenv('DEBUG') == '2') {
@@ -145,35 +176,26 @@ class Http
 
         // handle bad response data
         if ($code != 204 && empty($body)) {
-            throw new Exception\RemoteException('Empty Document', $err_data);
-        }
-        else if ($code == 401) {
-            throw new Exception\AuthException('Unauthorized', $err_data);
-        }
-        else if ($code == 403) {
-            throw new Exception\NotFoundException('Forbidden', $err_data);
-        }
-        else if ($code == 404) {
-            throw new Exception\NotFoundException('Not Found', $err_data);
-        }
-        else if ($code < 200) {
-            throw new Exception\RemoteException('Informational', $err_data);
-        }
-        else if ($code > 299 && $code < 400) {
-            throw new Exception\RemoteException('Redirection', $err_data);
-        }
-        else if ($code > 399 && $code < 500) {
-            throw new Exception\RemoteException('Client Error', $err_data);
-        }
-        else if ($code > 499) {
-            throw new Exception\RemoteException('Server Error', $err_data);
-        }
-        else if ($code != 204 && is_null($json) && json_last_error() != JSON_ERROR_NONE) {
-            throw new Exception\RemoteException('JSON decode error', $err_data);
+            throw new RemoteException('Empty Document', $rawData);
+        } else if ($code == 401) {
+            throw new AuthException('Unauthorized', $rawData);
+        } else if ($code == 403) {
+            throw new NotFoundException('Forbidden', $rawData);
+        } else if ($code == 404) {
+            throw new NotFoundException('Not Found', $rawData);
+        } else if ($code < 200) {
+            throw new RemoteException('Informational', $rawData);
+        } else if ($code > 299 && $code < 400) {
+            throw new RemoteException('Redirection', $rawData);
+        } else if ($code > 399 && $code < 500) {
+            throw new RemoteException('Client Error', $rawData);
+        } else if ($code > 499) {
+            throw new RemoteException('Server Error', $rawData);
+        } else if ($code != 204 && is_null($json) && json_last_error() != JSON_ERROR_NONE) {
+            throw new RemoteException('JSON decode error', $rawData);
         }
 
-        // return json or the raw stringified response body
-        return array($code, $json, $err_data);
+        // return status code, JSON decoded body, and raw request/response data
+        return [$code, $json, $rawData];
     }
-
 }

@@ -1,25 +1,41 @@
 <?php
+
 namespace Pmp\Sdk;
 
 /**
- * CollectionDoc Page Iterator
- *
- * An iterator for ALL the items attached to a doc
- *
+ * Iterator for items attached to a Collection.Doc+JSON doc
  */
 class PageIterator implements \Iterator
 {
+    /**
+     * The first page configured for the iterator
+     *
+     * @var CollectionDocJson
+     */
     private $_initialDoc;
+
+    /**
+     * The last page number configured for the iterator
+     *
+     * @var int
+     */
     private $_lastPageNumber;
+
+    /**
+     * The page currently loaded in the iterator
+     *
+     * @var CollectionDocJson
+     */
     private $_currentPageDoc;
 
     /**
      * Constructor
      *
-     * @param CollectionDocJson $doc the parent document to iterate over
+     * @param CollectionDocJson $doc the parent doc to iterate over
      * @param int $pageLimit the maximum number of pages to load
      */
-    public function __construct(CollectionDocJson $doc, $pageLimit = null) {
+    public function __construct(CollectionDocJson $doc, $pageLimit = null)
+    {
         $this->_initialDoc = $doc;
         $this->_currentPageDoc = $doc;
 
@@ -30,9 +46,10 @@ class PageIterator implements \Iterator
     }
 
     /**
-     * Back to the first page (already loaded)
+     * Go back to the first page (already loaded)
      */
-    function rewind() {
+    public function rewind()
+    {
         $this->_currentPageDoc = $this->_initialDoc;
     }
 
@@ -41,7 +58,8 @@ class PageIterator implements \Iterator
      *
      * @return CollectionDocJsonItems the current items
      */
-    function current() {
+    public function current()
+    {
         return $this->_currentPageDoc->items();
     }
 
@@ -50,30 +68,31 @@ class PageIterator implements \Iterator
      *
      * @return int the page number
      */
-    function key() {
+    public function key()
+    {
         return $this->_currentPageDoc->items()->pageNum();
     }
 
     /**
-     * Move forward a page
+     * Go to the next page
      */
-    function next() {
+    public function next()
+    {
         $link = $this->_currentPageDoc->navigation('next');
         if ($link && isset($link->pagenum) && $link->pagenum <= $this->_lastPageNumber) {
             $this->_currentPageDoc = $link->follow();
-        }
-        else {
+        } else {
             $this->_currentPageDoc = null;
         }
     }
 
     /**
-     * Is the current page valid?
+     * Determine whether current page exists
      *
      * @return bool whether the current page exists
      */
-    function valid() {
-        return $this->_currentPageDoc ? true : false;
+    public function valid()
+    {
+        return !empty($this->_currentPageDoc);
     }
-
 }

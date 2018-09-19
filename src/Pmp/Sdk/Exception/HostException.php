@@ -1,12 +1,13 @@
 <?php
+
 namespace Pmp\Sdk\Exception;
 
 /**
- * API unknown-host errors
+ * Remote exception specifically for unknown API host errors
  *
- * Also catches some very specific "host found but this is not the home doc"
- * errors, when instantiating the SDK.
+ * Also catches some very specific "host found but this is not the home doc" errors, when instantiating the SDK
  */
-class HostException extends RemoteException {
+class HostException extends RemoteException
+{
 
 }
