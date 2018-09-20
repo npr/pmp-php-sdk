@@ -408,7 +408,7 @@ $
 $ make test
 ```
 
-To debug the HTTP calls occuring during the tests, set the *DEBUG* environment variable to 1 with `DEBUG=1 make test`.
+To debug the HTTP calls occurring during the tests, set the *DEBUG* environment variable to 1 with `DEBUG=1 make test`.
 
 ## Issues and Contributing
 
