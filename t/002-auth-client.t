@@ -68,3 +68,14 @@ try {
 catch (AuthException $e) {
     pass( 'invalid client - throws exception' );
 }
+
+// missing client credentials
+try {
+    $bad_client = new AuthClient($host, $client_id, '');
+    $bad_client->getToken();
+    fail( 'invalid client - no exception' );
+}
+catch (AuthException $e) {
+    pass( 'invalid client - throws exception' );
+}
+
