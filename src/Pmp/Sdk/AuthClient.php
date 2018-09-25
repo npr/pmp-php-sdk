@@ -56,6 +56,9 @@ class AuthClient
     public function __construct($host, $id, $secret, CollectionDocJson $home = null)
     {
         $this->_host = $host;
+        if (empty($id) || empty($secret)) {
+            throw new AuthException("Missing client credentials");
+        }
         $this->_clientAuth = 'Basic ' . base64_encode($id . ':' . $secret);
         $this->home = $home;
         $this->getToken();
