@@ -11,7 +11,7 @@ use \Pmp\Sdk\Exception\HostException as HostException;
 //
 
 // plan and connect
-list($host, $client_id, $client_secret) = pmp_client_plan(24);
+list($host, $client_id, $client_secret) = pmp_client_plan(25);
 ok( $auth = new AuthClient($host, $client_id, $client_secret), 'instantiate new AuthClient' );
 
 // get a token
@@ -68,3 +68,14 @@ try {
 catch (AuthException $e) {
     pass( 'invalid client - throws exception' );
 }
+
+// missing client credentials
+try {
+    $bad_client = new AuthClient($host, $client_id, '');
+    $bad_client->getToken();
+    fail( 'invalid client - no exception' );
+}
+catch (AuthException $e) {
+    pass( 'invalid client - throws exception' );
+}
+
