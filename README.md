@@ -1,4 +1,4 @@
-# PMP PHP SDK
+# PMP is shut down as of July 2021 - this SDK is no longer maintained!
 
 [![Build Status](https://travis-ci.org/npr/pmp-php-sdk.svg?branch=master)](https://travis-ci.org/npr/pmp-php-sdk) [![Latest Stable Version](https://img.shields.io/packagist/v/publicmediaplatform/pmpsdk.svg)](https://packagist.org/packages/publicmediaplatform/pmpsdk)
 
